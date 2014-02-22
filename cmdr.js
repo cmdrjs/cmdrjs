@@ -1,9 +1,15 @@
-//todo: argument masking
-//todo: command piping
-//todo: argument single quotes
-//todo: input hold focus
+/*
+ * cmdrjs
+ * Version 1.0.0-alpha
+ * Copyright 2014 Shaftware.
+ * All Rights Reserved.  
+ * Use, reproduction, distribution, and modification of this code is subject to the terms and 
+ * conditions of the MIT license, available at http://www.opensource.org/licenses/mit-license.php
+ *
+ * Project: https://github.com/shaftware/cmdrjs
+ */
 
-;(function (define) {
+; (function (define) {
     define(['jquery'], function($) {
 
         var version = '1.0.0-alpha',
