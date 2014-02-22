@@ -1,7 +1,6 @@
 //todo: argument masking
 //todo: command piping
 //todo: argument single quotes
-//todo: echo hide quoted command
 //todo: input hold focus
 
 ;(function (define) {
@@ -52,8 +51,7 @@
             this.close();
         });
 
-        cmdr.setup('ECHO', function (command) {
-            var arg = command.substring(5);
+        cmdr.setup('ECHO', function (arg) {
             var toggle = arg.toUpperCase();
             if (toggle === 'ON') {
                 this.config.echo = true;
@@ -196,21 +194,22 @@
                 throw 'Invalid command';
             }
 
+            command = $.trim(command);
+
             if (config.echo) {
                 writeLine('> ' + command);
             }
 
-            var parts = parseCommand(command);
-            var name = parts[0].toUpperCase();
-            var args = parts.slice(1);
-            var definition = commands[name];
+            var parsed = parseCommand(command);
+            var definition = commands[parsed.name.toUpperCase()];
             if (!definition) {
                 writeLineError('Invalid command');
                 return;
             }
 
+            var args = parsed.args;
             if (!definition.parse) {
-                args = [command];
+                args = [parsed.arg];
             }
 
             definition.callback.apply(cmdr, args);
@@ -241,15 +240,29 @@
         }
 
         function parseCommand(command) {
-            var exp = /[^\s"]+|"([^"]*)"/gi;
-            var parts = [];
+            var exp = /[^\s"]+|"([^"]*)"/gi,
+                name = null,
+                arg = null,
+                args = [];
+
             do {
                 var match = exp.exec(command);
                 if (match != null) {
-                    parts.push(match[1] ? match[1] : match[0]);
+                    var value = match[1] ? match[1] : match[0];
+                    if (match.index === 0) {
+                        name = value;
+                        arg = command.substr(value.length + (match[1] ? 3 : 1));
+                    } else {
+                        args.push(value);
+                    }
                 }
             } while (match != null);
-            return parts;
+
+            return {
+                name: name,
+                arg: arg,
+                args: args
+            };
         }
 
         function resolveDefinition(name, callback, settings) {
