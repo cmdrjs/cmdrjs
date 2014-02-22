@@ -74,7 +74,6 @@
             if (activated) return;
 
             container = $(template).appendTo('body');
-            form = $('form', container);
             input = $('textarea', container);
             output = $('.output', container);
             if (!config.fixedInput) {
@@ -105,8 +104,16 @@
                 } else if (event.keyCode === 40) {
                     historyForward();
                     return false;
+                } else if (event.keyCode === 9) {
+                    return false;
                 }
                 return true;
+            });
+
+            container.on('click', function(event) {
+                if (!$(event.target).is('textarea')) {
+                    input.focus();
+                }
             });
 
             activated = true;
