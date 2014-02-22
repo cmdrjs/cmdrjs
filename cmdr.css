@@ -21,23 +21,39 @@
     padding: 5px;
     color: #fff;
     font-family: "Courier New";
+    font-size: 10pt;
 }
 
-.cmdr input {
+.cmdr .input {
+    position: relative;
+    top: -1px;
+}
+
+.cmdr .input:before {
+    content: ">";
+    position: absolute;
+    top: 1px;
+}
+
+.cmdr .input textarea {
+    -webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;  
+    resize: none;
     border: transparent 0 none;
     background: transparent;
     color: #fff;
     font-family: "Courier New";
-    padding-left: 6px;
+    padding-left: 16px;
+    padding-top: 1px;
+    margin: 0;
+    width: 100%;
+    overflow: auto;
+    font-size: 10pt;
 }
 
-.cmdr form:before {
-    content: ">";
-    font-size: 0.9em;
-}
-
-.cmdr .output {
-    font-size: 0.9em;
+.cmdr .input textarea:focus {
+    outline: none;
 }
 
 .cmdr .output .warning {

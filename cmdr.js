@@ -15,7 +15,7 @@
         var version = '1.0.0-alpha',
             commands = {},
             activated = false,
-            template = '<div class="cmdr" style="display: none"><form><input type="text" /></form><div class="output"></div></div>',
+            template = '<div class="cmdr" style="display: none"><div class="input"><textarea/></div><div class="output"></div></div>',
             container,
             form,
             input,
@@ -75,7 +75,7 @@
 
             container = $(template).appendTo('body');
             form = $('form', container);
-            input = $('input', container);
+            input = $('textarea', container);
             output = $('.output', container);
             if (!config.fixedInput) {
                 container.prepend(output);
@@ -88,23 +88,25 @@
                     close();
                 }
             });
-
-            form.on('submit', function() {
-                var command = input.val();
-                if (command) {
-                    historyAdd(command);
-                    execute(command);
-                    input.val('');
+            
+            input.on('keypress', function (event) {
+                if (event.keyCode === 13) {
+                    var command = input.val();
+                    if (command) {
+                        historyAdd(command);
+                        execute(command);
+                        input.val('');
+                    }
+                    return false;
                 }
-                return false;
-            });
-
-            input.on('keypress', function(event) {
-                if (event.keyCode === 38) {
+                else if (event.keyCode === 38) {
                     historyBack();
+                    return false;
                 } else if (event.keyCode === 40) {
                     historyForward();
+                    return false;
                 }
+                return true;
             });
 
             activated = true;
