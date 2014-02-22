@@ -1,0 +1,17 @@
+*.config
+*.user
+*.csproj
+*.gpState
+*.sln
+*.suo
+/bin
+/obj
+/packages
+/Properties
+
+
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
