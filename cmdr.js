@@ -15,7 +15,7 @@
         var version = '1.0.0-alpha',
             commands = {},
             activated = false,
-            template = '<div class="cmdr" style="display: none"><div class="input"><textarea/></div><div class="output"></div></div>',
+            template = '<div class="cmdr" style="display: none"><div class="input"><textarea spellcheck="false" /></div><div class="output"></div></div>',
             container,
             form,
             input,
