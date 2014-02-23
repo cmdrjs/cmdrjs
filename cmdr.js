@@ -37,10 +37,6 @@
             close: close,
             write: write,
             writeLine: writeLine,
-            writeWarning: writeWarning,
-            writeLineWarning: writeLineWarning,
-            writeError: writeError,
-            writeLineError: writeLineError,
             clear: clear,
             execute: execute,
             setup: setup,
@@ -172,30 +168,6 @@
             outputLine = null;
         }
 
-        function writeWarning(value) {
-            if (!activated) return;
-
-            write(value, 'warning');
-        }
-
-        function writeLineWarning(value) {
-            if (!activated) return;
-
-            writeLine(value, 'warning');
-        }
-
-        function writeError(value) {
-            if (!activated) return;
-
-            write(value, 'error');
-        }
-
-        function writeLineError(value) {
-            if (!activated) return;
-
-            writeLine(value, 'error');
-        }
-
         function clear() {
             if (!activated) return;
 
@@ -218,7 +190,7 @@
             var parsed = parseCommand(command);
             var definition = commands[parsed.name.toUpperCase()];
             if (!definition) {
-                writeLineError('Invalid command');
+                writeLine('Invalid command', 'error');
                 return;
             }
 
