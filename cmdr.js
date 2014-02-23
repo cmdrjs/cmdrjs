@@ -89,23 +89,23 @@
             });
             
             input.on('keypress', function (event) {
-                if (event.keyCode === 13) {
-                    var command = input.val();
-                    if (command) {
-                        historyAdd(command);
-                        execute(command);
-                        input.val('');
-                    }
-                    return false;
-                }
-                else if (event.keyCode === 38) {
-                    historyBack();
-                    return false;
-                } else if (event.keyCode === 40) {
-                    historyForward();
-                    return false;
-                } else if (event.keyCode === 9) {
-                    return false;
+                switch(event.keyCode) {
+                    case 13:
+                        var command = input.val();
+                        if (command) {
+                            historyAdd(command);
+                            execute(command);
+                            input.val('');
+                        }
+                        return false;
+                    case 38:
+                        historyBack();
+                        return false;
+                    case 40:
+                        historyForward();
+                        return false;
+                    case 9:
+                        return false;
                 }
                 return true;
             });
@@ -209,7 +209,7 @@
                 throw 'Invalid command';
             }
 
-            command = $.trim(command);
+            command = command.trim();
 
             if (config.echo) {
                 writeLine('> ' + command);

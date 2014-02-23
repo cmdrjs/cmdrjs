@@ -56,6 +56,10 @@
     outline: none;
 }
 
+.cmdr .output span {
+    white-space: pre;
+}
+
 .cmdr .output .warning {
     color: yellow;
 }
