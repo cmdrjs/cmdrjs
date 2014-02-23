@@ -52,6 +52,12 @@
     font-size: 10pt;
 }
 
+@-moz-document url-prefix() { 
+  .cmdr .input textarea {
+    padding-left: 15px;
+  }
+}
+
 .cmdr .input textarea:focus {
     outline: none;
 }
