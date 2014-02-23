@@ -86,7 +86,7 @@
                 }
             });
             
-            input.on('keypress', function (event) {
+            input.on('keydown', function (event) {
                 switch(event.keyCode) {
                     case 13:
                         var command = input.val();
