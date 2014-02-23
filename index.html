@@ -1,0 +1,24 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>cmdrjs</title>
+    <link rel="stylesheet" type="text/css" href="cmdr.css" />
+    <style>
+        h1, p {
+            text-align: center;
+            font-family: "Courier New";
+        }
+    </style>
+</head>
+<body>
+    <h1>cmdrjs</h1>
+    <p>hint: press the ~ key</p>
+
+    <script src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
+    <script src="cmdr.js"></script>
+    <script>
+        cmdr.activate();
+        cmdr.writeLine("cmdrjs (version " + cmdr.version + ")");
+    </script>
+</body>
+</html>
