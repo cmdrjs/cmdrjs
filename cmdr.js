@@ -17,14 +17,15 @@
             activated = false,
             template = '<div class="cmdr" style="display: none"><div class="input"><textarea spellcheck="false" /></div><div class="output"></div></div>',
             container,
-            form,
             input,
             output,
             outputLine,
             history = [],
             historyIndex = -1,
             config = {
+                autoOpen: false,
                 openKey: 96,
+                closeKey: 27,
                 fixedInput: false,
                 echo: true
             };
@@ -76,10 +77,11 @@
                 container.prepend(output);
             }
 
-            $(document).on('keypress.cmdr', function(event) {
-                if (!$(event.target).is('input, textarea, select') && event.which === config.openKey) {
+            $(document).on('keypress.cmdr', function (event) {
+                if (!isOpen() && !$(event.target).is('input, textarea, select') && checkKey(event, config.openKey)) {
+                    event.preventDefault();
                     open();
-                } else if (event.keyCode === 27) {
+                } else if (isOpen() && checkKey(event, config.closeKey)) {
                     close();
                 }
             });
@@ -107,12 +109,16 @@
             });
 
             container.on('click', function(event) {
-                if (!$(event.target).is('textarea')) {
+                if (!$(event.target).is('.input textarea, .output *')) {
                     input.focus();
                 }
             });
-
+            
             activated = true;
+
+            if (config.autoOpen) {
+                open();
+            }
         }
 
         function deactivate() {
@@ -120,7 +126,6 @@
 
             container.remove();
             container = null;
-            form = null;
             input = null;
             output = null;
 
@@ -136,6 +141,10 @@
             activate();
         }
 
+        function isOpen() {
+            return container.is(':visible');
+        }
+
         function open() {
             if (!activated) return;
 
@@ -147,6 +156,7 @@
             if (!activated) return;
 
             container.hide();
+            input.blur();
         }
 
         function write(value, cssClass) {
@@ -279,6 +289,10 @@
             definition.name = definition.name.toUpperCase();
 
             return definition;
+        }
+
+        function checkKey(event, key) {
+            return (event.which || event.keyCode) === key;
         }
     });
 }(typeof define === 'function' && define.amd ? define : function (deps, factory) {

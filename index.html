@@ -13,9 +13,11 @@
     <script src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
     <script src="cmdr.js"></script>
     <script>
+        cmdr.config.autoOpen = true;
+        cmdr.config.openKey = -1;
+        cmdr.config.closeKey = -1;
         cmdr.activate();
         cmdr.writeLine("cmdrjs (version " + cmdr.version + ")");
-        cmdr.open();
     </script>
 </body>
 </html>
