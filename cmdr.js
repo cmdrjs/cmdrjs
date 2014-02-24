@@ -27,7 +27,6 @@
                 autoOpen: false,
                 openKey: 96,
                 closeKey: 27,
-                fixedInput: false,
                 echo: true
             };
 
@@ -75,9 +74,6 @@
             input = $('.input', container);
             textarea = $('textarea', container);
             output = $('.output', container);
-            if (!config.fixedInput) {
-                container.prepend(output);
-            }
 
             $(document).on('keypress.cmdr', function (event) {
                 if (!isOpen() && !$(event.target).is('input, textarea, select') && checkKey(event, config.openKey)) {
