@@ -1,5 +1,6 @@
 cmdrjs
 ======
+A JavaScript based command line interface for web pages.
 
 ## License
 
