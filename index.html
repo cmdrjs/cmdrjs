@@ -16,6 +16,17 @@
         cmdr.config.autoOpen = true;
         cmdr.config.openKey = -1;
         cmdr.config.closeKey = -1;
+
+        cmdr.setup('test', function () {
+            var cmdr = this;
+            var dfd = $.Deferred();
+            setTimeout(function () {
+                cmdr.writeLine('done');
+                dfd.resolve();
+            }, 3000);
+            return dfd;
+        });
+
         cmdr.activate();
         cmdr.writeLine("cmdrjs (version " + cmdr.version + ")");
     </script>

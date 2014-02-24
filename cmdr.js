@@ -18,6 +18,7 @@
             template = '<div class="cmdr" style="display: none"><div class="input"><textarea spellcheck="false" /></div><div class="output"></div></div>',
             container,
             input,
+            textarea,
             output,
             outputLine,
             history = [],
@@ -71,7 +72,8 @@
             if (activated) return;
 
             container = $(template).appendTo('body');
-            input = $('textarea', container);
+            input = $('.input', container);
+            textarea = $('textarea', container);
             output = $('.output', container);
             if (!config.fixedInput) {
                 container.prepend(output);
@@ -86,14 +88,13 @@
                 }
             });
             
-            input.on('keydown', function (event) {
+            textarea.on('keydown', function (event) {
                 switch(event.keyCode) {
                     case 13:
-                        var command = input.val();
+                        var command = textarea.val();
                         if (command) {
                             historyAdd(command);
                             execute(command);
-                            input.val('');
                         }
                         return false;
                     case 38:
@@ -109,8 +110,8 @@
             });
 
             container.on('click', function(event) {
-                if (!$(event.target).is('.input textarea, .output *')) {
-                    input.focus();
+                if (!$(event.target).is('.textarea textarea, .output *')) {
+                    textarea.focus();
                 }
             });
             
@@ -127,6 +128,7 @@
             container.remove();
             container = null;
             input = null;
+            textarea = null;
             output = null;
 
             $(document).off('keypress.cmdr');
@@ -149,14 +151,14 @@
             if (!activated) return;
 
             container.show();
-            input.focus();
+            textarea.focus();
         }
 
         function close() {
             if (!activated) return;
 
             container.hide();
-            input.blur();
+            textarea.blur();
         }
 
         function write(value, cssClass) {
@@ -204,12 +206,20 @@
                 return;
             }
 
+            input.css('visibility', 'hidden');
+            textarea.prop('disabled', true);
+
             var args = parsed.args;
             if (!definition.parse) {
                 args = [parsed.arg];
             }
 
-            definition.callback.apply(cmdr, args);
+            var result = definition.callback.apply(cmdr, args);
+
+            $.when(result).done(function() {
+                textarea.prop('disabled', false).val('');
+                input.css('visibility', 'visible');
+            });
         }
 
         function setup(name, callback, settings) {
@@ -225,14 +235,14 @@
         function historyBack() {
             if (history.length > historyIndex + 1) {
                 historyIndex++;
-                input.val(history[historyIndex]);
+                textarea.val(history[historyIndex]);
             }
         }
 
         function historyForward() {
             if (historyIndex > 0) {
                 historyIndex--;
-                input.val(history[historyIndex]);
+                textarea.val(history[historyIndex]);
             }
         }
 
