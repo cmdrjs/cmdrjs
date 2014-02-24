@@ -106,7 +106,7 @@
             });
 
             container.on('click', function(event) {
-                if (!$(event.target).is('.textarea textarea, .output *')) {
+                if (!$(event.target).is('.input textarea, .output *')) {
                     textarea.focus();
                 }
             });
