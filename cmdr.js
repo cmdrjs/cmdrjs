@@ -10,17 +10,18 @@
  */
 
 ; (function (define) {
-    define(['jquery'], function($) {
+    define(['jquery'], function ($) {
 
         var version = '1.0.0-alpha',
             commands = {},
             activated = false,
-            template = '<div class="cmdr" style="display: none"><div class="input"><textarea spellcheck="false" /></div><div class="output"></div></div>',
+            template = '<div class="cmdr" style="display: none"><div class="input"><textarea class="prompt" spellcheck="false" /></div><div class="output"></div></div>',
             container,
             input,
-            textarea,
+            prompt,
             output,
             outputLine,
+            queue = [],
             history = [],
             historyIndex = -1,
             config = {
@@ -36,6 +37,8 @@
             reactivate: reactivate,
             open: open,
             close: close,
+            read: read,
+            readLine: readLine,
             write: write,
             writeLine: writeLine,
             clear: clear,
@@ -72,7 +75,7 @@
 
             container = $(template).appendTo('body');
             input = $('.input', container);
-            textarea = $('textarea', container);
+            prompt = $('.prompt', container);
             output = $('.output', container);
 
             $(document).on('keypress.cmdr', function (event) {
@@ -83,11 +86,11 @@
                     close();
                 }
             });
-            
-            textarea.on('keydown', function (event) {
-                switch(event.keyCode) {
+
+            prompt.on('keydown', function (event) {
+                switch (event.keyCode) {
                     case 13:
-                        var command = textarea.val();
+                        var command = prompt.val();
                         if (command) {
                             historyAdd(command);
                             execute(command);
@@ -105,12 +108,12 @@
                 return true;
             });
 
-            container.on('click', function(event) {
-                if (!$(event.target).is('.input textarea, .output *')) {
-                    textarea.focus();
+            container.on('click', function (event) {
+                if (!$(event.target).is('.input *, .output *')) {
+                    prompt.focus();
                 }
             });
-            
+
             activated = true;
 
             if (config.autoOpen) {
@@ -124,7 +127,7 @@
             container.remove();
             container = null;
             input = null;
-            textarea = null;
+            prompt = null;
             output = null;
 
             $(document).off('keypress.cmdr');
@@ -147,14 +150,27 @@
             if (!activated) return;
 
             container.show();
-            textarea.focus();
+            prompt.focus();
         }
 
         function close() {
             if (!activated) return;
 
             container.hide();
-            textarea.blur();
+            prompt.blur();
+        }
+
+        function read(capture) {
+            // allow only to run while command is running
+            // return deferred
+            // resolve on keypress
+            // prevent char if capture is true
+        }
+
+        function readLine() {
+            // allow only to run while command is running
+            // return deferred
+            // resolve on submit
         }
 
         function write(value, cssClass) {
@@ -202,8 +218,7 @@
                 return;
             }
 
-            input.css('visibility', 'hidden');
-            textarea.prop('disabled', true);
+            prompt.prop('disabled', true).val('').hide();
 
             var args = parsed.args;
             if (!definition.parse) {
@@ -212,8 +227,8 @@
 
             var result = definition.callback.apply(cmdr, args);
 
-            $.when(result).done(function() {
-                textarea.prop('disabled', false).val('');
+            $.when(result).done(function () {
+                prompt.prop('disabled', false).show();
                 input.css('visibility', 'visible');
             });
         }
@@ -231,14 +246,14 @@
         function historyBack() {
             if (history.length > historyIndex + 1) {
                 historyIndex++;
-                textarea.val(history[historyIndex]);
+                prompt.val(history[historyIndex]);
             }
         }
 
         function historyForward() {
             if (historyIndex > 0) {
                 historyIndex--;
-                textarea.val(history[historyIndex]);
+                prompt.val(history[historyIndex]);
             }
         }
 
