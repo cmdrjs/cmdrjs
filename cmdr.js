@@ -21,6 +21,7 @@
             prompt,
             output,
             outputLine,
+            current,
             queue = [],
             history = [],
             historyIndex = -1,
@@ -168,9 +169,16 @@
         }
 
         function readLine() {
-            // allow only to run while command is running
-            // return deferred
-            // resolve on submit
+            if (!activated) return null;
+            if (!current) return null;
+
+            activatePrompt();
+
+            current.readLine = $.Deferred().done(function() {
+                deactivatePrompt();
+            });
+
+            return current.readLine.promise();
         }
 
         function write(value, cssClass) {
@@ -200,11 +208,12 @@
 
         function execute(command) {
             if (!activated) return;
+            if (current) return; 
 
             if (typeof command !== 'string') {
                 throw 'Invalid command';
             }
-
+            
             command = command.trim();
 
             if (config.echo) {
@@ -218,7 +227,12 @@
                 return;
             }
 
-            prompt.prop('disabled', true).val('').hide();
+            current = {
+                command: command,
+                definition: definition
+            };
+
+            deactivatePrompt();
 
             var args = parsed.args;
             if (!definition.parse) {
@@ -228,14 +242,25 @@
             var result = definition.callback.apply(cmdr, args);
 
             $.when(result).done(function () {
-                prompt.prop('disabled', false).show();
-                input.css('visibility', 'visible');
+                current = null;
+                if (queue.length > 0) {
+                    execute(queue.shift());
+                }
+                activatePrompt();
             });
         }
 
         function setup(name, callback, settings) {
             var definition = resolveDefinition(name, callback, settings);
             commands[definition.name] = definition;
+        }
+
+        function activatePrompt() {
+            prompt.prop('disabled', false).show();
+        }
+
+        function deactivatePrompt() {
+            prompt.prop('disabled', true).val('').hide();
         }
 
         function historyAdd(command) {
