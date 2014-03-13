@@ -116,7 +116,7 @@
             });
 
             prompt.on('keypress', function(event) {
-                if (current.read) {
+                if (current && current.read) {
                     if (event.charCode !== 0) {
                         current.read.char = String.fromCharCode(event.charCode);
                         if (current.read.capture) {
@@ -130,7 +130,7 @@
             });
 
             prompt.on('keyup', function () {
-                if (current.read && current.read.char) {
+                if (current && current.read && current.read.char) {
                     current.read.resolve(current.read.char);
                 }
             });
