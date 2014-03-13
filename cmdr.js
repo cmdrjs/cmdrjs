@@ -15,7 +15,7 @@
         var version = '1.0.0-alpha',
             commands = {},
             activated = false,
-            template = '<div class="cmdr" style="display: none"><div class="input"><textarea class="prompt" spellcheck="false" /></div><div class="output"></div></div>',
+            template = '<div class="cmdr" style="display: none"><div class="output"></div><div class="input"><textarea class="prompt" spellcheck="false" row="1" /></div></div>',
             container,
             input,
             prompt,
@@ -89,24 +89,64 @@
             });
 
             prompt.on('keydown', function (event) {
-                switch (event.keyCode) {
-                    case 13:
-                        var command = prompt.val();
-                        if (command) {
-                            historyAdd(command);
-                            execute(command);
+                if (!current) {
+                    switch (event.keyCode) {
+                        case 13:
+                            var value = prompt.val();
+                            if (value) {
+                                flushPrompt();
+                                historyAdd(value);
+                                execute(value);
+                            }
+                            return false;
+                        case 38:
+                            historyBack();
+                            return false;
+                        case 40:
+                            historyForward();
+                            return false;
+                        case 9:
+                            return false;
+                    }
+                } else if (current.readLine && event.keyCode === 13) {
+                    current.readLine.resolve(prompt.val());
+                    return false;
+                } 
+                return true;
+            });
+
+            prompt.on('keypress', function(event) {
+                if (current.read) {
+                    if (event.charCode !== 0) {
+                        current.read.char = String.fromCharCode(event.charCode);
+                        if (current.read.capture) {
+                            return false;
                         }
+                    } else {
                         return false;
-                    case 38:
-                        historyBack();
-                        return false;
-                    case 40:
-                        historyForward();
-                        return false;
-                    case 9:
-                        return false;
+                    }
                 }
                 return true;
+            });
+
+            prompt.on('keyup', function () {
+                if (current.read && current.read.char) {
+                    current.read.resolve(current.read.char);
+                }
+            });
+
+            prompt.on('change cut paste drop keydown', function () {
+                setTimeout(function () {
+                    prompt.height('auto').height(prompt[0].scrollHeight);
+                }, 0);
+            });
+
+            var resizeThrottle;
+            $(window).on('resize.cmdr', function () {
+                clearTimeout(resizeThrottle);
+                resizeThrottle = setTimeout(function () {
+                    prompt.height('auto').height(prompt[0].scrollHeight);
+                }, 100);
             });
 
             container.on('click', function (event) {
@@ -132,6 +172,7 @@
             output = null;
 
             $(document).off('keypress.cmdr');
+            $(window).off('resize.cmdr');
 
             activated = false;
         }
@@ -161,24 +202,40 @@
             prompt.blur();
         }
 
-        function read(capture) {
-            // allow only to run while command is running
-            // return deferred
-            // resolve on keypress
-            // prevent char if capture is true
+        function read(callback, capture) {
+            if (!activated) return;
+            if (!current) return;
+            
+            activatePrompt();
+
+            current.read = $.Deferred().done(function (value) {
+                deactivatePrompt();
+                current.read = null;
+                if (callback.call(cmdr, value) === true) {
+                    read(callback, capture);
+                } else {
+                    flushPrompt();
+                }
+            });
+
+            current.read.capture = capture;
         }
 
-        function readLine() {
-            if (!activated) return null;
-            if (!current) return null;
+        function readLine(callback) {
+            if (!activated) return;
+            if (!current) return;
 
             activatePrompt();
 
-            current.readLine = $.Deferred().done(function() {
+            current.readLine = $.Deferred().done(function (value) {
+                writeLine(value);
                 deactivatePrompt();
+                current.readLine = null;
+                flushPrompt();
+                if (callback.call(cmdr, value) === true) {
+                    readLine(callback);
+                }
             });
-
-            return current.readLine.promise();
         }
 
         function write(value, cssClass) {
@@ -215,11 +272,7 @@
             }
             
             command = command.trim();
-
-            if (config.echo) {
-                writeLine('> ' + command);
-            }
-
+            
             var parsed = parseCommand(command);
             var definition = commands[parsed.name.toUpperCase()];
             if (!definition) {
@@ -260,7 +313,14 @@
         }
 
         function deactivatePrompt() {
-            prompt.prop('disabled', true).val('').hide();
+            prompt.prop('disabled', true).hide();
+        }
+
+        function flushPrompt() {
+            if (config.echo) {
+                writeLine(prompt.val());
+            }
+            prompt.val('');
         }
 
         function historyAdd(command) {
@@ -271,14 +331,14 @@
         function historyBack() {
             if (history.length > historyIndex + 1) {
                 historyIndex++;
-                prompt.val(history[historyIndex]);
+                prompt.val(history[historyIndex]).change();
             }
         }
 
         function historyForward() {
             if (historyIndex > 0) {
                 historyIndex--;
-                prompt.val(history[historyIndex]);
+                prompt.val(history[historyIndex]).change();
             }
         }
 

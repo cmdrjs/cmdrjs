@@ -18,12 +18,14 @@
         cmdr.config.closeKey = -1;
 
         cmdr.setup('test', function () {
-            var cmdr = this;
             var dfd = $.Deferred();
-            setTimeout(function () {
-                cmdr.writeLine('done');
-                dfd.resolve();
-            }, 3000);
+            cmdr.read(function (c) {
+                if (c.toLowerCase() === 'q') {
+                    dfd.resolve();
+                    return false;
+                }
+                return true;
+            }, false);
             return dfd;
         });
 

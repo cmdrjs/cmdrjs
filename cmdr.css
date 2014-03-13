@@ -29,11 +29,6 @@
     top: -1px;
 }
 
-.cmdr .input:before {
-    content: ">";
-    position: absolute;
-    top: 1px;
-}
 
 .cmdr .input textarea {
     -webkit-box-sizing: border-box;
@@ -44,7 +39,6 @@
     background: transparent;
     color: #fff;
     font-family: "Courier New";
-    padding-left: 16px;
     padding-top: 1px;
     margin: 0;
     width: 100%;
@@ -54,12 +48,16 @@
 
 @-moz-document url-prefix() { 
   .cmdr .input textarea {
-    padding-left: 15px;
+      padding-left: 1px;
   }
 }
 
 .cmdr .input textarea:focus {
     outline: none;
+}
+
+.cmdr .output {
+    padding-left: 2px;
 }
 
 .cmdr .output span {
