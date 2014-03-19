@@ -15,9 +15,10 @@
         var version = '1.0.0-alpha',
             commands = {},
             activated = false,
-            template = '<div class="cmdr" style="display: none"><div class="output"></div><div class="input"><textarea class="prompt" spellcheck="false" row="1" /></div></div>',
+            template = '<div class="cmdr" style="display: none"><div class="output"></div><div class="input"><span class="prefix"></span><textarea class="prompt" spellcheck="false" row="1" /></div></div>',
             container,
             input,
+            prefix,
             prompt,
             output,
             outputLine,
@@ -29,7 +30,8 @@
                 autoOpen: false,
                 openKey: 96,
                 closeKey: 27,
-                echo: true
+                echo: true,
+                promptPrefix: '> '
             };
 
         var cmdr = {
@@ -76,6 +78,7 @@
 
             container = $(template).appendTo('body');
             input = $('.input', container);
+            prefix = $('.prefix', container);
             prompt = $('.prompt', container);
             output = $('.output', container);
 
@@ -155,6 +158,8 @@
                 }
             });
 
+            activatePrompt();
+
             activated = true;
 
             if (config.autoOpen) {
@@ -168,6 +173,7 @@
             container.remove();
             container = null;
             input = null;
+            prefix = null;
             prompt = null;
             output = null;
 
@@ -206,7 +212,7 @@
             if (!activated) return;
             if (!current) return;
             
-            activatePrompt();
+            activatePrompt(true);
 
             current.read = $.Deferred().done(function (value) {
                 deactivatePrompt();
@@ -225,7 +231,7 @@
             if (!activated) return;
             if (!current) return;
 
-            activatePrompt();
+            activatePrompt(true);
 
             current.readLine = $.Deferred().done(function (value) {
                 writeLine(value);
@@ -308,16 +314,34 @@
             commands[definition.name] = definition;
         }
 
-        function activatePrompt() {
-            prompt.prop('disabled', false).show();
+        function activatePrompt(inline) {
+            if (inline) {
+                if (outputLine) {
+                    prefix.text(outputLine.text);
+                    outputLine.remove();
+                    outputLine = null;
+                }
+            } else {
+                prefix.text(config.promptPrefix);
+            }
+            input.show();
+            setTimeout(function () {
+                prompt.prop('disabled', false).css('text-indent', getPrefixWidth() + 'px').blur().focus();
+            }, 0);
         }
 
         function deactivatePrompt() {
-            prompt.prop('disabled', true).hide();
+            prefix.text('');
+            prompt.prop('disabled', true);
+            input.hide();
+            if (outputLine) {
+                outputLine.show();
+            }
         }
 
         function flushPrompt() {
             if (config.echo) {
+                write(prefix.text());
                 writeLine(prompt.val());
             }
             prompt.val('');
@@ -400,6 +424,26 @@
         function checkKey(event, key) {
             return (event.which || event.keyCode) === key;
         }
+
+        function getPrefixWidth() {
+            var width = prefix.width();
+            var text = prefix.text();
+            var spacePadding = text.length - text.trim().length;
+            width += spacePadding * getPrefixSpaceWidth();
+            return width;
+        }
+
+        function getPrefixSpaceWidth() {
+            if (!prefix._spaceWidth) {
+                var elem1 = $('<span style="visibility: hidden">| |</span>').appendTo(prefix);
+                var elem2 = $('<span style="visibility: hidden">||</span>').appendTo(prefix);
+                prefix._spaceWidth = elem1.innerWidth() - elem2.innerWidth();
+                elem1.remove();
+                elem2.remove();
+            }
+            return prefix._spaceWidth;
+        }
+
     });
 }(typeof define === 'function' && define.amd ? define : function (deps, factory) {
     if (typeof module !== 'undefined' && module.exports) {

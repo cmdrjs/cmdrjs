@@ -27,8 +27,12 @@
 .cmdr .input {
     position: relative;
     top: -1px;
+    padding-top: 1px;
 }
 
+.cmdr .input .prefix {
+    display: inline-block;
+}
 
 .cmdr .input textarea {
     -webkit-box-sizing: border-box;
@@ -39,25 +43,26 @@
     background: transparent;
     color: #fff;
     font-family: "Courier New";
-    padding-top: 1px;
     margin: 0;
+    margin-left: -2px;
+    padding-top: 1px;
     width: 100%;
     overflow: auto;
     font-size: 10pt;
+    position: absolute;
+    left: 0;
+    top: 0;
+    line-height: 1;
 }
 
 @-moz-document url-prefix() { 
   .cmdr .input textarea {
-      padding-left: 1px;
+    margin-left: -1px;
   }
 }
 
 .cmdr .input textarea:focus {
     outline: none;
-}
-
-.cmdr .output {
-    padding-left: 2px;
 }
 
 .cmdr .output span {
