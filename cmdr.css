@@ -60,7 +60,10 @@
 }
 
 .cmdr .output span {
-    white-space: pre;
+    white-space: -moz-pre-wrap;
+    white-space: -pre-wrap; 
+    white-space: -o-pre-wrap; 
+    white-space: pre-wrap; 
 }
 
 .cmdr .output .warning {

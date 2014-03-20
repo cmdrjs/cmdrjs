@@ -97,8 +97,6 @@
                         case 13:
                             var value = prompt.val();
                             if (value) {
-                                flushInput(!config.echo);
-                                historyAdd(value);
                                 execute(value);
                             }
                             return false;
@@ -136,6 +134,28 @@
                 if (current && current.read && current.read.char) {
                     current.read.resolve(current.read.char);
                 }
+            });
+
+            prompt.on('paste', function () {
+                setTimeout(function () {
+                    var value = prompt.val();
+                    var lines = value.split(/\r\n|\r|\n/g);
+                    var length = lines.length;
+                    if (length > 1) {
+                        for (var i = 1; i < length; i++) {
+                            if (lines[i].length > 0) {
+                                queue.push(lines[i]);
+                            }
+                        }
+                        if (current && current.readLine) {
+                            current.readLine.resolve(lines[0]);
+                        } else if (current && current.read) {
+                            current.read.resolve(lines[0][0]);
+                        } else {
+                            execute(lines[0]);
+                        }
+                    }
+                }, 0);
             });
 
             prompt.on('change cut paste drop keydown', function () {
@@ -216,6 +236,9 @@
 
             current.read = $.Deferred().done(function (value) {
                 current.read = null;
+                if (!capture) {
+                    prompt.val(value);
+                }
                 deactivateInput();
                 if (callback.call(cmdr, value) === true) {
                     read(callback, capture);
@@ -223,8 +246,11 @@
                     flushInput();
                 }
             });
-
             current.read.capture = capture;
+            
+            if (queue.length > 0) {
+                current.read.resolve(queue.shift()[0]);
+            }
         }
 
         function readLine(callback) {
@@ -235,12 +261,17 @@
 
             current.readLine = $.Deferred().done(function (value) {
                 current.readLine = null;
+                prompt.val(value);
                 deactivateInput();
                 flushInput();
                 if (callback.call(cmdr, value) === true) {
                     readLine(callback);
                 }
             });
+
+            if (queue.length > 0) {
+                current.readLine.resolve(queue.shift());
+            }
         }
 
         function write(value, cssClass) {
@@ -272,10 +303,13 @@
             if (!activated) return;
             if (current) return; 
 
-            if (typeof command !== 'string') {
+            if (typeof command !== 'string' || command.length === 0) {
                 throw 'Invalid command';
             }
 
+            prompt.val(command);
+            flushInput(!config.echo);
+            historyAdd(command);
             deactivateInput();
 
             command = command.trim();
@@ -307,7 +341,7 @@
                         execute(queue.shift());
                     }
                     activateInput();
-                });
+                }, 0);
             });
         }
 
