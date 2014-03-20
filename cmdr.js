@@ -97,7 +97,7 @@
                         case 13:
                             var value = prompt.val();
                             if (value) {
-                                flushPrompt();
+                                flushInput(!config.echo);
                                 historyAdd(value);
                                 execute(value);
                             }
@@ -158,7 +158,7 @@
                 }
             });
 
-            activatePrompt();
+            activateInput();
 
             activated = true;
 
@@ -212,15 +212,15 @@
             if (!activated) return;
             if (!current) return;
             
-            activatePrompt(true);
+            activateInput(true);
 
             current.read = $.Deferred().done(function (value) {
-                deactivatePrompt();
                 current.read = null;
+                deactivateInput();
                 if (callback.call(cmdr, value) === true) {
                     read(callback, capture);
                 } else {
-                    flushPrompt();
+                    flushInput();
                 }
             });
 
@@ -231,13 +231,12 @@
             if (!activated) return;
             if (!current) return;
 
-            activatePrompt(true);
+            activateInput(true);
 
             current.readLine = $.Deferred().done(function (value) {
-                writeLine(value);
-                deactivatePrompt();
                 current.readLine = null;
-                flushPrompt();
+                deactivateInput();
+                flushInput();
                 if (callback.call(cmdr, value) === true) {
                     readLine(callback);
                 }
@@ -276,13 +275,16 @@
             if (typeof command !== 'string') {
                 throw 'Invalid command';
             }
-            
+
+            deactivateInput();
+
             command = command.trim();
             
             var parsed = parseCommand(command);
             var definition = commands[parsed.name.toUpperCase()];
             if (!definition) {
                 writeLine('Invalid command', 'error');
+                activateInput();
                 return;
             }
 
@@ -290,8 +292,6 @@
                 command: command,
                 definition: definition
             };
-
-            deactivatePrompt();
 
             var args = parsed.args;
             if (!definition.parse) {
@@ -301,11 +301,13 @@
             var result = definition.callback.apply(cmdr, args);
 
             $.when(result).done(function () {
-                current = null;
-                if (queue.length > 0) {
-                    execute(queue.shift());
-                }
-                activatePrompt();
+                setTimeout(function () {
+                    current = null;
+                    if (queue.length > 0) {
+                        execute(queue.shift());
+                    }
+                    activateInput();
+                });
             });
         }
 
@@ -314,10 +316,10 @@
             commands[definition.name] = definition;
         }
 
-        function activatePrompt(inline) {
+        function activateInput(inline) {
             if (inline) {
                 if (outputLine) {
-                    prefix.text(outputLine.text);
+                    prefix.text(outputLine.text());
                     outputLine.remove();
                     outputLine = null;
                 }
@@ -326,24 +328,21 @@
             }
             input.show();
             setTimeout(function () {
-                prompt.prop('disabled', false).css('text-indent', getPrefixWidth() + 'px').blur().focus();
+                prompt.prop('disabled', false).css('text-indent', getPrefixWidth() + 'px').focus();
             }, 0);
         }
 
-        function deactivatePrompt() {
-            prefix.text('');
+        function deactivateInput() {
             prompt.prop('disabled', true);
             input.hide();
-            if (outputLine) {
-                outputLine.show();
-            }
         }
 
-        function flushPrompt() {
-            if (config.echo) {
+        function flushInput(preventWrite) {
+            if (!preventWrite) {
                 write(prefix.text());
                 writeLine(prompt.val());
             }
+            prefix.text('');
             prompt.val('');
         }
 

@@ -17,15 +17,13 @@
         cmdr.config.openKey = -1;
         cmdr.config.closeKey = -1;
 
-        cmdr.setup('test', function () {
+        cmdr.setup('NAME', function () {
             var dfd = $.Deferred();
-            cmdr.read(function (c) {
-                if (c.toLowerCase() === 'q') {
-                    dfd.resolve();
-                    return false;
-                }
-                return true;
-            }, false);
+            cmdr.write('Name: ');
+            cmdr.readLine(function (v) {
+                cmdr.writeLine('Your name is ' + v + '.');
+                dfd.resolve();
+            });
             return dfd;
         });
 
