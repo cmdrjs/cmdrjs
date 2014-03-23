@@ -52,24 +52,50 @@
             version: version
         };
 
-        cmdr.setup('CLS', function () {
-            this.clear();
+        cmdr.setup('VER', function () {
+            cmdr.writeLine('cmdrjs (version ' + cmdr.version + ')');
+        }, {
+            description: 'Displays the cmdrjs version'
         });
 
-        cmdr.setup('EXIT', function () {
-            this.close();
+        cmdr.setup('HELP', function () {
+            cmdr.writeLine('The following commands are available:');
+            cmdr.writeLine();
+            for (var name in commands) {
+                var command = commands[name];
+                cmdr.write(pad(name, ' ', 10));
+                cmdr.writeLine(command.description);
+            }
+            cmdr.writeLine();
+        }, {
+            description: 'Lists the available commands'
         });
 
         cmdr.setup('ECHO', function (arg) {
             var toggle = arg.toUpperCase();
             if (toggle === 'ON') {
-                this.config.echo = true;
+                cmdr.config.echo = true;
             } else if (toggle === 'OFF') {
-                this.config.echo = false;
+                cmdr.config.echo = false;
             } else {
-                this.writeLine(arg);
+                cmdr.writeLine(arg);
             }
-        }, { parse: false });
+        }, {
+            parse: false,
+            description: 'Displays provided text or toggles command echoing'
+        });
+
+        cmdr.setup('CLS', function () {
+            cmdr.clear();
+        }, {
+            description: 'Clears the command prompt'
+        });
+
+        cmdr.setup('EXIT', function () {
+            cmdr.close();
+        }, {
+            description: 'Closes the command prompt'
+        });
 
         return cmdr;
 
@@ -277,7 +303,7 @@
         function write(value, cssClass) {
             if (!activated) return;
 
-            value = '' + value;
+            value = value || '';
 
             var outputValue = $('<span/>').addClass(cssClass).text(value);
             if (!outputLine) {
@@ -288,6 +314,8 @@
 
         function writeLine(value, cssClass) {
             if (!activated) return;
+
+            value = (value || '') + '\n';
 
             write(value, cssClass);
             outputLine = null;
@@ -301,7 +329,10 @@
 
         function execute(command) {
             if (!activated) return;
-            if (current) return; 
+            if (current) {
+                queue.push(command);
+                return;
+            }; 
 
             if (typeof command !== 'string' || command.length === 0) {
                 throw 'Invalid command';
@@ -337,10 +368,10 @@
             $.when(result).done(function () {
                 setTimeout(function () {
                     current = null;
+                    activateInput();
                     if (queue.length > 0) {
                         execute(queue.shift());
                     }
-                    activateInput();
                 }, 0);
             });
         }
@@ -475,6 +506,15 @@
                 elem2.remove();
             }
             return prefix._spaceWidth;
+        }
+
+        function pad(value, padding, length) {
+            var right = length >= 0;
+            length = Math.abs(length);
+            while (value.length < length) {
+                value = right ? value + padding : padding + value;
+            }
+            return value;
         }
 
     });
