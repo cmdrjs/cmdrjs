@@ -240,7 +240,7 @@
                     prompt.val(value);
                 }
                 deactivateInput();
-                if (callback.call(cmdr, value) === true) {
+                if (callback.call(current, value) === true) {
                     read(callback, capture);
                 } else {
                     flushInput();
@@ -264,7 +264,7 @@
                 prompt.val(value);
                 deactivateInput();
                 flushInput();
-                if (callback.call(cmdr, value) === true) {
+                if (callback.call(current, value) === true) {
                     readLine(callback);
                 }
             });
@@ -332,7 +332,7 @@
                 args = [parsed.arg];
             }
 
-            var result = definition.callback.apply(cmdr, args);
+            var result = definition.callback.apply(current, args);
 
             $.when(result).done(function () {
                 setTimeout(function () {
