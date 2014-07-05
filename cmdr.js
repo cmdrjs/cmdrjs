@@ -244,7 +244,10 @@
             if (!activated) return;
 
             container.show();
-            prompt.focus();
+
+            setTimeout(function () {
+                prompt.css('text-indent', getPrefixWidth() + 'px').focus();
+            }, 0);
         }
 
         function close() {
