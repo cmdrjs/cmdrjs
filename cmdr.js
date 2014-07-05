@@ -1,6 +1,6 @@
 /*
  * cmdrjs
- * Version 1.0.0-alpha
+ * Version 1.0.1-alpha
  * Copyright 2014 Shaftware.
  * All Rights Reserved.  
  * Use, reproduction, distribution, and modification of this code is subject to the terms and 
@@ -12,7 +12,7 @@
 ; (function (define) {
     define(['jquery'], function ($) {
 
-        var version = '1.0.0-alpha',
+        var version = '1.0.1-alpha',
             commands = {},
             activated = false,
             template = '<div class="cmdr" style="display: none"><div class="output"></div><div class="input"><span class="prefix"></span><textarea class="prompt" spellcheck="false" row="1" /></div></div>',
