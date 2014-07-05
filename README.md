@@ -2,6 +2,9 @@ cmdrjs
 ======
 A JavaScript based command line interface for web pages.
 
+## NuGet Package
+https://www.nuget.org/packages/cmdrjs/
+
 ## License
 
 The MIT License (MIT)
