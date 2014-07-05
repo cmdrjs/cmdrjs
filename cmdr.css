@@ -80,10 +80,3 @@
       top: 2px;
   }
 }}
-
-/* Hacks for FF */
-@-moz-document url-prefix() { 
-  .cmdr .input textarea {
-      left: -1px;
-  }
-}
