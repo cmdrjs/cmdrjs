@@ -66,6 +66,10 @@
     white-space: pre-wrap; 
 }
 
+.cmdr .output .success {
+    color: green;
+}
+
 .cmdr .output .warning {
     color: yellow;
 }
