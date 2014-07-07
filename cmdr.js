@@ -263,7 +263,7 @@
             
             activateInput(true);
 
-            current.read = $.Deferred().done(function (value) {
+            current.read = $.Deferred().always(function (value) {
                 current.read = null;
                 if (!capture) {
                     prompt.val(value);
@@ -288,7 +288,7 @@
 
             activateInput(true);
 
-            current.readLine = $.Deferred().done(function (value) {
+            current.readLine = $.Deferred().always(function (value) {
                 current.readLine = null;
                 prompt.val(value);
                 deactivateInput();
@@ -368,7 +368,7 @@
 
             var result = definition.callback.apply(current, args);
 
-            $.when(result).done(function () {
+            $.when(result).always(function () {
                 setTimeout(function () {
                     current = null;
                     activateInput();
