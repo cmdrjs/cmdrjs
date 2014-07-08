@@ -1,6 +1,6 @@
 /*
  * cmdrjs
- * Version 1.0.1-alpha
+ * Version 1.0.2-alpha
  * Copyright 2014 Shaftware.
  * All Rights Reserved.  
  * Use, reproduction, distribution, and modification of this code is subject to the terms and 
@@ -15,7 +15,7 @@
         var version = '1.0.1-alpha',
             commands = {},
             activated = false,
-            template = '<div class="cmdr" style="display: none"><div class="output"></div><div class="input"><span class="prefix"></span><textarea class="prompt" spellcheck="false" row="1" /></div></div>',
+            template = '<div class="cmdr" style="display: none"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>',
             container,
             input,
             prefix,
@@ -63,8 +63,10 @@
             cmdr.writeLine();
             for (var name in commands) {
                 var command = commands[name];
-                cmdr.write(pad(name, ' ', 10));
-                cmdr.writeLine(command.description);
+                if (!!unwrap(command.available)) {
+                    cmdr.write(pad(name, ' ', 10));
+                    cmdr.writeLine(command.description);
+                }
             }
             cmdr.writeLine();
         }, {
@@ -109,7 +111,7 @@
             output = $('.output', container);
 
             $(document).on('keypress.cmdr', function (event) {
-                if (!isOpen() && !$(event.target).is('input, textarea, select') && checkKey(event, config.openKey)) {
+                if (!isOpen() && !$(event.target).is('input, textarea, select, [contenteditable]') && checkKey(event, config.openKey)) {
                     event.preventDefault();
                     open();
                 } else if (isOpen() && checkKey(event, config.closeKey)) {
@@ -121,22 +123,26 @@
                 if (!current) {
                     switch (event.keyCode) {
                         case 13:
-                            var value = prompt.val();
+                            var value = promptVal();
                             if (value) {
                                 execute(value);
                             }
+                            event.preventDefault();
                             return false;
                         case 38:
                             historyBack();
+                            event.preventDefault();
                             return false;
                         case 40:
                             historyForward();
+                            event.preventDefault();
                             return false;
                         case 9:
+                            event.preventDefault();
                             return false;
                     }
                 } else if (current.readLine && event.keyCode === 13) {
-                    current.readLine.resolve(prompt.val());
+                    current.readLine.resolve(promptVal());
                     return false;
                 } 
                 return true;
@@ -164,7 +170,7 @@
 
             prompt.on('paste', function () {
                 setTimeout(function () {
-                    var value = prompt.val();
+                    var value = promptVal()
                     var lines = value.split(/\r\n|\r|\n/g);
                     var length = lines.length;
                     if (length > 1) {
@@ -266,7 +272,7 @@
             current.read = $.Deferred().always(function (value) {
                 current.read = null;
                 if (!capture) {
-                    prompt.val(value);
+                    promptVal(value);
                 }
                 deactivateInput();
                 if (callback.call(current, value) === true) {
@@ -290,7 +296,7 @@
 
             current.readLine = $.Deferred().always(function (value) {
                 current.readLine = null;
-                prompt.val(value);
+                promptVal(value);
                 deactivateInput();
                 flushInput();
                 if (callback.call(current, value) === true) {
@@ -341,7 +347,7 @@
                 throw 'Invalid command';
             }
 
-            prompt.val(command);
+            promptVal(command);
             flushInput(!config.echo);
             historyAdd(command);
             deactivateInput();
@@ -350,7 +356,7 @@
             
             var parsed = parseCommand(command);
             var definition = commands[parsed.name.toUpperCase()];
-            if (!definition) {
+            if (!definition || !unwrap(definition.available)) {
                 writeLine('Invalid command', 'error');
                 activateInput();
                 return;
@@ -408,10 +414,10 @@
         function flushInput(preventWrite) {
             if (!preventWrite) {
                 write(prefix.text());
-                writeLine(prompt.val());
+                writeLine(promptVal());
             }
             prefix.text('');
-            prompt.val('');
+            promptVal('');
         }
 
         function historyAdd(command) {
@@ -422,14 +428,14 @@
         function historyBack() {
             if (history.length > historyIndex + 1) {
                 historyIndex++;
-                prompt.val(history[historyIndex]).change();
+                promptVal(history[historyIndex]).change();
             }
         }
 
         function historyForward() {
             if (historyIndex > 0) {
                 historyIndex--;
-                prompt.val(history[historyIndex]).change();
+                promptVal(history[historyIndex]).change();
             }
         }
 
@@ -473,7 +479,8 @@
             var definition = {
                 name: name,
                 callback: callback,
-                parse: true
+                parse: true,
+                available: true
             };
 
             $.extend(definition, settings);
@@ -518,6 +525,18 @@
                 value = right ? value + padding : padding + value;
             }
             return value;
+        }
+
+        function unwrap(value) {
+            return typeof value === 'function' ? value() : value;
+        }
+
+        function promptVal(value) {
+            if (typeof value === 'undefined') {
+                return prompt.html().replace(/[<]br[^>]*[>]/gi, '');
+            } else {
+                prompt.html(value);
+            }
         }
 
     });
