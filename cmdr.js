@@ -1,6 +1,6 @@
 /*
  * cmdrjs
- * Version 1.0.3-alpha
+ * Version 1.0.2-alpha
  * Copyright 2014 Shaftware.
  * All Rights Reserved.  
  * Use, reproduction, distribution, and modification of this code is subject to the terms and 
