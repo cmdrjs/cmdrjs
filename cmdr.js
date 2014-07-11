@@ -1,6 +1,6 @@
 /*
  * cmdrjs
- * Version 1.0.2-alpha
+ * Version 1.0.3-alpha
  * Copyright 2014 Shaftware.
  * All Rights Reserved.  
  * Use, reproduction, distribution, and modification of this code is subject to the terms and 
@@ -28,7 +28,7 @@
             historyIndex = -1,
             config = {
                 autoOpen: false,
-                openKey: 96,
+                openKey: 192,
                 closeKey: 27,
                 echo: true,
                 promptPrefix: '> '
@@ -52,25 +52,25 @@
             version: version
         };
 
-        cmdr.setup('VER', function () {
-            cmdr.writeLine('cmdrjs (version ' + cmdr.version + ')');
-        }, {
-            description: 'Displays the cmdrjs version'
-        });
-
-        cmdr.setup('HELP', function () {
+        cmdr.setup(['HELP','?','/?'], function () {
             cmdr.writeLine('The following commands are available:');
             cmdr.writeLine();
-            for (var name in commands) {
-                var command = commands[name];
-                if (!!unwrap(command.available)) {
-                    cmdr.write(pad(name, ' ', 10));
-                    cmdr.writeLine(command.description);
+            for (var key in commands) {
+                var definition = commands[key];
+                if (!!unwrap(definition.available)) {
+                    cmdr.write(pad(key, ' ', 10));
+                    cmdr.writeLine(definition.description);
                 }
             }
             cmdr.writeLine();
         }, {
             description: 'Lists the available commands'
+        });
+
+        cmdr.setup(['VERSION', 'VER'], function () {
+            cmdr.writeLine('cmdrjs (version ' + cmdr.version + ')');
+        }, {
+            description: 'Displays the cmdrjs version'
         });
 
         cmdr.setup('ECHO', function (arg) {
@@ -87,13 +87,13 @@
             description: 'Displays provided text or toggles command echoing'
         });
 
-        cmdr.setup('CLS', function () {
+        cmdr.setup(['CLEAR','CLS'], function () {
             cmdr.clear();
         }, {
             description: 'Clears the command prompt'
         });
 
-        cmdr.setup('EXIT', function () {
+        cmdr.setup(['QUIT','EXIT'], function () {
             cmdr.close();
         }, {
             description: 'Closes the command prompt'
@@ -110,11 +110,11 @@
             prompt = $('.prompt', container);
             output = $('.output', container);
 
-            $(document).on('keypress.cmdr', function (event) {
-                if (!isOpen() && !$(event.target).is('input, textarea, select, [contenteditable]') && checkKey(event, config.openKey)) {
+            $(document).on('keydown.cmdr', function (event) {
+                if (!isOpen() && !$(event.target).is('input, textarea, select, [contenteditable]') && event.keyCode ==  config.openKey) {
                     event.preventDefault();
                     open();
-                } else if (isOpen() && checkKey(event, config.closeKey)) {
+                } else if (isOpen() && event.keyCode == config.closeKey) {
                     close();
                 }
             });
@@ -170,7 +170,7 @@
 
             prompt.on('paste', function () {
                 setTimeout(function () {
-                    var value = promptVal()
+                    var value = promptVal();
                     var lines = value.split(/\r\n|\r|\n/g);
                     var length = lines.length;
                     if (length > 1) {
@@ -188,20 +188,6 @@
                         }
                     }
                 }, 0);
-            });
-
-            prompt.on('change cut paste drop keydown', function () {
-                setTimeout(function () {
-                    prompt.height('auto').height(prompt[0].scrollHeight);
-                }, 0);
-            });
-
-            var resizeThrottle;
-            $(window).on('resize.cmdr', function () {
-                clearTimeout(resizeThrottle);
-                resizeThrottle = setTimeout(function () {
-                    prompt.height('auto').height(prompt[0].scrollHeight);
-                }, 100);
             });
 
             container.on('click', function (event) {
@@ -229,8 +215,7 @@
             prompt = null;
             output = null;
 
-            $(document).off('keypress.cmdr');
-            $(window).off('resize.cmdr');
+            $(document).off('keydown.cmdr');
 
             activated = false;
         }
@@ -387,7 +372,9 @@
 
         function setup(name, callback, settings) {
             var definition = resolveDefinition(name, callback, settings);
-            commands[definition.name] = definition;
+            for (var i = 0, l = definition.names.length; i < l; i++) {
+                commands[definition.names[i].toUpperCase()] = definition;
+            }
         }
 
         function activateInput(inline) {
@@ -403,6 +390,9 @@
             input.show();
             setTimeout(function () {
                 prompt.prop('disabled', false).css('text-indent', getPrefixWidth() + 'px').focus();
+                container.animate({
+                    scrollTop: container[0].scrollHeight
+                }, 1000);
             }, 0);
         }
 
@@ -428,14 +418,16 @@
         function historyBack() {
             if (history.length > historyIndex + 1) {
                 historyIndex++;
-                promptVal(history[historyIndex]).change();
+                promptVal(history[historyIndex]);
+                prompt.change();
             }
         }
 
         function historyForward() {
             if (historyIndex > 0) {
                 historyIndex--;
-                promptVal(history[historyIndex]).change();
+                promptVal(history[historyIndex]);
+                prompt.change();
             }
         }
 
@@ -465,19 +457,27 @@
             };
         }
 
-        function resolveDefinition(name, callback, settings) {
-            if (typeof name !== 'string') {
+        function resolveDefinition(names, callback, settings) {
+            if (typeof names !== 'string' && !$.isArray(names)) {
                 settings = callback;
-                callback = name;
-                name = null;
+                callback = names;
+                names = null;
             }
             if (typeof callback !== 'function') {
                 settings = callback;
                 callback = null;
             }
 
+            if (typeof names === 'string') {
+                names = [names]
+            } else if ($.isArray(names)) {
+                names = $.grep(names, function(value) {
+                    return typeof value === 'string';
+                });
+            }
+
             var definition = {
-                name: name,
+                names: names,
                 callback: callback,
                 parse: true,
                 available: true
@@ -485,18 +485,13 @@
 
             $.extend(definition, settings);
 
-            if (typeof definition.name !== 'string' ||
+            if (!$.isArray(definition.names) ||
+                definition.names.length === 0 ||
                 typeof definition.callback !== 'function') {
                 throw 'Invalid command definition';
             }
-
-            definition.name = definition.name.toUpperCase();
-
+            
             return definition;
-        }
-
-        function checkKey(event, key) {
-            return (event.which || event.keyCode) === key;
         }
 
         function getPrefixWidth() {
@@ -533,9 +528,9 @@
 
         function promptVal(value) {
             if (typeof value === 'undefined') {
-                return prompt.html().replace(/[<]br[^>]*[>]/gi, '');
+                return prompt.text();
             } else {
-                prompt.html(value);
+                prompt.text(value);
             }
         }
 
