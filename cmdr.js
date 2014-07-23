@@ -12,7 +12,7 @@
 ; (function (define) {
     define(['jquery'], function ($) {
 
-        var version = '1.0.3-alpha',
+        var version = '1.0.2-alpha',
             commands = {},
             activated = false,
             template = '<div class="cmdr" style="display: none"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>',
@@ -544,17 +544,20 @@
         }
 
         function getPromptIndent() {
-            if (hacks.promptIndentPadding && !promptVal()) {
-                return {
-                    'padding-left': getPrefixWidth() + 'px',
-                    'text-indent': ''
-                };
-            } else {
-                return {
-                    'text-indent': getPrefixWidth() + 'px',
-                    'padding-left': ''
-                };
+            if (hacks.promptIndentPadding) {
+                if (promptVal()) {
+                    return {
+                        'text-indent': getPrefixWidth() + 'px',
+                        'padding-left': ''
+                    };
+                } else {
+                    return {
+                        'padding-left': getPrefixWidth() + 'px',
+                        'text-indent': ''
+                    };
+                }
             }
+            return { 'text-indent': getPrefixWidth() + 'px' };
         }
 
     });
