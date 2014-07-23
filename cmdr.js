@@ -1,6 +1,6 @@
 /*
  * cmdrjs
- * Version 1.0.2-alpha
+ * Version 1.0.3-alpha
  * Copyright 2014 Shaftware.
  * All Rights Reserved.  
  * Use, reproduction, distribution, and modification of this code is subject to the terms and 
@@ -12,7 +12,7 @@
 ; (function (define) {
     define(['jquery'], function ($) {
 
-        var version = '1.0.2-alpha',
+        var version = '1.0.3-alpha',
             commands = {},
             activated = false,
             template = '<div class="cmdr" style="display: none"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>',
@@ -32,6 +32,9 @@
                 closeKey: 27,
                 echo: true,
                 promptPrefix: '> '
+            },
+            hacks = {
+                promptIndentPadding: typeof InstallTrigger !== 'undefined' // Firefox - misplaced cursor when using 'text-indent'
             };
 
         var cmdr = {
@@ -190,6 +193,12 @@
                 }, 0);
             });
 
+            if (hacks.promptIndentPadding) {
+                prompt.on('input', function() {
+                    prompt.css(getPromptIndent())
+                });
+            }
+
             container.on('click', function (event) {
                 if (!$(event.target).is('.input *, .output *')) {
                     prompt.focus();
@@ -237,7 +246,7 @@
             container.show();
 
             setTimeout(function () {
-                prompt.css('text-indent', getPrefixWidth() + 'px').focus();
+                prompt.css(getPromptIndent()).focus();
             }, 0);
         }
 
@@ -389,7 +398,7 @@
             }
             input.show();
             setTimeout(function () {
-                prompt.prop('disabled', false).css('text-indent', getPrefixWidth() + 'px').focus();
+                prompt.prop('disabled', false).css(getPromptIndent()).focus();
                 container.animate({
                     scrollTop: container[0].scrollHeight
                 }, 1000);
@@ -531,6 +540,20 @@
                 return prompt.text();
             } else {
                 prompt.text(value);
+            }
+        }
+
+        function getPromptIndent() {
+            if (hacks.promptIndentPadding && !promptVal()) {
+                return {
+                    'padding-left': getPrefixWidth() + 'px',
+                    'text-indent': ''
+                };
+            } else {
+                return {
+                    'text-indent': getPrefixWidth() + 'px',
+                    'padding-left': ''
+                };
             }
         }
 
