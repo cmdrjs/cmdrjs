@@ -48,6 +48,7 @@
     left: 0;
     top: 0;
     word-break: break-all;
+    outline: 0;
 }
 
 .cmdr .input .prompt:focus {
