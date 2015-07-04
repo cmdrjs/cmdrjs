@@ -13,7 +13,7 @@ before_script:
 - git config --global user.email "travis@github.com"
 after_success:
 - if [[ $TRAVIS_BRANCH == "master" ]] && [[ $TRAVIS_PULL_REQUEST == "false" ]]; then
-  cd $DIST_PATH; git clone $REPO_URL dist; cd $DIST_PATH && git fetch && git checkout gh-pages
+  cd $DIST_PATH; git clone $REPO_URL dist; cd $DIST_PATH && git checkout gh-pages
   && rm -rf *; cd $TRAVIS_BUILD_DIR && npm run build; cd $DIST_PATH && git add -A
   && git commit -am "Travis build $TRAVIS_BUILD_NUMBER"; git push $REPO_URL gh-pages;
   fi
