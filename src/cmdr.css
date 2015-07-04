@@ -1,0 +1,82 @@
+/*
+ * cmdrjs
+ * Version 1.0.3-alpha
+ * Copyright 2014 Shaftware.
+ * All Rights Reserved.  
+ * Use, reproduction, distribution, and modification of this code is subject to the terms and 
+ * conditions of the MIT license, available at http://www.opensource.org/licenses/mit-license.php
+ *
+ * Project: https://github.com/shaftware/cmdrjs
+ */
+
+.cmdr {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #000;
+    opacity: 0.9;
+    overflow-y: auto;
+    padding: 5px;
+    color: #fff;
+    font-family: "Courier New";
+    font-size: 10pt;
+}
+
+.cmdr .input {
+    -webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;  
+    position: relative;
+}
+
+.cmdr .input .prefix {
+    display: inline-block;
+}
+
+.cmdr .input textarea {
+    -webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;  
+    resize: none;
+    border: transparent 0 none;
+    background: transparent;
+    color: #fff;
+    font-family: "Courier New";
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    line-height: 1;
+    overflow: auto;
+    font-size: 10pt;
+    position: absolute;
+    left: 0;
+    top: 1px;
+}
+
+.cmdr .input textarea:focus {
+    outline: none;
+}
+
+.cmdr .output span {
+    white-space: -moz-pre-wrap;
+    white-space: -pre-wrap; 
+    white-space: -o-pre-wrap; 
+    white-space: pre-wrap; 
+}
+
+.cmdr .output .warning {
+    color: yellow;
+}
+
+.cmdr .output .error {
+    color: red;
+}
+
+/* Hacks for all browsers except IE and Safari */
+@media screen { @media (min-width: 0px) { 
+  .cmdr .input textarea {
+      top: 2px;
+  }
+}}

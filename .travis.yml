@@ -1,0 +1,32 @@
+language: node_js
+node_js:
+- '0.10'
+env:
+  global:
+  - secure: EM+clsBUMEAoFDciPrIWG2bcmxj+qM0LYP5GN9d1lzXea9V9aum/q7tQQcq8ai1NUlr87fA5esUCtGUxfPCh5WSFwNGBANsZVGWsBQzQIzSxO4GQwwZS/01kUhbO3NJGjWmLzeAJBvivt7MvDw+hUX3sNGC9FSYPv50vw3skFic=
+before_script:
+  - npm install -g grunt-cli
+  - npm install -g bower 
+  - DIST_PATH=$TRAVIS_BUILD_DIR/dist 
+  - REPO_URL=https://$GH_TOKEN@github.com/$TRAVIS_REPO_SLUG.git
+  - git config --global user.name "Travis-CI" 
+  - git config --global user.email "cruikshj+travis@github.com"
+after_success:
+- if [[ $TRAVIS_BRANCH == "master" ]] && [[ $TRAVIS_PULL_REQUEST == "false" ]]; then
+  cd $DIST_PATH; git clone $REPO_URL dist; cd $DIST_PATH && git checkout gh-pages
+  && rm -rf *; cd $TRAVIS_BUILD_DIR && npm run build; cd $DIST_PATH && git add -A
+  && git commit -am "Travis build $TRAVIS_BUILD_NUMBER"; git push $REPO_URL gh-pages;
+  fi
+deploy:
+  provider: releases
+  api_key:
+    secure: D/sK1W0oY96ZFnTyF3KnEZSjfVeUxXy7luJHYDkZaLQOIht7uQ4BRfhAihhjOe7rAdoNCVhkkRH+q/xhxnOg5sBOZE44om9jDvEZDstkvqCtTq51RuxRjgdrJg8ZWvjD/GW6+SKjrvO5XP9rn1qMevX3zdq8jaERjDu+RMJ5TRY=
+  file:
+  - dist/cmdr.js
+  - dist/cmdr.min.js
+  - dist/cmdr.css
+  - dist/cmdr.min.css
+  skip_cleanup: true
+  on:
+    tags: true
+    repo: shaftware/cmdrjs
