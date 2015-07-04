@@ -3,14 +3,14 @@ node_js:
 - '0.10'
 env:
   global:
-  - secure: EM+clsBUMEAoFDciPrIWG2bcmxj+qM0LYP5GN9d1lzXea9V9aum/q7tQQcq8ai1NUlr87fA5esUCtGUxfPCh5WSFwNGBANsZVGWsBQzQIzSxO4GQwwZS/01kUhbO3NJGjWmLzeAJBvivt7MvDw+hUX3sNGC9FSYPv50vw3skFic=
+  - secure: hCddMWdTteqSjgQBsrVuAaPewpBDqSt2MyHt7fStxAQzQ7rJLggElw4Y2MhRASZ0INYxOgYbaze5sbPhArdrpB0Xc0lSF1NZ7PFWGH1ot9axZEnDGTqav0+O/Wnl78a8DzAmcAaJ8qxBXLnYxcjRBrc/mdCXQW5y9w4f6CnY1iw=
 before_script:
-  - npm install -g grunt-cli
-  - npm install -g bower 
-  - DIST_PATH=$TRAVIS_BUILD_DIR/dist 
-  - REPO_URL=https://$GH_TOKEN@github.com/$TRAVIS_REPO_SLUG.git
-  - git config --global user.name "Travis-CI" 
-  - git config --global user.email "cruikshj+travis@github.com"
+- npm install -g grunt-cli
+- npm install -g bower
+- DIST_PATH=$TRAVIS_BUILD_DIR/dist
+- REPO_URL=https://$GH_TOKEN@github.com/$TRAVIS_REPO_SLUG.git
+- git config --global user.name "Travis-CI"
+- git config --global user.email "travis@github.com"
 after_success:
 - if [[ $TRAVIS_BRANCH == "master" ]] && [[ $TRAVIS_PULL_REQUEST == "false" ]]; then
   cd $DIST_PATH; git clone $REPO_URL dist; cd $DIST_PATH && git checkout gh-pages
