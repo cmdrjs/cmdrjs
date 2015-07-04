@@ -2,8 +2,9 @@ cmdrjs
 ======
 A JavaScript based command line interface for web pages.
 
-## NuGet Package
-https://www.nuget.org/packages/cmdrjs/
+## Packages
+* Bower
+* NuGet: https://www.nuget.org/packages/cmdrjs/
 
 ## License
 
