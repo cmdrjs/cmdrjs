@@ -14,7 +14,7 @@ git remote add upstream "https://$GH_TOKEN@github.com/shaftware/cmdrjs.git"
 git fetch upstream
 git reset upstream/gh-pages
 
-echo "www.cmdjrs.com" > CNAME
+echo "www.cmdrjs.com" > CNAME
 
 touch .
 
