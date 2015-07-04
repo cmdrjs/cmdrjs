@@ -47,10 +47,16 @@
       },
       copy: {
         dist: {
+          files: [
+            { expand: true, cwd: 'src/', src: ['cmdr.js'], dest: 'dist/' },
+            { expand: true, cwd: 'src/', src: ['cmdr.css'], dest: 'dist/' }
+          ]
+        },
+        pages: {
           expand: true,
           cwd: 'src/',
           src: '*',          
-          dest: 'dist/'
+          dest: 'pages/'          
         }
       },
       uglify: {
@@ -78,12 +84,13 @@
     //development
     grunt.registerTask('dev', ['jshint', 'karma:server', 'watch:scripts']);
 
-    //testing
+    //test
     grunt.registerTask('test', ['jshint', 'karma:once']);
     grunt.registerTask('test:full', ['jshint', 'bowerVerify']);
     
     //build
-    grunt.registerTask('build', ['copy', 'uglify', 'cssmin']);
+    grunt.registerTask('build', ['copy:dist', 'uglify', 'cssmin']);
+    grunt.registerTask('build:full', ['build', 'copy:pages']);
     
     //release
     grunt.registerTask('pack', ['nugetpack']);

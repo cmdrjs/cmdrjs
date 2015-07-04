@@ -7,16 +7,8 @@ env:
 before_script:
 - npm install -g grunt-cli
 - npm install -g bower
-- DIST_PATH=$TRAVIS_BUILD_DIR/dist
-- REPO_URL=https://$GH_TOKEN@github.com/$TRAVIS_REPO_SLUG.git
-- git config --global user.name "Travis-CI"
-- git config --global user.email "travis@github.com"
 after_success:
-- if [[ $TRAVIS_BRANCH == "master" ]] && [[ $TRAVIS_PULL_REQUEST == "false" ]]; then
-  cd $DIST_PATH; git clone $REPO_URL dist; cd $DIST_PATH && git checkout gh-pages
-  && rm -rf *; cd $TRAVIS_BUILD_DIR && npm run build; cd $DIST_PATH && git add -A
-  && git commit -am "Travis build $TRAVIS_BUILD_NUMBER"; git push $REPO_URL gh-pages;
-  fi
+- test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && bash deploy.sh
 deploy:
   provider: releases
   api_key:
