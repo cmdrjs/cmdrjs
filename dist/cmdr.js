@@ -12,10 +12,10 @@
 ; (function (define) {
     define(['jquery'], function ($) {
 
-        var version = '1.0.3-alpha',
+        var version = '1.0.2-alpha',
             commands = {},
             activated = false,
-            template = '<div class="cmdr" style="display: none"><div class="output"></div><div class="input"><span class="prefix"></span><textarea class="prompt" spellcheck="false" row="1" /></div></div>',
+            template = '<div class="cmdr" style="display: none"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>',
             container,
             input,
             prefix,
@@ -28,10 +28,13 @@
             historyIndex = -1,
             config = {
                 autoOpen: false,
-                openKey: 96,
+                openKey: 192,
                 closeKey: 27,
                 echo: true,
                 promptPrefix: '> '
+            },
+            hacks = {
+                promptIndentPadding: typeof InstallTrigger !== 'undefined' // Firefox - misplaced cursor when using 'text-indent'
             };
 
         var cmdr = {
@@ -52,23 +55,25 @@
             version: version
         };
 
-        cmdr.setup('VER', function () {
-            cmdr.writeLine('cmdrjs (version ' + cmdr.version + ')');
-        }, {
-            description: 'Displays the cmdrjs version'
-        });
-
-        cmdr.setup('HELP', function () {
+        cmdr.setup(['HELP','?','/?'], function () {
             cmdr.writeLine('The following commands are available:');
             cmdr.writeLine();
-            for (var name in commands) {
-                var command = commands[name];
-                cmdr.write(pad(name, ' ', 10));
-                cmdr.writeLine(command.description);
+            for (var key in commands) {
+                var definition = commands[key];
+                if (!!unwrap(definition.available)) {
+                    cmdr.write(pad(key, ' ', 10));
+                    cmdr.writeLine(definition.description);
+                }
             }
             cmdr.writeLine();
         }, {
             description: 'Lists the available commands'
+        });
+
+        cmdr.setup(['VERSION', 'VER'], function () {
+            cmdr.writeLine('cmdrjs (version ' + cmdr.version + ')');
+        }, {
+            description: 'Displays the cmdrjs version'
         });
 
         cmdr.setup('ECHO', function (arg) {
@@ -85,13 +90,13 @@
             description: 'Displays provided text or toggles command echoing'
         });
 
-        cmdr.setup('CLS', function () {
+        cmdr.setup(['CLEAR','CLS'], function () {
             cmdr.clear();
         }, {
             description: 'Clears the command prompt'
         });
 
-        cmdr.setup('EXIT', function () {
+        cmdr.setup(['QUIT','EXIT'], function () {
             cmdr.close();
         }, {
             description: 'Closes the command prompt'
@@ -108,11 +113,11 @@
             prompt = $('.prompt', container);
             output = $('.output', container);
 
-            $(document).on('keypress.cmdr', function (event) {
-                if (!isOpen() && !$(event.target).is('input, textarea, select') && checkKey(event, config.openKey)) {
+            $(document).on('keydown.cmdr', function (event) {
+                if (!isOpen() && !$(event.target).is('input, textarea, select, [contenteditable]') && event.keyCode ==  config.openKey) {
                     event.preventDefault();
                     open();
-                } else if (isOpen() && checkKey(event, config.closeKey)) {
+                } else if (isOpen() && event.keyCode == config.closeKey) {
                     close();
                 }
             });
@@ -121,22 +126,26 @@
                 if (!current) {
                     switch (event.keyCode) {
                         case 13:
-                            var value = prompt.val();
+                            var value = promptVal();
                             if (value) {
                                 execute(value);
                             }
+                            event.preventDefault();
                             return false;
                         case 38:
                             historyBack();
+                            event.preventDefault();
                             return false;
                         case 40:
                             historyForward();
+                            event.preventDefault();
                             return false;
                         case 9:
+                            event.preventDefault();
                             return false;
                     }
                 } else if (current.readLine && event.keyCode === 13) {
-                    current.readLine.resolve(prompt.val());
+                    current.readLine.resolve(promptVal());
                     return false;
                 } 
                 return true;
@@ -164,7 +173,7 @@
 
             prompt.on('paste', function () {
                 setTimeout(function () {
-                    var value = prompt.val();
+                    var value = promptVal();
                     var lines = value.split(/\r\n|\r|\n/g);
                     var length = lines.length;
                     if (length > 1) {
@@ -184,19 +193,11 @@
                 }, 0);
             });
 
-            prompt.on('change cut paste drop keydown', function () {
-                setTimeout(function () {
-                    prompt.height('auto').height(prompt[0].scrollHeight);
-                }, 0);
-            });
-
-            var resizeThrottle;
-            $(window).on('resize.cmdr', function () {
-                clearTimeout(resizeThrottle);
-                resizeThrottle = setTimeout(function () {
-                    prompt.height('auto').height(prompt[0].scrollHeight);
-                }, 100);
-            });
+            if (hacks.promptIndentPadding) {
+                prompt.on('input', function() {
+                    prompt.css(getPromptIndent())
+                });
+            }
 
             container.on('click', function (event) {
                 if (!$(event.target).is('.input *, .output *')) {
@@ -223,8 +224,7 @@
             prompt = null;
             output = null;
 
-            $(document).off('keypress.cmdr');
-            $(window).off('resize.cmdr');
+            $(document).off('keydown.cmdr');
 
             activated = false;
         }
@@ -246,7 +246,7 @@
             container.show();
 
             setTimeout(function () {
-                prompt.css('text-indent', getPrefixWidth() + 'px').focus();
+                prompt.css(getPromptIndent()).focus();
             }, 0);
         }
 
@@ -263,10 +263,10 @@
             
             activateInput(true);
 
-            current.read = $.Deferred().done(function (value) {
+            current.read = $.Deferred().always(function (value) {
                 current.read = null;
                 if (!capture) {
-                    prompt.val(value);
+                    promptVal(value);
                 }
                 deactivateInput();
                 if (callback.call(current, value) === true) {
@@ -288,9 +288,9 @@
 
             activateInput(true);
 
-            current.readLine = $.Deferred().done(function (value) {
+            current.readLine = $.Deferred().always(function (value) {
                 current.readLine = null;
-                prompt.val(value);
+                promptVal(value);
                 deactivateInput();
                 flushInput();
                 if (callback.call(current, value) === true) {
@@ -335,13 +335,13 @@
             if (current) {
                 queue.push(command);
                 return;
-            }
+            }; 
 
             if (typeof command !== 'string' || command.length === 0) {
                 throw 'Invalid command';
             }
 
-            prompt.val(command);
+            promptVal(command);
             flushInput(!config.echo);
             historyAdd(command);
             deactivateInput();
@@ -350,7 +350,7 @@
             
             var parsed = parseCommand(command);
             var definition = commands[parsed.name.toUpperCase()];
-            if (!definition) {
+            if (!definition || !unwrap(definition.available)) {
                 writeLine('Invalid command', 'error');
                 activateInput();
                 return;
@@ -368,7 +368,7 @@
 
             var result = definition.callback.apply(current, args);
 
-            $.when(result).done(function () {
+            $.when(result).always(function () {
                 setTimeout(function () {
                     current = null;
                     activateInput();
@@ -381,7 +381,9 @@
 
         function setup(name, callback, settings) {
             var definition = resolveDefinition(name, callback, settings);
-            commands[definition.name] = definition;
+            for (var i = 0, l = definition.names.length; i < l; i++) {
+                commands[definition.names[i].toUpperCase()] = definition;
+            }
         }
 
         function activateInput(inline) {
@@ -396,7 +398,10 @@
             }
             input.show();
             setTimeout(function () {
-                prompt.prop('disabled', false).css('text-indent', getPrefixWidth() + 'px').focus();
+                prompt.prop('disabled', false).css(getPromptIndent()).focus();
+                container.animate({
+                    scrollTop: container[0].scrollHeight
+                }, 1000);
             }, 0);
         }
 
@@ -408,10 +413,10 @@
         function flushInput(preventWrite) {
             if (!preventWrite) {
                 write(prefix.text());
-                writeLine(prompt.val());
+                writeLine(promptVal());
             }
             prefix.text('');
-            prompt.val('');
+            promptVal('');
         }
 
         function historyAdd(command) {
@@ -422,14 +427,16 @@
         function historyBack() {
             if (history.length > historyIndex + 1) {
                 historyIndex++;
-                prompt.val(history[historyIndex]).change();
+                promptVal(history[historyIndex]);
+                prompt.change();
             }
         }
 
         function historyForward() {
             if (historyIndex > 0) {
                 historyIndex--;
-                prompt.val(history[historyIndex]).change();
+                promptVal(history[historyIndex]);
+                prompt.change();
             }
         }
 
@@ -437,11 +444,11 @@
             var exp = /[^\s"]+|"([^"]*)"/gi,
                 name = null,
                 arg = null,
-                args = [],
-                match = null;
+                args = [];
+
             do {
-                match = exp.exec(command);
-                if (match !== null) {
+                var match = exp.exec(command);
+                if (match != null) {
                     var value = match[1] ? match[1] : match[0];
                     if (match.index === 0) {
                         name = value;
@@ -450,7 +457,7 @@
                         args.push(value);
                     }
                 }
-            } while (match !== null);
+            } while (match != null);
 
             return {
                 name: name,
@@ -459,37 +466,41 @@
             };
         }
 
-        function resolveDefinition(name, callback, settings) {
-            if (typeof name !== 'string') {
+        function resolveDefinition(names, callback, settings) {
+            if (typeof names !== 'string' && !$.isArray(names)) {
                 settings = callback;
-                callback = name;
-                name = null;
+                callback = names;
+                names = null;
             }
             if (typeof callback !== 'function') {
                 settings = callback;
                 callback = null;
             }
 
+            if (typeof names === 'string') {
+                names = [names]
+            } else if ($.isArray(names)) {
+                names = $.grep(names, function(value) {
+                    return typeof value === 'string';
+                });
+            }
+
             var definition = {
-                name: name,
+                names: names,
                 callback: callback,
-                parse: true
+                parse: true,
+                available: true
             };
 
             $.extend(definition, settings);
 
-            if (typeof definition.name !== 'string' ||
+            if (!$.isArray(definition.names) ||
+                definition.names.length === 0 ||
                 typeof definition.callback !== 'function') {
                 throw 'Invalid command definition';
             }
-
-            definition.name = definition.name.toUpperCase();
-
+            
             return definition;
-        }
-
-        function checkKey(event, key) {
-            return (event.which || event.keyCode) === key;
         }
 
         function getPrefixWidth() {
@@ -520,11 +531,40 @@
             return value;
         }
 
+        function unwrap(value) {
+            return typeof value === 'function' ? value() : value;
+        }
+
+        function promptVal(value) {
+            if (typeof value === 'undefined') {
+                return prompt.text();
+            } else {
+                prompt.text(value);
+            }
+        }
+
+        function getPromptIndent() {
+            if (hacks.promptIndentPadding) {
+                if (promptVal()) {
+                    return {
+                        'text-indent': getPrefixWidth() + 'px',
+                        'padding-left': ''
+                    };
+                } else {
+                    return {
+                        'padding-left': getPrefixWidth() + 'px',
+                        'text-indent': ''
+                    };
+                }
+            }
+            return { 'text-indent': getPrefixWidth() + 'px' };
+        }
+
     });
 }(typeof define === 'function' && define.amd ? define : function (deps, factory) {
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = factory(require('jquery'));
     } else {
-        window.cmdr = factory(jQuery);
+        window['cmdr'] = factory(window['jQuery']);
     }
 }));
