@@ -1,7 +1,7 @@
 /*
  * cmdrjs
  * Version 1.0.3-alpha
- * Copyright 2014 Shaftware.
+ * Copyright 2015 Shaftware.
  * All Rights Reserved.  
  * Use, reproduction, distribution, and modification of this code is subject to the terms and 
  * conditions of the MIT license, available at http://www.opensource.org/licenses/mit-license.php
@@ -12,7 +12,7 @@
 ; (function (define) {
     define(['jquery'], function ($) {
 
-        var version = '1.0.2-alpha',
+        var version = '1.0.3-alpha',
             commands = {},
             activated = false,
             template = '<div class="cmdr" style="display: none"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>',
@@ -195,7 +195,7 @@
 
             if (hacks.promptIndentPadding) {
                 prompt.on('input', function() {
-                    prompt.css(getPromptIndent())
+                    prompt.css(getPromptIndent());
                 });
             }
 
@@ -335,7 +335,7 @@
             if (current) {
                 queue.push(command);
                 return;
-            }; 
+            }
 
             if (typeof command !== 'string' || command.length === 0) {
                 throw 'Invalid command';
@@ -444,11 +444,12 @@
             var exp = /[^\s"]+|"([^"]*)"/gi,
                 name = null,
                 arg = null,
-                args = [];
+                args = [],
+                match = null;
 
             do {
-                var match = exp.exec(command);
-                if (match != null) {
+                match = exp.exec(command);
+                if (match !== null) {
                     var value = match[1] ? match[1] : match[0];
                     if (match.index === 0) {
                         name = value;
@@ -457,7 +458,7 @@
                         args.push(value);
                     }
                 }
-            } while (match != null);
+            } while (match !== null);
 
             return {
                 name: name,
@@ -478,7 +479,7 @@
             }
 
             if (typeof names === 'string') {
-                names = [names]
+                names = [names];
             } else if ($.isArray(names)) {
                 names = $.grep(names, function(value) {
                     return typeof value === 'string';
@@ -565,6 +566,6 @@
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = factory(require('jquery'));
     } else {
-        window['cmdr'] = factory(window['jQuery']);
+        window.cmdr = factory(jQuery);
     }
 }));
