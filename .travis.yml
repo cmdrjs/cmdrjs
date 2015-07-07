@@ -8,6 +8,8 @@ before_script:
 - npm install -g grunt-cli
 - npm install -g bower
 script:
+- bower install
+- grunt test
 - grunt build
 after_success:
 - bash deploy.sh
