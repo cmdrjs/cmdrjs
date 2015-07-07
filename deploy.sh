@@ -3,24 +3,14 @@
 set -o errexit -o nounset
 
 if [[ "$TRAVIS_PULL_REQUEST" != "false" ]]; then
-  echo "Skipping deployment to NuGet because this is a pull request"
   echo "Skipping deployment to gh-pages because this is a pull request"
   exit 0
 fi
 
-echo $TRAVIS_TAG
 if [[ "$TRAVIS_TAG" == "" ]]; then
-  echo "Skipping deployment to NuGet because this is not a tagged commit"
   echo "Skipping deployment to gh-pages because this is not a tagged commit"
   exit 0
 fi
-
-VER=${TRAVIS_TAG#v}
-echo $VER
-
-echo "Deploying NuGet package"
-
-nuget pack package.nuspec -Version $VER
 
 echo "Deploying gh-pages"
 

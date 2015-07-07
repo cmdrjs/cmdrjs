@@ -72,6 +72,12 @@
             'dist/cmdr.min.css': ['dist/cmdr.css']
           }
         }
+      },
+      nugetpack: {
+        dist: {
+          src: 'package.nuspec',
+          dest: 'nuget/'
+        }
       }
     });
 
@@ -84,5 +90,8 @@
     
     //build
     grunt.registerTask('build', ['copy:dist', 'uglify', 'cssmin', 'copy:pages']);
+    
+    //nuget
+    grunt.registerTask('nuget:pack', ['nugetpack']);
   };
 })();
