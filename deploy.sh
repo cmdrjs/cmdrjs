@@ -7,15 +7,10 @@ if [[ "$TRAVIS_PULL_REQUEST" != "false" ]]; then
   echo "Skipping deployment to gh-pages because this is a pull request"
   exit 0
 fi
-if [[ "$TRAVIS_BRANCH" != "master" ]]; then
-  echo "Skipping deployment to NuGet because this is not a master branch commit"
-  echo "Skipping deployment to gh-pages because this is not a master branch commit"
-  exit 0
-fi
 
 TAG=$(git describe --exact-match --abbrev=0 --tags)
-
-if [[ $TAG == "" ]]; then
+echo $TAG
+if [[ "$TAG" == "" ]]; then
   echo "Skipping deployment to NuGet because this is not a tagged commit"
   echo "Skipping deployment to gh-pages because this is not a tagged commit"
   exit 0
