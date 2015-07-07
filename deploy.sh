@@ -8,15 +8,15 @@ if [[ "$TRAVIS_PULL_REQUEST" != "false" ]]; then
   exit 0
 fi
 
-TAG=$(git describe --exact-match --abbrev=0 --tags)
-echo $TAG
-if [[ "$TAG" == "" ]]; then
+echo $TRAVIS_TAG
+if [[ "$TRAVIS_TAG" == "" ]]; then
   echo "Skipping deployment to NuGet because this is not a tagged commit"
   echo "Skipping deployment to gh-pages because this is not a tagged commit"
   exit 0
 fi
 
-VER=${TAG#v}
+VER=${TRAVIS_TAG#v}
+echo $VER
 
 echo "Deploying NuGet package"
 
@@ -39,5 +39,5 @@ echo "www.cmdrjs.com" > CNAME
 touch .
 
 git add -A .
-git commit -m "${TAG} deploy"
+git commit -m "${TRAVIS_TAG} deploy"
 git push -q upstream HEAD:gh-pages
