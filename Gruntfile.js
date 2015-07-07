@@ -72,12 +72,6 @@
             'dist/cmdr.min.css': ['dist/cmdr.css']
           }
         }
-      },
-      nugetpack: {
-        dist: {
-          src: 'package.nuspec',
-          dest: 'nuget/'
-        }
       }
     });
 
@@ -89,10 +83,6 @@
     grunt.registerTask('test:full', ['jshint', 'bowerVerify']);
     
     //build
-    grunt.registerTask('build', ['copy:dist', 'uglify', 'cssmin']);
-    grunt.registerTask('build:full', ['build', 'copy:pages']);
-    
-    //release
-    grunt.registerTask('pack', ['nugetpack']);
+    grunt.registerTask('build', ['copy:dist', 'uglify', 'cssmin', 'copy:pages']);
   };
 })();
