@@ -349,7 +349,27 @@
             command = command.trim();
             
             var parsed = parseCommand(command);
-            var definition = commands[parsed.name.toUpperCase()];
+            var definitions = getCommand(parsed.name.toUpperCase());
+            var definition;
+            if (!definitions) {
+                definition = definitions;
+            } else if (definitions.length === 1) {
+                definition = definitions[0].value;
+            } else {                
+                writeLine('Multiple abbriviations found:', 'error');
+                writeLine();
+                for (var i = 0; i < definitions.length; i++) {
+                    var com = definitions[i];
+                    if (!!unwrap(com.value.available)) {
+                        write(pad(com.name, ' ', 10));
+                        writeLine(com.value.description);
+                    }
+                }
+                writeLine();
+                activateInput();
+                return;
+            }            
+            
             if (!definition || !unwrap(definition.available)) {
                 writeLine('Invalid command', 'error');
                 activateInput();
@@ -559,6 +579,41 @@
                 }
             }
             return { 'text-indent': getPrefixWidth() + 'px' };
+        }
+        
+        function getCommand(key) {
+            var definition = commands[key.toUpperCase()];
+                        
+            if (!definition) {
+                var matchedCommands = [];
+                
+                for (var command in commands) {                    
+                    if (startsWith(command, key) && commands[command].available) {
+                        matchedCommands.push({ name: command, value: commands[command] });
+                    }
+                }
+                
+                if (matchedCommands.length === 0) {
+                    return;
+                }
+                else if (matchedCommands.length === 1) {
+                    return [matchedCommands[0]];                    
+                }
+                else {
+                    for (var i = 1; i < matchedCommands.length; i++) {
+                        if (matchedCommands[0].value.names.indexOf(matchedCommands[i].name) < 0) {
+                            return matchedCommands;
+                        }
+                    }
+                    return [matchedCommands[0]];
+                }
+            }
+                        
+            return [{ name: key, value: definition }];
+        }
+        
+        function startsWith(value, startWithString) {
+            return value.indexOf(startWithString, 0) === 0;
         }
 
     });
