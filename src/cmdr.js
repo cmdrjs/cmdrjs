@@ -349,29 +349,22 @@
             command = command.trim();
             
             var parsed = parseCommand(command);
-            var definitions = getCommand(parsed.name.toUpperCase());
+            var definitions = getAvailableCommands(parsed.name.toUpperCase());
             var definition;
             if (!definitions) {
-                definition = definitions;
-            } else if (definitions.length === 1) {
-                definition = definitions[0].value;
-            } else {                
-                writeLine('Multiple abbriviations found:', 'error');
-                writeLine();
-                for (var i = 0; i < definitions.length; i++) {
-                    var com = definitions[i];
-                    if (!!unwrap(com.value.available)) {
-                        write(pad(com.name, ' ', 10));
-                        writeLine(com.value.description);
-                    }
-                }
-                writeLine();
+                writeLine('Invalid command', 'error');
                 activateInput();
                 return;
-            }            
-            
-            if (!definition || !unwrap(definition.available)) {
-                writeLine('Invalid command', 'error');
+            } else if (definitions.length === 1) {
+                definition = definitions[0].value;
+            } else {
+                writeLine('Ambiguous command', 'error');
+                writeLine();
+                for (var i = 0; i < definitions.length; i++) {
+                    write(pad(definitions[i].name, ' ', 10));
+                    writeLine(definitions[i].value.description);
+                }
+                writeLine();
                 activateInput();
                 return;
             }
@@ -581,14 +574,14 @@
             return { 'text-indent': getPrefixWidth() + 'px' };
         }
         
-        function getCommand(key) {
-            var definition = commands[key.toUpperCase()];
+        function getAvailableCommands(key) {
+            var definition = commands[key];
                         
             if (!definition) {
                 var matchedCommands = [];
                 
                 for (var command in commands) {                    
-                    if (startsWith(command, key) && commands[command].available) {
+                    if (startsWith(command, key) && !!unwrap(commands[command].available)) {
                         matchedCommands.push({ name: command, value: commands[command] });
                     }
                 }
