@@ -349,15 +349,13 @@
             command = command.trim();
             
             var parsed = parseCommand(command);
-            var definitions = getAvailableCommands(parsed.name.toUpperCase());
-            var definition;
-            if (!definitions) {
+            
+            var definitions = getDefinitions(parsed.name);            
+            if (!definitions || definitions.length < 1) {
                 writeLine('Invalid command', 'error');
                 activateInput();
                 return;
-            } else if (definitions.length === 1) {
-                definition = definitions[0].value;
-            } else {
+            } else if (definitions.length > 1) {
                 writeLine('Ambiguous command', 'error');
                 writeLine();
                 for (var i = 0; i < definitions.length; i++) {
@@ -367,7 +365,9 @@
                 writeLine();
                 activateInput();
                 return;
-            }
+            } 
+            
+            var definition = definitions[0];
 
             current = {
                 command: command,
@@ -392,10 +392,10 @@
             });
         }
 
-        function setup(name, callback, settings) {
-            var definition = resolveDefinition(name, callback, settings);
-            for (var i = 0, l = definition.names.length; i < l; i++) {
-                commands[definition.names[i].toUpperCase()] = definition;
+        function setup(names, callback, settings) {
+            var definitions = createDefinitions(names, callback, settings);
+            for (var i = 0, l = definitions.length; i < l; i++) {
+                commands[definitions[i].name] = definitions[i];
             }
         }
 
@@ -480,7 +480,7 @@
             };
         }
 
-        function resolveDefinition(names, callback, settings) {
+        function createDefinitions(names, callback, settings) {
             if (typeof names !== 'string' && !$.isArray(names)) {
                 settings = callback;
                 callback = names;
@@ -497,24 +497,50 @@
                 names = $.grep(names, function(value) {
                     return typeof value === 'string';
                 });
-            }
-
-            var definition = {
-                names: names,
-                callback: callback,
-                parse: true,
-                available: true
-            };
-
-            $.extend(definition, settings);
-
-            if (!$.isArray(definition.names) ||
-                definition.names.length === 0 ||
-                typeof definition.callback !== 'function') {
+            }            
+            
+            if (!$.isArray(names) ||
+                names.length === 0 ||
+                typeof callback !== 'function') {
                 throw 'Invalid command definition';
             }
             
-            return definition;
+            var definitions = [];
+            
+            for (var i = 0, l = names.length; i < l; i++) {                
+                var definition = {
+                    name: names[i].toUpperCase(),
+                    callback: callback,
+                    parse: true,
+                    available: true
+                };
+                
+                $.extend(definition, settings);
+                
+                definitions.push(definition);
+            }
+                        
+            return definitions;
+        }
+        
+        function getDefinitions(name) {
+            name = name.toUpperCase();
+            
+            var definition = commands[name];
+            
+            if (definition) {
+                return [definition];
+            }
+                        
+            var definitions = [];
+            
+            for (var key in commands) {                    
+                if (key.indexOf(name, 0) === 0 && unwrap(commands[key].available)) {
+                    definitions.push(commands[key]);
+                }
+            }
+                        
+            return definitions;
         }
 
         function getPrefixWidth() {
@@ -574,41 +600,7 @@
             return { 'text-indent': getPrefixWidth() + 'px' };
         }
         
-        function getAvailableCommands(key) {
-            var definition = commands[key];
-                        
-            if (!definition) {
-                var matchedCommands = [];
-                
-                for (var command in commands) {                    
-                    if (startsWith(command, key) && !!unwrap(commands[command].available)) {
-                        matchedCommands.push({ name: command, value: commands[command] });
-                    }
-                }
-                
-                if (matchedCommands.length === 0) {
-                    return;
-                }
-                else if (matchedCommands.length === 1) {
-                    return [matchedCommands[0]];                    
-                }
-                else {
-                    for (var i = 1; i < matchedCommands.length; i++) {
-                        if (matchedCommands[0].value.names.indexOf(matchedCommands[i].name) < 0) {
-                            return matchedCommands;
-                        }
-                    }
-                    return [matchedCommands[0]];
-                }
-            }
-                        
-            return [{ name: key, value: definition }];
-        }
         
-        function startsWith(value, startWithString) {
-            return value.indexOf(startWithString, 0) === 0;
-        }
-
     });
 }(typeof define === 'function' && define.amd ? define : function (deps, factory) {
     if (typeof module !== 'undefined' && module.exports) {
