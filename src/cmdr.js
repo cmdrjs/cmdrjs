@@ -1,12 +1,12 @@
 /*
  * cmdrjs
  * Version 1.0.4-alpha
- * Copyright 2015 Shaftware.
+ * Copyright 2015 cmdrjs.
  * All Rights Reserved.  
  * Use, reproduction, distribution, and modification of this code is subject to the terms and 
  * conditions of the MIT license, available at http://www.opensource.org/licenses/mit-license.php
  *
- * Project: https://github.com/shaftware/cmdrjs
+ * Project: https://github.com/cmdrjs/cmdrjs
  */
 
 ; (function (define) {
