@@ -379,8 +379,14 @@
                 args = [parsed.arg];
             }
 
-            var result = definition.callback.apply(current, args);
-
+            var result;
+            try {
+                result = definition.callback.apply(current, args);                
+            } catch (error) {
+                writeLine('Unhandled exception. See console log for details.', 'error');
+                console.error(error);
+            }
+            
             $.when(result).always(function () {
                 setTimeout(function () {
                     current = null;
