@@ -360,7 +360,7 @@
                 writeLine();
                 for (var i = 0; i < definitions.length; i++) {
                     write(pad(definitions[i].name, ' ', 10));
-                    writeLine(definitions[i].value.description);
+                    writeLine(definitions[i].description);
                 }
                 writeLine();
                 activateInput();
