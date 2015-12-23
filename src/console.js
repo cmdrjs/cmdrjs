@@ -469,9 +469,50 @@ class Console {
     constructor(containerNode, settings) {
         _console.set(this, new _Console(this, containerNode, settings));
     }
+    
+    get settings() {
+        return _console.get(this).settings;
+    }
 
     dispose() {
         _console.get(this).dispose();
+    }
+    
+    reset() {
+        _console.get(this).dispose();
+        _console.get(this).init();
+    }
+    
+    read(callback, capture) {
+        _console.get(this).read(callback, capture);
+    }
+    
+    readLine(callback) {
+        _console.get(this).readLine(callback);
+    }
+    
+    write(value, cssClass) {
+        _console.get(this).write(value, cssClass);
+    }
+
+    writeLine(value, cssClass) {
+        _console.get(this).writeLine(value, cssClass);
+    }
+
+    writePad(value, padding, length, cssClass) {
+        _console.get(this).writePad(value, padding, length, cssClass);
+    }
+
+    clear() {
+        _console.get(this).clear();
+    }
+
+    execute(command) {
+        _console.get(this).execute(command);
+    }
+
+    define(names, callback, settings) {
+        _console.get(this).define(names, callback, settings);
     }
 }
 
