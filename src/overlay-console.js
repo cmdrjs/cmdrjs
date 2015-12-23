@@ -7,22 +7,30 @@ const _defaultSettings = {
     closeKey: 27
 };
 
-var _overlayNode = null;
+let _instance = null;
 
 class OverlayConsole extends Console {
     constructor(settings) {
-
-        if (!_overlayNode) {
-            _overlayNode = utils.createElement('<div style="display: none" class="cmdr-overlay"></div>');
-            document.body.appendChild(_overlayNode);
+        
+        var overlayNode;
+        if (_instance) {
+            overlayNode = _instance._overlayNode;
+            _instance.dispose();
+        }
+        
+        if (!overlayNode) {
+            overlayNode = utils.createElement('<div style="display: none" class="cmdr-overlay"></div>');
+            document.body.appendChild(overlayNode);
         }
 
         settings = utils.extend({}, _defaultSettings, settings);
 
-        super(_overlayNode, settings);
+        super(overlayNode, settings);
         
-        this._overlayNode = _overlayNode;
+        this._overlayNode = overlayNode;
         this._documentEventHandler = null;
+        
+        _instance = this;
     }
 
     init() {
