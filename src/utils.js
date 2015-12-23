@@ -51,18 +51,18 @@ export function smoothScroll(element, target, duration) {
     var startTop = element.scrollTop;
     var distance = target - startTop;
 
-    var smoothStep = function(start, end, point) {
-        if(point <= start) { return 0; }
-        if(point >= end) { return 1; }
+    var smoothStep = function (start, end, point) {
+        if (point <= start) { return 0; }
+        if (point >= end) { return 1; }
         var x = (point - start) / (end - start);
-        return x*x*(3 - 2*x);
+        return x * x * (3 - 2 * x);
     }
 
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
         var previousTop = element.scrollTop;
 
-        var scrollFrame = function() {
-            if(element.scrollTop != previousTop) {
+        var scrollFrame = function () {
+            if (element.scrollTop != previousTop) {
                 reject("interrupted");
                 return;
             }
@@ -72,12 +72,12 @@ export function smoothScroll(element, target, duration) {
             var frameTop = Math.round(startTop + (distance * point));
             element.scrollTop = frameTop;
 
-            if(now >= endTime) {
+            if (now >= endTime) {
                 resolve();
                 return;
             }
 
-            if(element.scrollTop === previousTop
+            if (element.scrollTop === previousTop
                 && element.scrollTop !== frameTop) {
                 resolve();
                 return;
@@ -101,6 +101,14 @@ export function defer() {
         this.then = this.promise.then.bind(this.promise);
         this.catch = this.promise.catch.bind(this.promise);
     };
-    
+
     return new Deferred();
+}
+
+export function blur(element = null) {
+    if (element && element !== document.activeElement) return;
+    var temp = document.createElement("input");
+    document.body.appendChild(temp);
+    temp.focus();
+    document.body.removeChild(temp);
 }

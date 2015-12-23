@@ -4,75 +4,89 @@ const _defaultSettings = {
     echo: true,
     promptPrefix: '> ',
     template: '<div class="cmdr-console"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>',
-    basicCommands: true
+    predefinedCommands: true
 };
 
 const _promptIndentPadding = typeof InstallTrigger !== 'undefined'; // Firefox - misplaced cursor when using 'text-indent'
 
-class _Console {
-    constructor(instance, containerNode, settings) {
-        this.instance = instance;
-        this.containerNode = containerNode;
-        this.settings = utils.extend({}, _defaultSettings, settings);
-        this.consoleNode = null;
-        this.inputNode = null;
-        this.prefixNode = null;
-        this.promptNode = null;
-        this.outputNode = null;
-        this.outputLineNode = null;
-        this.definitions = {};
-        this.current = null;
-        this.queue = [];
-        this.history = [];
-        this.historyIndex = -1;
-
+class Console {
+    constructor(containerNode, settings) {
+        this._settings = utils.extend({}, _defaultSettings, settings);
+        this._containerNode = containerNode;
+        this._consoleNode = null;
+        this._inputNode = null;
+        this._prefixNode = null;
+        this._promptNode = null;
+        this._outputNode = null;
+        this._outputLineNode = null;
+        this._definitions = {};
+        this._current = null;
+        this._queue = [];
+        this._history = [];
+        this._historyIndex = -1;
+        this._initialized = false;
+        
         this.init();
+    }
+    
+    get settings() {
+        return this._settings;
+    }
+
+    get definitions() {
+        return this._definitions;
+    }
+    
+    get initialized() {
+        return this._initialized;
     }
 
     init() {
-        this.consoleNode = utils.createElement(this.settings.template);
+        if (this._initialized) return;
+        
+        this._consoleNode = utils.createElement(this._settings.template);
 
-        this.containerNode.appendChild(this.consoleNode);
+        this._containerNode.appendChild(this._consoleNode);
 
-        this.outputNode = this.consoleNode.querySelector('.output');
-        this.inputNode = this.consoleNode.querySelector('.input');
-        this.prefixNode = this.consoleNode.querySelector('.prefix');
-        this.promptNode = this.consoleNode.querySelector('.prompt');
+        this._outputNode = this._consoleNode.querySelector('.output');
+        this._inputNode = this._consoleNode.querySelector('.input');
+        this._prefixNode = this._consoleNode.querySelector('.prefix');
+        this._promptNode = this._consoleNode.querySelector('.prompt');
 
-        this.promptNode.addEventListener('keydown', (function (event) {
-            if (!this.current) {
+        this._promptNode.addEventListener('keydown', (function (event) {
+            if (!this._current) {
                 switch (event.keyCode) {
                     case 13:
-                        var value = this.promptNode.textContent;
+                        var value = this._promptNode.textContent;
                         if (value) {
                             this.execute(value);
                         }
                         event.preventDefault();
                         return false;
                     case 38:
-                        this.historyBack();
+                        this._historyBack();
                         event.preventDefault();
                         return false;
                     case 40:
-                        this.historyForward();
+                        this._historyForward();
                         event.preventDefault();
                         return false;
                     case 9:
                         event.preventDefault();
                         return false;
                 }
-            } else if (this.current.readLine && event.keyCode === 13) {
-                this.current.readLine.resolve(this.promptNode.textContent);
+            } else if (this._current.readLine && event.keyCode === 13) {
+                this._current.readLine.resolve(this._promptNode.textContent);
                 return false;
             }
             return true;
         }).bind(this));
 
-        this.promptNode.addEventListener('keypress', (function (event) {
-            if (this.current && this.current.read) {
+        this._promptNode.addEventListener('keypress', (function (event) {
+            if (this._current && this._current.read) {
                 if (event.charCode !== 0) {
-                    this.current.read.char = String.fromCharCode(event.charCode);
-                    if (this.current.read.capture) {
+                    this._current.read.char = String.fromCharCode(event.charCode);
+                    if (this._current.read.capture) {
                         return false;
                     }
                 } else {
@@ -82,128 +96,139 @@ class _Console {
             return true;
         }).bind(this));
 
-        this.promptNode.addEventListener('keyup', (function () {
-            if (this.current && this.current.read && this.current.read.char) {
-                this.current.read.resolve(this.current.read.char);
+        this._promptNode.addEventListener('keyup', (function () {
+            if (this._current && this._current.read && this._current.read.char) {
+                this._current.read.resolve(this._current.read.char);
             }
         }).bind(this));
 
-        this.promptNode.addEventListener('paste', (function () {
+        this._promptNode.addEventListener('paste', (function () {
             setTimeout((function () {
-                var value = this.promptNode.textContent;
+                var value = this._promptNode.textContent;
                 var lines = value.split(/\r\n|\r|\n/g);
                 var length = lines.length;
                 if (length > 1) {
                     for (var i = 1; i < length; i++) {
                         if (lines[i].length > 0) {
-                            this.queue.get(this).push(lines[i]);
+                            this._queue.get(this).push(lines[i]);
                         }
                     }
-                    if (this.current && this.current.readLine) {
-                        this.current.readLine.resolve(lines[0]);
-                    } else if (this.current && this.current.read) {
-                        this.current.read.resolve(lines[0][0]);
+                    if (this._current && this._current.readLine) {
+                        this._current.readLine.resolve(lines[0]);
+                    } else if (this._current && this._current.read) {
+                        this._current.read.resolve(lines[0][0]);
                     } else {
-                        this.current(lines[0]);
+                        this._current(lines[0]);
                     }
                 }
             }).bind(this), 0);
         }).bind(this));
 
         if (_promptIndentPadding) {
-            this.promptNode.addEventListener('input', (function () {
-                prompt.css(this.getPromptIndent());
+            this._promptNode.addEventListener('input', (function () {
+                prompt.css(this._getPromptIndent());
             }).bind(this));
         }
 
-        this.consoleNode.addEventListener('click', (function (event) {
-            if (event.target !== this.inputNode && !this.inputNode.contains(event.target) &&
-                event.target !== this.outputNode && !this.outputNode.contains(event.target)) {
-                this.promptNode.focus();
+        this._consoleNode.addEventListener('click', (function (event) {
+            if (event.target !== this._inputNode && !this._inputNode.contains(event.target) &&
+                event.target !== this._outputNode && !this._outputNode.contains(event.target)) {
+                this._promptNode.focus();
             }
         }).bind(this));
 
-        if (this.settings.basicCommands) {
-            this.defineBasic();
+        if (this._settings.predefinedCommands) {
+            this.predefine();
         }
 
-        this.activateInput();
+        this._activateInput();
+        
+        this._initialized = true;
     }
 
     dispose() {
-        this.containerNode.removeChild(this.consoleNode);
-        this.consoleNode = null;
-        this.outputNode = null;
-        this.inputNode = null;
-        this.prefixNode = null;
-        this.promptNode = null;
-        this.definitions = {};
-        this.current = null;
-        this.queue = [];
-        this.history = [];
-        this.historyIndex = -1;
+        if (!this._initialized) return;
+        
+        this._containerNode.removeChild(this._consoleNode);
+        this._consoleNode = null;
+        this._outputNode = null;
+        this._inputNode = null;
+        this._prefixNode = null;
+        this._promptNode = null;
+        this._definitions = {};
+        this._current = null;
+        this._queue = [];
+        this._history = [];
+        this._historyIndex = -1;  
+        
+        this._initialized = false;      
+    }
+        
+    reset() {
+        this.dispose();
+        this.init();
     }
 
     read(callback, capture) {
-        if (!this.current) return;
+        if (!this._current) return;
 
-        this.activateInput(true);
+        this._activateInput(true);
 
-        this.current.read = utils.defer();
-        this.current.read.then((function (value) {
-            this.current.read = null;
+        this._current.read = utils.defer();
+        this._current.read.then((function (value) {
+            this._current.read = null;
             if (!capture) {
-                this.promptNode.textContent = value;
+                this._promptNode.textContent = value;
             }
-            this.deactivateInput();
-            if (callback.call(this.current, value) === true) {
-                this.read(callback, capture);
+            this._deactivateInput();
+            if (callback.call(this._current, value) === true) {
+                this._read(callback, capture);
             } else {
-                this.flushInput();
+                this._flushInput();
             }
         }).bind(this));
-        this.current.read.capture = capture;
+        this._current.read.capture = capture;
 
-        if (this.queue.length > 0) {
-            this.current.read.resolve(this.queue.shift()[0]);
+        if (this._queue.length > 0) {
+            this._current.read.resolve(this._queue.shift()[0]);
         }
     }
 
     readLine(callback) {
-        if (!this.current) return;
+        if (!this._current) return;
 
-        this.activateInput(true);
+        this._activateInput(true);
 
-        this.current.readLine = utils.defer();
-        this.current.readLine.then((function (value) {
-            this.current.readLine = null;
-            this.promptNode.textContent = value;
-            this.deactivateInput();
-            this.flushInput();
-            if (callback.call(this.current, value) === true) {
+        this._current.readLine = utils.defer();
+        this._current.readLine.then((function (value) {
+            this._current.readLine = null;
+            this._promptNode.textContent = value;
+            this._deactivateInput();
+            this._flushInput();
+            if (callback.call(this._current, value) === true) {
                 this.readLine(callback);
             }
         }).bind(this));
 
-        if (this.queue.length > 0) {
-            this.current.readLine.resolve(this.queue.shift());
+        if (this._queue.length > 0) {
+            this._current.readLine.resolve(this._queue.shift());
         }
     }
 
     write(value, cssClass) {
         value = value || '';
         var outputValue = utils.createElement(`<span class="${cssClass}">${value}</span>`);
-        if (!this.outputLineNode) {
-            this.outputLineNode = utils.createElement('<div></div>');
-            this.outputNode.appendChild(this.outputLineNode);
+        if (!this._outputLineNode) {
+            this._outputLineNode = utils.createElement('<div></div>');
+            this._outputNode.appendChild(this._outputLineNode);
         }
-        this.outputLineNode.appendChild(outputValue);
+        this._outputLineNode.appendChild(outputValue);
     }
 
     writeLine(value, cssClass) {
         value = (value || '') + '\n';
         this.write(value, cssClass);
-        this.outputLineNode = null;
+        this._outputLineNode = null;
     }
 
     writePad(value, padding, length, cssClass) {
@@ -211,12 +236,20 @@ class _Console {
     }
 
     clear() {
-        this.outputNode.innerHTML = '';
+        this._outputNode.innerHTML = '';
+    }
+    
+    focus() {
+        this._promptNode.focus();
+    }
+    
+    blur() {
+        utils.blur(this._promptNode);
     }
 
     execute(command) {
-        if (this.current) {
-            this.queue.push(command);
+        if (this._current) {
+            this._queue.push(command);
             return;
         }
 
@@ -224,19 +257,19 @@ class _Console {
             throw 'Invalid command';
         }
 
-        this.promptNode.textContent = command;
-        this.flushInput(!this.settings.echo);
-        this.historyAdd(command);
-        this.deactivateInput();
+        this._promptNode.textContent = command;
+        this._flushInput(!this._settings.echo);
+        this._historyAdd(command);
+        this._deactivateInput();
 
         command = command.trim();
 
-        var parsed = this.parseCommand(command);
+        var parsed = this._parseCommand(command);
 
-        var definitions = this.getDefinitions(parsed.name);
+        var definitions = this._getDefinitions(parsed.name);
         if (!definitions || definitions.length < 1) {
             this.writeLine('Invalid command', 'error');
-            this.activateInput();
+            this._activateInput();
             return;
         } else if (definitions.length > 1) {
             this.writeLine('Ambiguous command', 'error');
@@ -246,16 +279,16 @@ class _Console {
                 this.writeLine(definitions[i].description);
             }
             this.writeLine();
-            this.activateInput();
+            this._activateInput();
             return;
         }
 
         var definition = definitions[0];
 
-        this.current = {
+        this._current = {
             command: command,
             definition: definition,
-            console: this.instance
+            console: this
         };
 
         var args = parsed.args;
@@ -265,7 +298,7 @@ class _Console {
 
         var result;
         try {
-            result = definition.callback.apply(this.current, args);
+            result = definition.callback.apply(this._current, args);
         } catch (error) {
             this.writeLine('Unhandled exception. See consoleNode log for details.', 'error');
             console.error(error);
@@ -273,81 +306,118 @@ class _Console {
 
         Promise.all([result]).then((function () {
             setTimeout((function () {
-                this.current = null;
-                this.activateInput();
-                if (this.queue.length > 0) {
-                    this.execute(this.queue.shift());
+                this._current = null;
+                this._activateInput();
+                if (this._queue.length > 0) {
+                    this.execute(this._queue.shift());
                 }
             }).bind(this), 0);
         }).bind(this));
     }
 
     define(names, callback, settings) {
-        var definitions = this.createDefinitions(names, callback, settings);
+        var definitions = this._createDefinitions(names, callback, settings);
         for (var i = 0, l = definitions.length; i < l; i++) {
-            this.definitions[definitions[i].name] = definitions[i];
+            this._definitions[definitions[i].name] = definitions[i];
         }
     }
+    
+    predefine() {
+        this.define(['HELP', '?'], function () {
+            this.console.writeLine('The following commands are available:');
+            this.console.writeLine();
+            for (var key in this.console.definitions) {
+                var definition = this.console.definitions[key];
+                if (!!utils.unwrap(definition.available)) {
+                    this.console.writePad(key, ' ', 10);
+                    this.console.writeLine(definition.description);
+                }
+            }
+            this.console.writeLine();
+        }, {
+                description: 'Lists the available commands'
+            });
 
-    activateInput(inline) {
+        this.define('ECHO', function (arg) {
+            var toggle = arg.toUpperCase();
+            if (toggle === 'ON') {
+                this.console.settings.echo = true;
+            } else if (toggle === 'OFF') {
+                this.console.settings.echo = false;
+            } else {
+                this.console.writeLine(arg);
+            }
+        }, {
+                parse: false,
+                description: 'Displays provided text or toggles command echoing'
+            });
+
+        this.define(['CLS'], function () {
+            this.console.clear();
+        }, {
+                description: 'Clears the command prompt'
+            });
+    }
+
+    _activateInput(inline) {
         if (inline) {
-            if (this.outputLineNode) {
-                this.prefixNode.textContent = this.outputLineNode.textContent;
-                this.outputNode.removeChild(this.outputLineNode);
-                this.outputLineNode = null;
+            if (this._outputLineNode) {
+                this._prefixNode.textContent = this._outputLineNode.textContent;
+                this._outputNode.removeChild(this._outputLineNode);
+                this._outputLineNode = null;
             }
         } else {
-            this.prefixNode.textContent = this.settings.promptPrefix;
+            this._prefixNode.textContent = this._settings.promptPrefix;
         }
-        this.inputNode.style.display = '';
+        this._inputNode.style.display = '';
         setTimeout((function () {
-            this.promptNode.setAttribute('disabled', false);
-            this.setPromptIndent();
-            this.promptNode.focus();
-            utils.smoothScroll(this.consoleNode, this.consoleNode.scrollHeight, 1000);
+            this._promptNode.setAttribute('disabled', false);
+            this._setPromptIndent();
+            this._promptNode.focus();
+            utils.smoothScroll(this._consoleNode, this._consoleNode.scrollHeight, 1000);
         }).bind(this), 0);
     }
 
-    deactivateInput() {
-        this.promptNode.setAttribute('disabled', true);
-        this.inputNode.style.display = 'none';
+    _deactivateInput() {
+        this._promptNode.setAttribute('disabled', true);
+        this._inputNode.style.display = 'none';
     }
 
-    flushInput(preventWrite) {
+    _flushInput(preventWrite) {
         if (!preventWrite) {
-            this.write(this.prefixNode.textContent);
-            this.writeLine(this.promptNode.textContent);
+            this.write(this._prefixNode.textContent);
+            this.writeLine(this._promptNode.textContent);
         }
-        this.prefixNode.textContent = '';
-        this.promptNode.textContent = '';
+        this._prefixNode.textContent = '';
+        this._promptNode.textContent = '';
     }
 
-    historyAdd(command) {
-        this.history.unshift(command);
-        this.historyIndex = -1;
+    _historyAdd(command) {
+        this._history.unshift(command);
+        this._historyIndex = -1;
     }
 
-    historyBack() {
-        if (this.history.length > this.historyIndex + 1) {
-            this.historyIndex++;
-            this.promptNode.textContent = history[this.historyIndex];
+    _historyBack() {
+        if (this._history.length > this._historyIndex + 1) {
+            this._historyIndex++;
+            this._promptNode.textContent = history[this._historyIndex];
             var event = document.createEvent('HTMLEvents');
             event.initEvent('change', true, false);
-            this.promptNode.dispatchEvent(event);
+            this._promptNode.dispatchEvent(event);
         }
     }
 
-    historyForward() {
-        if (this.historyIndex > 0) {
-            this.historyIndex--;
-            this.promptNode.textContent = history[this.historyIndex];
+    _historyForward() {
+        if (this._historyIndex > 0) {
+            this._historyIndex--;
+            this._promptNode.textContent = history[this._historyIndex];
             var event = document.createEvent('HTMLEvents');
             event.initEvent('change', true, false);
-            this.promptNode.dispatchEvent(event);
+            this._promptNode.dispatchEvent(event);
         }
     }
 
-    parseCommand(command) {
+    _parseCommand(command) {
         var exp = /[^\s"]+|"([^"]*)"/gi,
             name = null,
             arg = null,
@@ -374,7 +444,7 @@ class _Console {
         };
     }
 
-    createDefinitions(names, callback, settings) {
+    _createDefinitions(names, callback, settings) {
         if (typeof names !== 'string' && !Array.isArray(names)) {
             settings = callback;
             callback = names;
@@ -417,10 +487,10 @@ class _Console {
         return definitions;
     }
 
-    getDefinitions(name) {
+    _getDefinitions(name) {
         name = name.toUpperCase();
 
-        var definition = this.definitions[name];
+        var definition = this._definitions[name];
 
         if (definition) {
             return [definition];
@@ -428,142 +498,48 @@ class _Console {
 
         var definitions = [];
 
-        for (var key in this.definitions) {
-            if (key.indexOf(name, 0) === 0 && utils.unwrap(this.definitions[key].available)) {
-                definitions.push(this.definitions[key]);
+        for (var key in this._definitions) {
+            if (key.indexOf(name, 0) === 0 && utils.unwrap(this._definitions[key].available)) {
+                definitions.push(this._definitions[key]);
             }
         }
 
         return definitions;
     }
 
-    getPrefixWidth() {
-        var width = this.prefixNode.getBoundingClientRect().width;
-        var text = this.prefixNode.textContent;
+    _getPrefixWidth() {
+        var width = this._prefixNode.getBoundingClientRect().width;
+        var text = this._prefixNode.textContent;
         var spacePadding = text.length - text.trim().length;
 
-        if (!this.prefixNode._spaceWidth) {
+        if (!this._prefixNode._spaceWidth) {
             var elem1 = utils.createElement('<span style="visibility: hidden">| |</span>');
-            this.prefixNode.appendChild(elem1);
+            this._prefixNode.appendChild(elem1);
             var elem2 = utils.createElement('<span style="visibility: hidden">||</span>')
-            this.prefixNode.appendChild(elem2);
-            this.prefixNode._spaceWidth = elem1.offsetWidth - elem2.offsetWidth;
-            this.prefixNode.removeChild(elem1);
-            this.prefixNode.removeChild(elem2);
+            this._prefixNode.appendChild(elem2);
+            this._prefixNode._spaceWidth = elem1.offsetWidth - elem2.offsetWidth;
+            this._prefixNode.removeChild(elem1);
+            this._prefixNode.removeChild(elem2);
         }
 
-        width += spacePadding * this.prefixNode._spaceWidth;
+        width += spacePadding * this._prefixNode._spaceWidth;
         return width;
     }
 
-    setPromptIndent() {
-        var prefixWidth = this.getPrefixWidth() + 'px';
+    _setPromptIndent() {
+        var prefixWidth = this._getPrefixWidth() + 'px';
         if (_promptIndentPadding) {
-            if (this.promptNode.textContent) {
-                this.promptNode.style.textIndent = prefixWidth;
-                this.promptNode.style.paddingLeft = '';
+            if (this._promptNode.textContent) {
+                this._promptNode.style.textIndent = prefixWidth;
+                this._promptNode.style.paddingLeft = '';
             } else {
-                this.promptNode.style.textIndent = '';
-                this.promptNode.style.paddingLeft = prefixWidth;
+                this._promptNode.style.textIndent = '';
+                this._promptNode.style.paddingLeft = prefixWidth;
             }
         }
         else {
-            this.promptNode.style.textIndent = prefixWidth;
+            this._promptNode.style.textIndent = prefixWidth;
         }
-    }
-
-    defineBasic() {
-        this.define(['HELP', '?'], function () {
-            this.console.writeLine('The following commands are available:');
-            this.console.writeLine();
-            for (var key in this.console.definitions) {
-                var definition = this.console.definitions[key];
-                if (!!utils.unwrap(definition.available)) {
-                    this.console.writePad(key, ' ', 10);
-                    this.console.writeLine(definition.description);
-                }
-            }
-            this.console.writeLine();
-        }, {
-                description: 'Lists the available commands'
-            });
-
-        this.define('ECHO', function (arg) {
-            var toggle = arg.toUpperCase();
-            if (toggle === 'ON') {
-                this.console.settings.echo = true;
-            } else if (toggle === 'OFF') {
-                this.console.settings.echo = false;
-            } else {
-                this.console.writeLine(arg);
-            }
-        }, {
-                parse: false,
-                description: 'Displays provided text or toggles command echoing'
-            });
-
-        this.define(['CLS'], function () {
-            this.console.clear();
-        }, {
-                description: 'Clears the command prompt'
-            });
-    }
-}
-
-const _console = new WeakMap();
-
-class Console {
-    constructor(containerNode, settings) {
-        _console.set(this, new _Console(this, containerNode, settings));
-    }
-
-    get settings() {
-        return _console.get(this).settings;
-    }
-
-    get definitions() {
-        return _console.get(this).definitions;
-    }
-
-    dispose() {
-        _console.get(this).dispose();
-    }
-
-    reset() {
-        _console.get(this).dispose();
-        _console.get(this).init();
-    }
-
-    read(callback, capture) {
-        _console.get(this).read(callback, capture);
-    }
-
-    readLine(callback) {
-        _console.get(this).readLine(callback);
-    }
-
-    write(value, cssClass) {
-        _console.get(this).write(value, cssClass);
-    }
-
-    writeLine(value, cssClass) {
-        _console.get(this).writeLine(value, cssClass);
-    }
-
-    writePad(value, padding, length, cssClass) {
-        _console.get(this).writePad(value, padding, length, cssClass);
-    }
-
-    clear() {
-        _console.get(this).clear();
-    }
-
-    execute(command) {
-        _console.get(this).execute(command);
-    }
-
-    define(names, callback, settings) {
-        _console.get(this).define(names, callback, settings);
     }
 }
 

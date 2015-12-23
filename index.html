@@ -4,18 +4,12 @@
     <title>cmdrjs</title>
     <link rel="stylesheet" type="text/css" href="dist/cmdr.css" />
     <style>
-        body {
-            background: #000;
-        }
     </style>
 </head>
 <body>
-    <div id="container"></div>
     <script src="dist/cmdr.js"></script>
-    <script>
-        var container = document.getElementById('container');
-        
-        var console = new cmdr.Console(container);
+    <script>        
+        var console = cmdr.overlay();
     </script>
 </body>
 </html>
