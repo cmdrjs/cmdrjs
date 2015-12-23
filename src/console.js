@@ -3,7 +3,8 @@ import * as utils from './utils.js';
 const _defaultSettings = {
     echo: true,
     promptPrefix: '> ',
-    template: '<div class="cmdr-console"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>'
+    template: '<div class="cmdr-console"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>',
+    basicCommands: true
 };
 
 const _promptIndentPadding = typeof InstallTrigger !== 'undefined'; // Firefox - misplaced cursor when using 'text-indent'
@@ -21,9 +22,9 @@ class _Console {
         this.outputLineNode = null;
         this.definitions = {};
         this.current = null;
-        this.queue = [],
-        this.history = [],
-        this.historyIndex = -1,
+        this.queue = [];
+        this.history = [];
+        this.historyIndex = -1;
 
         this.init();
     }
@@ -121,7 +122,11 @@ class _Console {
                 this.promptNode.focus();
             }
         }).bind(this));
-        
+
+        if (this.settings.basicCommands) {
+            this.defineBasic();
+        }
+
         this.activateInput();
     }
 
@@ -132,6 +137,11 @@ class _Console {
         this.inputNode = null;
         this.prefixNode = null;
         this.promptNode = null;
+        this.definitions = {};
+        this.current = null;
+        this.queue = [];
+        this.history = [];
+        this.historyIndex = -1;
     }
 
     read(callback, capture) {
@@ -139,7 +149,7 @@ class _Console {
 
         this.activateInput(true);
 
-        this.current.read = utils.defer();        
+        this.current.read = utils.defer();
         this.current.read.then((function (value) {
             this.current.read = null;
             if (!capture) {
@@ -164,7 +174,7 @@ class _Console {
 
         this.activateInput(true);
 
-        this.current.readLine = utils.defer();        
+        this.current.readLine = utils.defer();
         this.current.readLine.then((function (value) {
             this.current.readLine = null;
             this.promptNode.textContent = value;
@@ -291,8 +301,8 @@ class _Console {
         }
         this.inputNode.style.display = '';
         setTimeout((function () {
-            this.promptNode.setAttribute('disabled', false);            
-            this.setPromptIndent();            
+            this.promptNode.setAttribute('disabled', false);
+            this.setPromptIndent();
             this.promptNode.focus();
             utils.smoothScroll(this.consoleNode, this.consoleNode.scrollHeight, 1000);
         }).bind(this), 0);
@@ -317,7 +327,7 @@ class _Console {
         this.historyIndex = -1;
     }
 
-    historyBack() { 
+    historyBack() {
         if (this.history.length > this.historyIndex + 1) {
             this.historyIndex++;
             this.promptNode.textContent = history[this.historyIndex];
@@ -431,7 +441,7 @@ class _Console {
         var width = this.prefixNode.getBoundingClientRect().width;
         var text = this.prefixNode.textContent;
         var spacePadding = text.length - text.trim().length;
-        
+
         if (!this.prefixNode._spaceWidth) {
             var elem1 = utils.createElement('<span style="visibility: hidden">| |</span>');
             this.prefixNode.appendChild(elem1);
@@ -441,7 +451,7 @@ class _Console {
             this.prefixNode.removeChild(elem1);
             this.prefixNode.removeChild(elem2);
         }
-        
+
         width += spacePadding * this.prefixNode._spaceWidth;
         return width;
     }
@@ -461,6 +471,43 @@ class _Console {
             this.promptNode.style.textIndent = prefixWidth;
         }
     }
+
+    defineBasic() {
+        this.define(['HELP', '?'], function () {
+            this.console.writeLine('The following commands are available:');
+            this.console.writeLine();
+            for (var key in this.console.definitions) {
+                var definition = this.console.definitions[key];
+                if (!!utils.unwrap(definition.available)) {
+                    this.console.writePad(key, ' ', 10);
+                    this.console.writeLine(definition.description);
+                }
+            }
+            this.console.writeLine();
+        }, {
+                description: 'Lists the available commands'
+            });
+
+        this.define('ECHO', function (arg) {
+            var toggle = arg.toUpperCase();
+            if (toggle === 'ON') {
+                this.console.settings.echo = true;
+            } else if (toggle === 'OFF') {
+                this.console.settings.echo = false;
+            } else {
+                this.console.writeLine(arg);
+            }
+        }, {
+                parse: false,
+                description: 'Displays provided text or toggles command echoing'
+            });
+
+        this.define(['CLS'], function () {
+            this.console.clear();
+        }, {
+                description: 'Clears the command prompt'
+            });
+    }
 }
 
 const _console = new WeakMap();
@@ -469,28 +516,32 @@ class Console {
     constructor(containerNode, settings) {
         _console.set(this, new _Console(this, containerNode, settings));
     }
-    
+
     get settings() {
         return _console.get(this).settings;
+    }
+
+    get definitions() {
+        return _console.get(this).definitions;
     }
 
     dispose() {
         _console.get(this).dispose();
     }
-    
+
     reset() {
         _console.get(this).dispose();
         _console.get(this).init();
     }
-    
+
     read(callback, capture) {
         _console.get(this).read(callback, capture);
     }
-    
+
     readLine(callback) {
         _console.get(this).readLine(callback);
     }
-    
+
     write(value, cssClass) {
         _console.get(this).write(value, cssClass);
     }
