@@ -36,7 +36,7 @@ class OverlayConsole extends Console {
     init() {
         if (this.initialized) return;
 
-        this._documentEventHandler = (function (event) {
+        this._documentEventHandler = (event) => {
             if (!this.isOpen() &&
                 ['INPUT', 'TEXTAREA', 'SELECT'].indexOf(event.target.tagName) === -1 &&
                 !event.target.isContentEditable &&
@@ -46,7 +46,7 @@ class OverlayConsole extends Console {
             } else if (this.isOpen() && event.keyCode == this.settings.closeKey) {
                 this.close();
             }
-        }).bind(this);
+        };
 
         document.addEventListener('keydown', this._documentEventHandler);
 
@@ -74,10 +74,10 @@ class OverlayConsole extends Console {
     open() {
         this._overlayNode.style.display = '';
 
-        setTimeout((function () {
+        setTimeout(() => {
             this._setPromptIndent();  //hack: using 'private' method from base class to fix indent
             this.focus();
-        }).bind(this), 0);
+        }, 0);
     }
 
     close() {

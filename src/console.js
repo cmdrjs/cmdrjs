@@ -69,7 +69,7 @@ class Console {
         this._prefixNode = this._consoleNode.querySelector('.prefix');
         this._promptNode = this._consoleNode.querySelector('.prompt');
 
-        this._promptNode.addEventListener('keydown', (function (event) {
+        this._promptNode.addEventListener('keydown', (event) => {
             if (!this._current) {
                 switch (event.keyCode) {
                     case 13:
@@ -96,9 +96,9 @@ class Console {
                 return false;
             }
             return true;
-        }).bind(this));
+        });
 
-        this._promptNode.addEventListener('keypress', (function (event) {
+        this._promptNode.addEventListener('keypress', (event) => {
             if (this._current && this._current.read) {
                 if (event.charCode !== 0) {
                     this._current.read.char = String.fromCharCode(event.charCode);
@@ -110,16 +110,16 @@ class Console {
                 }
             }
             return true;
-        }).bind(this));
+        });
 
-        this._promptNode.addEventListener('keyup', (function () {
+        this._promptNode.addEventListener('keyup', () => {
             if (this._current && this._current.read && this._current.read.char) {
                 this._current.read.resolve(this._current.read.char);
             }
-        }).bind(this));
+        });
 
-        this._promptNode.addEventListener('paste', (function () {
-            setTimeout((function () {
+        this._promptNode.addEventListener('paste', () => {
+            setTimeout(() => {
                 var value = this._promptNode.textContent;
                 var lines = value.split(/\r\n|\r|\n/g);
                 var length = lines.length;
@@ -137,21 +137,21 @@ class Console {
                         this._current(lines[0]);
                     }
                 }
-            }).bind(this), 0);
-        }).bind(this));
+            }, 0);
+        });
 
         if (_promptIndentPadding) {
-            this._promptNode.addEventListener('input', (function () {
+            this._promptNode.addEventListener('input', () => {
                 prompt.css(this._getPromptIndent());
-            }).bind(this));
+            });
         }
 
-        this._consoleNode.addEventListener('click', (function (event) {
+        this._consoleNode.addEventListener('click', (event) => {
             if (event.target !== this._inputNode && !this._inputNode.contains(event.target) &&
                 event.target !== this._outputNode && !this._outputNode.contains(event.target)) {
                 this._promptNode.focus();
             }
-        }).bind(this));
+        });
 
         if (this._settings.predefinedCommands) {
             this.predefine();
@@ -189,7 +189,7 @@ class Console {
         this._activateInput(true);
 
         this._current.read = utils.defer();
-        this._current.read.then((function (value) {
+        this._current.read.then((value) => {
             this._current.read = null;
             if (!capture) {
                 this._promptNode.textContent = value;
@@ -200,7 +200,7 @@ class Console {
             } else {
                 this._flushInput();
             }
-        }).bind(this));
+        });
         this._current.read.capture = capture;
 
         if (this._queue.length > 0) {
@@ -214,7 +214,7 @@ class Console {
         this._activateInput(true);
 
         this._current.readLine = utils.defer();
-        this._current.readLine.then((function (value) {
+        this._current.readLine.then((value) => {
             this._current.readLine = null;
             this._promptNode.textContent = value;
             this._deactivateInput();
@@ -222,7 +222,7 @@ class Console {
             if (callback.call(this._current, value) === true) {
                 this.readLine(callback);
             }
-        }).bind(this));
+        });
 
         if (this._queue.length > 0) {
             this._current.readLine.resolve(this._queue.shift());
@@ -318,15 +318,15 @@ class Console {
             console.error(error);
         }
 
-        Promise.all([result]).then((function () {
-            setTimeout((function () {
+        Promise.all([result]).then(() => {
+            setTimeout(() => {
                 this._current = null;
                 this._activateInput();
                 if (this._queue.length > 0) {
                     this.execute(this._queue.shift());
                 }
-            }).bind(this), 0);
-        }).bind(this));
+            }, 0);
+        });
     }
 
     define(names, callback, settings) {
@@ -384,12 +384,12 @@ class Console {
             this._prefixNode.textContent = this._settings.promptPrefix;
         }
         this._inputNode.style.display = '';
-        setTimeout((function () {
+        setTimeout(() => {
             this._promptNode.setAttribute('disabled', false);
             this._setPromptIndent();
             this._promptNode.focus();
             utils.smoothScroll(this._consoleNode, this._consoleNode.scrollHeight, 1000);
-        }).bind(this), 0);
+        }, 0);
     }
 
     _deactivateInput() {
@@ -411,14 +411,14 @@ class Console {
     }
     
     _historyCycle(forward) {
-        Promise.all([this._historyProvider.cycle(forward)]).then((function (values) {
+        Promise.all([this._historyProvider.cycle(forward)]).then((values) => {
             var command = values[0];
             if (command) {
                 this._promptNode.textContent = command;
                 utils.cursorToEnd(this._promptNode);
                 utils.dispatchEvent(this._promptNode, 'change', true, false);
             }
-        }).bind(this));
+        });
     }
 
     _parseCommand(command) {

@@ -93,10 +93,10 @@ export function smoothScroll(element, target, duration) {
 
 export function defer() {
     function Deferred() {
-        this.promise = new Promise((function (resolve, reject) {
+        this.promise = new Promise((resolve, reject) => {
             this.resolve = resolve;
             this.reject = reject;
-        }).bind(this));
+        });
 
         this.then = this.promise.then.bind(this.promise);
         this.catch = this.promise.catch.bind(this.promise);
