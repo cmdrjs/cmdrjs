@@ -22,6 +22,7 @@
     "grunt-contrib-watch": "*",
     "grunt-karma": "*",
     "grunt-nuget": "^0.1.4",
+    "grunt-sass": "^1.1.0",
     "karma": "*",
     "karma-expect": "*",
     "karma-mocha": "*",

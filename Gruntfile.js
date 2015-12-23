@@ -72,6 +72,16 @@
                     }
                 }
             },
+            sass: {
+                options: {
+                    sourceMap: true
+                },
+                dist: {
+                    files: {
+                        'dist/cmdr.css': 'src/cmdr.scss'
+                    }
+                }
+            },
             copy: {
                 dist: {
                     files: [
@@ -103,6 +113,6 @@
         grunt.registerTask('test:full', ['jshint', 'bowerVerify']);
     
         //build
-        grunt.registerTask('build', ['browserify', 'copy', 'uglify', 'cssmin']);
+        grunt.registerTask('build', ['browserify', 'sass', 'copy', 'uglify', 'cssmin']);
     };
 })();
