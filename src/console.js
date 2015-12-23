@@ -4,7 +4,8 @@ const _defaultSettings = {
     echo: true,
     promptPrefix: '> ',
     template: '<div class="cmdr-console"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>',
-    predefinedCommands: true
+    predefinedCommands: true,
+    abbreviatedCommands: true
 };
 
 const _promptIndentPadding = typeof InstallTrigger !== 'undefined'; // Firefox - misplaced cursor when using 'text-indent'
@@ -499,12 +500,15 @@ class Console {
         if (definition) {
             return [definition];
         }
-
+        
         var definitions = [];
-
-        for (var key in this._definitions) {
-            if (key.indexOf(name, 0) === 0 && utils.unwrap(this._definitions[key].available)) {
-                definitions.push(this._definitions[key]);
+        
+        if (this._settings.abbreviatedCommands)
+        {
+            for (var key in this._definitions) {
+                if (key.indexOf(name, 0) === 0 && utils.unwrap(this._definitions[key].available)) {
+                    definitions.push(this._definitions[key]);
+                }
             }
         }
 
