@@ -6,8 +6,5 @@
   "repository": {
     "type": "git",
     "url": "git@github.com:cmdrjs/cmdrjs.git"
-  },
-  "dependencies": {
-    "jQuery": ">=1.7.2"
   }
 }
