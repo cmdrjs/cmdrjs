@@ -10,9 +10,13 @@ const _defaultSettings = {
 const _promptIndentPadding = typeof InstallTrigger !== 'undefined'; // Firefox - misplaced cursor when using 'text-indent'
 
 class Console {
-    constructor(containerNode, settings) {
+    constructor(containerElement, settings) {
+        if (!containerElement || !utils.isElement(containerElement)) {
+            throw '"containerElement" must be an HTMLElement.'
+        }
+        
         this._settings = utils.extend({}, _defaultSettings, settings);
-        this._containerNode = containerNode;
+        this._containerNode = containerElement;
         this._consoleNode = null;
         this._inputNode = null;
         this._prefixNode = null;
