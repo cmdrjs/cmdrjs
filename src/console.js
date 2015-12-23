@@ -1,11 +1,13 @@
 import * as utils from './utils.js';
+import HistoryProvider from './history-provider.js';
 
 const _defaultSettings = {
+    autoInit: true,
     echo: true,
     promptPrefix: '> ',
     template: '<div class="cmdr-console"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>',
     predefinedCommands: true,
-    abbreviatedCommands: true
+    abbreviatedCommands: true    
 };
 
 const _promptIndentPadding = typeof InstallTrigger !== 'undefined'; // Firefox - misplaced cursor when using 'text-indent'
@@ -27,11 +29,17 @@ class Console {
         this._definitions = {};
         this._current = null;
         this._queue = [];
-        this._history = [];
-        this._historyIndex = -1;
         this._initialized = false;
         
-        this.init();
+        this._historyProvider = new HistoryProvider();
+        
+        if (this._settings.autoInit) {
+            this.init();
+        }
+    }
+    
+    get initialized() {
+        return this._initialized;
     }
     
     get settings() {
@@ -42,8 +50,11 @@ class Console {
         return this._definitions;
     }
     
-    get initialized() {
-        return this._initialized;
+    get historyProvider() {
+        return this._historyProvider;
+    }
+    set historyProvider(value) {
+        this._historyProvider = value;
     }
 
     init() {
@@ -69,11 +80,11 @@ class Console {
                         event.preventDefault();
                         return false;
                     case 38:
-                        this._historyBack();
+                        this._historyCycle(false);
                         event.preventDefault();
                         return false;
                     case 40:
-                        this._historyForward();
+                        this._historyCycle(true);
                         event.preventDefault();
                         return false;
                     case 9:
@@ -163,8 +174,6 @@ class Console {
         this._definitions = {};
         this._current = null;
         this._queue = [];
-        this._history = [];
-        this._historyIndex = -1;  
         
         this._initialized = false;      
     }
@@ -398,28 +407,18 @@ class Console {
     }
 
     _historyAdd(command) {
-        this._history.unshift(command);
-        this._historyIndex = -1;
+        this._historyProvider.add(command);
     }
-
-    _historyBack() {
-        if (this._history.length > this._historyIndex + 1) {
-            this._historyIndex++;
-            this._promptNode.textContent = history[this._historyIndex];
-            var event = document.createEvent('HTMLEvents');
-            event.initEvent('change', true, false);
-            this._promptNode.dispatchEvent(event);
-        }
-    }
-
-    _historyForward() {
-        if (this._historyIndex > 0) {
-            this._historyIndex--;
-            this._promptNode.textContent = history[this._historyIndex];
-            var event = document.createEvent('HTMLEvents');
-            event.initEvent('change', true, false);
-            this._promptNode.dispatchEvent(event);
-        }
+    
+    _historyCycle(forward) {
+        Promise.all([this._historyProvider.cycle(forward)]).then((function (values) {
+            var command = values[0];
+            if (command) {
+                this._promptNode.textContent = command;
+                utils.cursorToEnd(this._promptNode);
+                utils.dispatchEvent(this._promptNode, 'change', true, false);
+            }
+        }).bind(this));
     }
 
     _parseCommand(command) {

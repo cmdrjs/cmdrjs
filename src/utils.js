@@ -118,3 +118,18 @@ export function isElement(obj) {
         obj instanceof HTMLElement : 
         obj && typeof obj === "object" && obj !== null && obj.nodeType === 1 && typeof obj.nodeName === "string";
 }
+
+export function cursorToEnd(element) {
+    var range = document.createRange();
+    range.selectNodeContents(element);
+    range.collapse(false);
+    var selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+}
+
+export function dispatchEvent(element, type, canBubble, cancelable) {
+    var event = document.createEvent('HTMLEvents');
+    event.initEvent(type, canBubble, cancelable);
+    element.dispatchEvent(event);
+}
