@@ -196,7 +196,7 @@ class Console {
             }
             this._deactivateInput();
             if (callback.call(this._current, value) === true) {
-                this._read(callback, capture);
+                this.read(callback, capture);
             } else {
                 this._flushInput();
             }
