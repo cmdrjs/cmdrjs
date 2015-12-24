@@ -1,7 +1,7 @@
 import * as utils from './utils.js';
 import Console from './console.js';
 
-const _defaultSettings = {
+const _defaultOptions = {
     autoOpen: false,
     openKey: 192,
     closeKey: 27
@@ -10,7 +10,7 @@ const _defaultSettings = {
 let _instance = null;
 
 class OverlayConsole extends Console {
-    constructor(settings) {
+    constructor(options) {
         
         var overlayNode;
         if (_instance) {
@@ -23,9 +23,9 @@ class OverlayConsole extends Console {
             document.body.appendChild(overlayNode);
         }
 
-        settings = utils.extend({}, _defaultSettings, settings);
+        options = utils.extend({}, _defaultOptions, options);
 
-        super(overlayNode, settings);
+        super(overlayNode, options);
         
         this._overlayNode = overlayNode;
         this._documentEventHandler = null;
@@ -40,10 +40,10 @@ class OverlayConsole extends Console {
             if (!this.isOpen() &&
                 ['INPUT', 'TEXTAREA', 'SELECT'].indexOf(event.target.tagName) === -1 &&
                 !event.target.isContentEditable &&
-                event.keyCode == this.settings.openKey) {
+                event.keyCode == this.options.openKey) {
                 event.preventDefault();
                 this.open();
-            } else if (this.isOpen() && event.keyCode == this.settings.closeKey) {
+            } else if (this.isOpen() && event.keyCode == this.options.closeKey) {
                 this.close();
             }
         };
@@ -52,7 +52,7 @@ class OverlayConsole extends Console {
 
         super.init();
 
-        if (this.settings.autoOpen) {
+        if (this.options.autoOpen) {
             this.open();
         }
     }

@@ -1,7 +1,7 @@
 import * as utils from './utils.js';
 import HistoryProvider from './history-provider.js';
 
-const _defaultSettings = {
+const _defaultOptions = {
     autoInit: true,
     echo: true,
     promptPrefix: '> ',
@@ -13,12 +13,12 @@ const _defaultSettings = {
 const _promptIndentPadding = typeof InstallTrigger !== 'undefined'; // Firefox - misplaced cursor when using 'text-indent'
 
 class Console {
-    constructor(containerElement, settings) {
+    constructor(containerElement, options) {
         if (!containerElement || !utils.isElement(containerElement)) {
             throw '"containerElement" must be an HTMLElement.'
         }
         
-        this._settings = utils.extend({}, _defaultSettings, settings);
+        this._options = utils.extend({}, _defaultOptions, options);
         this._containerNode = containerElement;
         this._consoleNode = null;
         this._inputNode = null;
@@ -33,7 +33,7 @@ class Console {
         
         this._historyProvider = new HistoryProvider();
         
-        if (this._settings.autoInit) {
+        if (this._options.autoInit) {
             this.init();
         }
     }
@@ -42,8 +42,8 @@ class Console {
         return this._initialized;
     }
     
-    get settings() {
-        return this._settings;
+    get options() {
+        return this._options;
     }
 
     get definitions() {
@@ -60,7 +60,7 @@ class Console {
     init() {
         if (this._initialized) return;
         
-        this._consoleNode = utils.createElement(this._settings.template);
+        this._consoleNode = utils.createElement(this._options.template);
 
         this._containerNode.appendChild(this._consoleNode);
 
@@ -153,7 +153,7 @@ class Console {
             }
         });
 
-        if (this._settings.predefinedCommands) {
+        if (this._options.predefinedCommands) {
             this.predefine();
         }
 
@@ -272,7 +272,7 @@ class Console {
         }
 
         this._promptNode.textContent = command;
-        this._flushInput(!this._settings.echo);
+        this._flushInput(!this._options.echo);
         this._historyAdd(command);
         this._deactivateInput();
 
@@ -329,8 +329,8 @@ class Console {
         });
     }
 
-    define(names, callback, settings) {
-        var definitions = this._createDefinitions(names, callback, settings);
+    define(names, callback, options) {
+        var definitions = this._createDefinitions(names, callback, options);
         for (var i = 0, l = definitions.length; i < l; i++) {
             this._definitions[definitions[i].name] = definitions[i];
         }
@@ -355,9 +355,9 @@ class Console {
         this.define('ECHO', function (arg) {
             var toggle = arg.toUpperCase();
             if (toggle === 'ON') {
-                this.console.settings.echo = true;
+                this.console.options.echo = true;
             } else if (toggle === 'OFF') {
-                this.console.settings.echo = false;
+                this.console.options.echo = false;
             } else {
                 this.console.writeLine(arg);
             }
@@ -381,7 +381,7 @@ class Console {
                 this._outputLineNode = null;
             }
         } else {
-            this._prefixNode.textContent = this._settings.promptPrefix;
+            this._prefixNode.textContent = this._options.promptPrefix;
         }
         this._inputNode.style.display = '';
         setTimeout(() => {
@@ -448,14 +448,14 @@ class Console {
         };
     }
 
-    _createDefinitions(names, callback, settings) {
+    _createDefinitions(names, callback, options) {
         if (typeof names !== 'string' && !Array.isArray(names)) {
-            settings = callback;
+            options = callback;
             callback = names;
             names = null;
         }
         if (typeof callback !== 'function') {
-            settings = callback;
+            options = callback;
             callback = null;
         }
 
@@ -483,7 +483,7 @@ class Console {
                 available: true
             };
 
-            utils.extend(definition, settings);
+            utils.extend(definition, options);
 
             definitions.push(definition);
         }
@@ -502,7 +502,7 @@ class Console {
         
         var definitions = [];
         
-        if (this._settings.abbreviatedCommands)
+        if (this._options.abbreviatedCommands)
         {
             for (var key in this._definitions) {
                 if (key.indexOf(name, 0) === 0 && utils.unwrap(this._definitions[key].available)) {
