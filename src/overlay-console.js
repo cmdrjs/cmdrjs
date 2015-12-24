@@ -32,18 +32,22 @@ class OverlayConsole extends Console {
         
         _instance = this;
     }
+    
+    get isOpen() {
+        return this._overlayNode.style.display !== 'none';
+    }
 
     init() {
         if (this.initialized) return;
 
         this._documentEventHandler = (event) => {
-            if (!this.isOpen() &&
+            if (!this.isOpen &&
                 ['INPUT', 'TEXTAREA', 'SELECT'].indexOf(event.target.tagName) === -1 &&
                 !event.target.isContentEditable &&
                 event.keyCode == this.options.openKey) {
                 event.preventDefault();
                 this.open();
-            } else if (this.isOpen() && event.keyCode == this.options.closeKey) {
+            } else if (this.isOpen && event.keyCode == this.options.closeKey) {
                 this.close();
             }
         };
@@ -65,10 +69,6 @@ class OverlayConsole extends Console {
         this.close();
 
         super.dispose();
-    }
-
-    isOpen() {
-        return this._overlayNode.style.display !== 'none';
     }
 
     open() {
