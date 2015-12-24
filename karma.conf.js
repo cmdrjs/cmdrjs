@@ -7,10 +7,7 @@ module.exports = function(config) {
     basePath: '',
     frameworks: ['requirejs', 'mocha', 'expect'],
     files: [{
-      pattern: 'bower_components/**/*.js',
-      included: false
-    }, {
-      pattern: 'src/**.js',
+      pattern: 'dist/**.js',
       included: false
     }, {
       pattern: 'spec/cmdr-tests.js',

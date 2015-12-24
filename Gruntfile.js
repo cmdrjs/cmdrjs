@@ -7,6 +7,9 @@
         grunt.initConfig({
             pkg: grunt.file.readJSON('package.json'),
             jshint: {
+                options: {
+                    esnext: true
+                },
                 all: ['Gruntfile.js', 'src/**/*.js', 'spec/**/*.js']
             },
             watch: {
@@ -67,7 +70,7 @@
                             debug: true
                         },
                         plugin: [
-                            [ "browserify-header" ]
+                            ["browserify-header"]
                         ]
                     },
                     files: {

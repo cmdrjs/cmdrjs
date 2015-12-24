@@ -15,7 +15,7 @@ const _promptIndentPadding = typeof InstallTrigger !== 'undefined'; // Firefox -
 class Console {
     constructor(containerElement, options) {
         if (!containerElement || !utils.isElement(containerElement)) {
-            throw '"containerElement" must be an HTMLElement.'
+            throw '"containerElement" must be an HTMLElement.';
         }
         
         this._options = utils.extend({}, _defaultOptions, options);
@@ -522,7 +522,7 @@ class Console {
         if (!this._prefixNode._spaceWidth) {
             var elem1 = utils.createElement('<span style="visibility: hidden">| |</span>');
             this._prefixNode.appendChild(elem1);
-            var elem2 = utils.createElement('<span style="visibility: hidden">||</span>')
+            var elem2 = utils.createElement('<span style="visibility: hidden">||</span>');
             this._prefixNode.appendChild(elem2);
             this._prefixNode._spaceWidth = elem1.offsetWidth - elem2.offsetWidth;
             this._prefixNode.removeChild(elem1);

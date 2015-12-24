@@ -1,4 +1,4 @@
-define(['src/cmdr'], function (cmdr) {
+define(['dist/cmdr'], function (cmdr) {
 
   describe('test', function () {
 

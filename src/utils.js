@@ -13,13 +13,13 @@ export function extend(out) {
         }
     }
     return out;
-};
+}
 
 export function createElement(html) {
     var wrapper = document.createElement('div');
     wrapper.innerHTML = html;
     return wrapper.firstChild;
-};
+}
 
 export function pad(value, padding, length) {
     var right = length >= 0;
@@ -56,7 +56,7 @@ export function smoothScroll(element, target, duration) {
         if (point >= end) { return 1; }
         var x = (point - start) / (end - start);
         return x * x * (3 - 2 * x);
-    }
+    };
 
     return new Promise(function (resolve, reject) {
         var previousTop = element.scrollTop;
@@ -77,15 +77,14 @@ export function smoothScroll(element, target, duration) {
                 return;
             }
 
-            if (element.scrollTop === previousTop
-                && element.scrollTop !== frameTop) {
+            if (element.scrollTop === previousTop && element.scrollTop !== frameTop) {
                 resolve();
                 return;
             }
             previousTop = element.scrollTop;
 
             setTimeout(scrollFrame, 0);
-        }
+        };
 
         setTimeout(scrollFrame, 0);
     });
@@ -100,7 +99,7 @@ export function defer() {
 
         this.then = this.promise.then.bind(this.promise);
         this.catch = this.promise.catch.bind(this.promise);
-    };
+    }
 
     return new Deferred();
 }
