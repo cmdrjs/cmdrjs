@@ -65,7 +65,10 @@
                         browserifyOptions: {
                             standalone: 'cmdr',
                             debug: true
-                        }
+                        },
+                        plugin: [
+                            [ "browserify-header" ]
+                        ]
                     },
                     files: {
                         "dist/cmdr.js": "src/cmdr.js"
@@ -90,6 +93,9 @@
                 }
             },
             uglify: {
+                options: {
+                    preserveComments: 'some'
+                },
                 dist: {
                     files: {
                         'dist/cmdr.min.js': ['dist/cmdr.js']
