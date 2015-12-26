@@ -1,12 +1,19 @@
 class HistoryProvider {
-    constructor(settings) {
+    constructor(shell) {
+        this.shell = shell;
         this.history = [];
         this.historyIndex = -1;
+        
+        this._preexecuteHandler = (command) => {
+            this.history.unshift(command);
+            this.historyIndex = -1;
+        }
+        this.shell.on('preexecute', this._preexecuteHandler);
     }
     
-    add(command) {
-        this.history.unshift(command);
-        this.historyIndex = -1;
+    dispose() {
+        this.clear();
+        this.shell.off('preexecute', this._preexecuteHandler);
     }
     
     cycle(forward) {

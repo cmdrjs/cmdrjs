@@ -1,17 +1,17 @@
-.cmdr-console {
+.cmdr-shell {
   overflow-y: auto;
   padding: 5px;
   color: #fff;
   font-family: "Courier New";
   font-size: 10pt; }
-  .cmdr-console .input {
+  .cmdr-shell .input {
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
     position: relative; }
-    .cmdr-console .input .prefix {
+    .cmdr-shell .input .prefix {
       display: inline-block; }
-    .cmdr-console .input .prompt {
+    .cmdr-shell .input .prompt {
       -webkit-box-sizing: border-box;
       -moz-box-sizing: border-box;
       box-sizing: border-box;
@@ -25,20 +25,20 @@
       top: 0;
       word-break: break-all;
       outline: 0; }
-    .cmdr-console .input .prompt:focus {
+    .cmdr-shell .input .prompt:focus {
       outline: none; }
-  .cmdr-console .output div {
+  .cmdr-shell .output div {
     word-break: break-all; }
-  .cmdr-console .output span {
+  .cmdr-shell .output span {
     white-space: -moz-pre-wrap;
     white-space: -pre-wrap;
     white-space: -o-pre-wrap;
     white-space: pre-wrap; }
-  .cmdr-console .output .success {
+  .cmdr-shell .output .success {
     color: #4cff00; }
-  .cmdr-console .output .warning {
+  .cmdr-shell .output .warning {
     color: yellow; }
-  .cmdr-console .output .error {
+  .cmdr-shell .output .error {
     color: red; }
 
 .cmdr-overlay {

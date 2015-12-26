@@ -1,9 +1,9 @@
 export function extend(out) {
     out = out || {};
-    for (var i = 1; i < arguments.length; i++) {
-        var obj = arguments[i];
+    for (let i = 1; i < arguments.length; i++) {
+        let obj = arguments[i];
         if (!obj) continue;
-        for (var key in obj) {
+        for (let key in obj) {
             if (obj.hasOwnProperty(key)) {
                 if (typeof obj[key] === 'object')
                     extend(out[key], obj[key]);
@@ -16,13 +16,13 @@ export function extend(out) {
 }
 
 export function createElement(html) {
-    var wrapper = document.createElement('div');
+    let wrapper = document.createElement('div');
     wrapper.innerHTML = html;
     return wrapper.firstChild;
 }
 
 export function pad(value, padding, length) {
-    var right = length >= 0;
+    let right = length >= 0;
     length = Math.abs(length);
     while (value.length < length) {
         value = right ? value + padding : padding + value;
@@ -45,31 +45,31 @@ export function smoothScroll(element, target, duration) {
         return Promise.resolve();
     }
 
-    var startTime = Date.now();
-    var endTime = startTime + duration;
+    let startTime = Date.now();
+    let endTime = startTime + duration;
 
-    var startTop = element.scrollTop;
-    var distance = target - startTop;
+    let startTop = element.scrollTop;
+    let distance = target - startTop;
 
-    var smoothStep = function (start, end, point) {
+    let smoothStep = function (start, end, point) {
         if (point <= start) { return 0; }
         if (point >= end) { return 1; }
-        var x = (point - start) / (end - start);
+        let x = (point - start) / (end - start);
         return x * x * (3 - 2 * x);
     };
 
     return new Promise(function (resolve, reject) {
-        var previousTop = element.scrollTop;
+        let previousTop = element.scrollTop;
 
-        var scrollFrame = function () {
+        let scrollFrame = function () {
             if (element.scrollTop != previousTop) {
                 reject("interrupted");
                 return;
             }
 
-            var now = Date.now();
-            var point = smoothStep(startTime, endTime, now);
-            var frameTop = Math.round(startTop + (distance * point));
+            let now = Date.now();
+            let point = smoothStep(startTime, endTime, now);
+            let frameTop = Math.round(startTop + (distance * point));
             element.scrollTop = frameTop;
 
             if (now >= endTime) {
@@ -106,7 +106,7 @@ export function defer() {
 
 export function blur(element = null) {
     if (element && element !== document.activeElement) return;
-    var temp = document.createElement("input");
+    let temp = document.createElement("input");
     document.body.appendChild(temp);
     temp.focus();
     document.body.removeChild(temp);
@@ -119,16 +119,40 @@ export function isElement(obj) {
 }
 
 export function cursorToEnd(element) {
-    var range = document.createRange();
+    let range = document.createRange();
     range.selectNodeContents(element);
     range.collapse(false);
-    var selection = window.getSelection();
+    let selection = window.getSelection();
     selection.removeAllRanges();
     selection.addRange(range);
 }
 
+export function getCursorPosition(element) {
+    let pos = 0;
+    let doc = element.ownerDocument || element.document;
+    let win = doc.defaultView || doc.parentWindow;
+    let sel;
+    if (typeof win.getSelection != "undefined") {
+        sel = win.getSelection();
+        if (sel.rangeCount > 0) {
+            let range = win.getSelection().getRangeAt(0);
+            let preCursorRange = range.cloneRange();
+            preCursorRange.selectNodeContents(element);
+            preCursorRange.setEnd(range.endContainer, range.endOffset);
+            pos = preCursorRange.toString().length;
+        }
+    } else if ((sel = doc.selection) && sel.type != "Control") {
+        let textRange = sel.createRange();
+        let preCursorTextRange = doc.body.createTextRange();
+        preCursorTextRange.moveToElementText(element);
+        preCursorTextRange.setEndPoint("EndToEnd", textRange);
+        pos = preCursorTextRange.text.length;
+    }
+    return pos;
+}
+
 export function dispatchEvent(element, type, canBubble, cancelable) {
-    var event = document.createEvent('HTMLEvents');
+    let event = document.createEvent('HTMLEvents');
     event.initEvent(type, canBubble, cancelable);
     element.dispatchEvent(event);
 }

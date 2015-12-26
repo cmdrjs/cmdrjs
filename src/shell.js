@@ -1,18 +1,19 @@
 import * as utils from './utils.js';
 import HistoryProvider from './history-provider.js';
+import AutocompleteProvider from './autocomplete-provider.js';
 
 const _defaultOptions = {
     autoInit: true,
     echo: true,
-    promptPrefix: '> ',
-    template: '<div class="cmdr-console"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>',
+    defaultPromptPrefix: '>',
+    template: '<div class="cmdr-shell"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>',
     predefinedCommands: true,
     abbreviatedCommands: true    
 };
 
 const _promptIndentPadding = typeof InstallTrigger !== 'undefined'; // Firefox - misplaced cursor when using 'text-indent'
 
-class Console {
+class Shell {
     constructor(containerNode, options) {
         if (!containerNode || !utils.isElement(containerNode)) {
             throw '"containerNode" must be an HTMLElement.';
@@ -20,7 +21,7 @@ class Console {
         
         this._options = utils.extend({}, _defaultOptions, options);
         this._containerNode = containerNode;
-        this._consoleNode = null;
+        this._shellNode = null;
         this._inputNode = null;
         this._prefixNode = null;
         this._promptNode = null;
@@ -29,17 +30,22 @@ class Console {
         this._definitions = {};
         this._current = null;
         this._queue = [];
-        this._initialized = false;
+        this._promptPrefix = null;
+        this._isInputInline = false;
+        this._autocompleteValue = null;
+        this._eventHandlers = {};
+        this._isInitialized = false;
         
-        this._historyProvider = new HistoryProvider();
+        this._historyProvider = null;
+        this._autocompleteProvider = null;
         
         if (this._options.autoInit) {
             this.init();
         }
     }
     
-    get initialized() {
-        return this._initialized;
+    get isInitialized() {
+        return this._isInitialized;
     }
     
     get options() {
@@ -50,30 +56,51 @@ class Console {
         return this._definitions;
     }
     
+    get promptPrefix() {
+        return this._promptPrefix;
+    }
+    set promptPrefix(value) {
+        this._promptPrefix = value;
+        if (!this._isInputInline) {
+            this._prefixNode.textContent = value;
+            this._setPromptIndent();
+        }
+    }
+    
     get historyProvider() {
         return this._historyProvider;
     }
     set historyProvider(value) {
         this._historyProvider = value;
     }
-
+    
+    get autocompleteProvider() {
+        return this._autocompleteProvider;
+    }
+    set autocompleteProvider(value) {
+        this._autocompleteProvider = value;
+    }
+    
     init() {
-        if (this._initialized) return;
-        
-        this._consoleNode = utils.createElement(this._options.template);
+        if (this._isInitialized) return;
+                
+        this._shellNode = utils.createElement(this._options.template);
 
-        this._containerNode.appendChild(this._consoleNode);
+        this._containerNode.appendChild(this._shellNode);
 
-        this._outputNode = this._consoleNode.querySelector('.output');
-        this._inputNode = this._consoleNode.querySelector('.input');
-        this._prefixNode = this._consoleNode.querySelector('.prefix');
-        this._promptNode = this._consoleNode.querySelector('.prompt');
+        this._outputNode = this._shellNode.querySelector('.output');
+        this._inputNode = this._shellNode.querySelector('.input');
+        this._prefixNode = this._shellNode.querySelector('.prefix');
+        this._promptNode = this._shellNode.querySelector('.prompt');
 
         this._promptNode.addEventListener('keydown', (event) => {
             if (!this._current) {
+                if (event.keyCode !== 9) {
+                    this._autocompleteReset();
+                }                
                 switch (event.keyCode) {
                     case 13:
-                        var value = this._promptNode.textContent;
+                        let value = this._promptNode.textContent;
                         if (value) {
                             this.execute(value);
                         }
@@ -88,6 +115,7 @@ class Console {
                         event.preventDefault();
                         return false;
                     case 9:
+                        this._autocompleteCycle(!event.shiftKey);
                         event.preventDefault();
                         return false;
                 }
@@ -120,11 +148,11 @@ class Console {
 
         this._promptNode.addEventListener('paste', () => {
             setTimeout(() => {
-                var value = this._promptNode.textContent;
-                var lines = value.split(/\r\n|\r|\n/g);
-                var length = lines.length;
+                let value = this._promptNode.textContent;
+                let lines = value.split(/\r\n|\r|\n/g);
+                let length = lines.length;
                 if (length > 1) {
-                    for (var i = 1; i < length; i++) {
+                    for (let i = 1; i < length; i++) {
                         if (lines[i].length > 0) {
                             this._queue.get(this).push(lines[i]);
                         }
@@ -146,7 +174,7 @@ class Console {
             });
         }
 
-        this._consoleNode.addEventListener('click', (event) => {
+        this._shellNode.addEventListener('click', (event) => {
             if (event.target !== this._inputNode && !this._inputNode.contains(event.target) &&
                 event.target !== this._outputNode && !this._outputNode.contains(event.target)) {
                 this._promptNode.focus();
@@ -156,17 +184,26 @@ class Console {
         if (this._options.predefinedCommands) {
             this.predefine();
         }
+        
+        if (!this._historyProvider) {
+            this._historyProvider = new HistoryProvider(this);
+        }
+        if (!this._autocompleteProvider) {
+            this._autocompleteProvider = new AutocompleteProvider(this);
+        }
+        
+        this._promptPrefix = this._options.defaultPromptPrefix;
 
         this._activateInput();
         
-        this._initialized = true;
+        this._isInitialized = true;
     }
 
     dispose() {
-        if (!this._initialized) return;
+        if (!this._isInitialized) return;
         
-        this._containerNode.removeChild(this._consoleNode);
-        this._consoleNode = null;
+        this._containerNode.removeChild(this._shellNode);
+        this._shellNode = null;
         this._outputNode = null;
         this._inputNode = null;
         this._prefixNode = null;
@@ -174,8 +211,20 @@ class Console {
         this._definitions = {};
         this._current = null;
         this._queue = [];
+        this._promptPrefix = null;
+        this._isInputInline = false;
+        this._eventHandlers = {};
         
-        this._initialized = false;      
+        if (this._historyProvider) {
+            this._historyProvider.dispose();
+            this._historyProvider = null;
+        }
+        if (this._autocompleteProvider) {
+            this._autocompleteProvider.dispose();
+            this._autocompleteProvider = null;
+        }
+        
+        this._isInitialized = false;      
     }
         
     reset() {
@@ -195,7 +244,7 @@ class Console {
                 this._promptNode.textContent = value;
             }
             this._deactivateInput();
-            if (callback.call(this._current, value) === true) {
+            if (callback(value, this._current) === true) {
                 this.read(callback, capture);
             } else {
                 this._flushInput();
@@ -219,7 +268,7 @@ class Console {
             this._promptNode.textContent = value;
             this._deactivateInput();
             this._flushInput();
-            if (callback.call(this._current, value) === true) {
+            if (callback(value, this._current) === true) {
                 this.readLine(callback);
             }
         });
@@ -231,7 +280,7 @@ class Console {
 
     write(value, cssClass) {
         value = value || '';
-        var outputValue = utils.createElement(`<span class="${cssClass}">${value}</span>`);
+        let outputValue = utils.createElement(`<span class="${cssClass}">${value}</span>`);
         if (!this._outputLineNode) {
             this._outputLineNode = utils.createElement('<div></div>');
             this._outputNode.appendChild(this._outputLineNode);
@@ -270,17 +319,18 @@ class Console {
         if (typeof command !== 'string' || command.length === 0) {
             throw 'Invalid command';
         }
-
+        
+        this._trigger('preexecute', command);
+        
         this._promptNode.textContent = command;
         this._flushInput(!this._options.echo);
-        this._historyAdd(command);
         this._deactivateInput();
 
         command = command.trim();
 
-        var parsed = this._parseCommand(command);
+        let parsed = this._parseCommand(command);
 
-        var definitions = this._getDefinitions(parsed.name);
+        let definitions = this._getDefinitions(parsed.name);
         if (!definitions || definitions.length < 1) {
             this.writeLine('Invalid command', 'error');
             this._activateInput();
@@ -288,7 +338,7 @@ class Console {
         } else if (definitions.length > 1) {
             this.writeLine('Ambiguous command', 'error');
             this.writeLine();
-            for (var i = 0; i < definitions.length; i++) {
+            for (let i = 0; i < definitions.length; i++) {
                 this.writePad(definitions[i].name, ' ', 10);
                 this.writeLine(definitions[i].description);
             }
@@ -297,29 +347,32 @@ class Console {
             return;
         }
 
-        var definition = definitions[0];
+        let definition = definitions[0];
 
         this._current = {
             command: command,
             definition: definition,
-            console: this
+            shell: this
         };
-
-        var args = parsed.args;
+        
+        let args = parsed.args;
         if (!definition.parse) {
             args = [parsed.arg];
-        }
+        }       
+        
+        this._trigger('executing', this._current);
 
-        var result;
+        let result;
         try {
             result = definition.callback.apply(this._current, args);
         } catch (error) {
-            this.writeLine('Unhandled exception. See consoleNode log for details.', 'error');
+            this.writeLine('Unhandled exception. See browser console log for details.', 'error');
             console.error(error);
         }
 
         Promise.all([result]).then(() => {
             setTimeout(() => {
+                this._trigger('execute', this._current);
                 this._current = null;
                 this._activateInput();
                 if (this._queue.length > 0) {
@@ -330,36 +383,36 @@ class Console {
     }
 
     define(names, callback, options) {
-        var definitions = this._createDefinitions(names, callback, options);
-        for (var i = 0, l = definitions.length; i < l; i++) {
+        let definitions = this._createDefinitions(names, callback, options);
+        for (let i = 0, l = definitions.length; i < l; i++) {
             this._definitions[definitions[i].name] = definitions[i];
         }
     }
     
     predefine() {
         this.define(['HELP', '?'], function () {
-            this.console.writeLine('The following commands are available:');
-            this.console.writeLine();
-            for (var key in this.console.definitions) {
-                var definition = this.console.definitions[key];
+            this.shell.writeLine('The following commands are available:');
+            this.shell.writeLine();
+            for (let key in this.shell.definitions) {
+                let definition = this.shell.definitions[key];
                 if (!!utils.unwrap(definition.available)) {
-                    this.console.writePad(key, ' ', 10);
-                    this.console.writeLine(definition.description);
+                    this.shell.writePad(key, ' ', 10);
+                    this.shell.writeLine(definition.description);
                 }
             }
-            this.console.writeLine();
+            this.shell.writeLine();
         }, {
                 description: 'Lists the available commands'
             });
 
         this.define('ECHO', function (arg) {
-            var toggle = arg.toUpperCase();
+            let toggle = arg.toUpperCase();
             if (toggle === 'ON') {
-                this.console.options.echo = true;
+                this.shell.options.echo = true;
             } else if (toggle === 'OFF') {
-                this.console.options.echo = false;
+                this.shell.options.echo = false;
             } else {
-                this.console.writeLine(arg);
+                this.shell.writeLine(arg);
             }
         }, {
                 parse: false,
@@ -367,10 +420,34 @@ class Console {
             });
 
         this.define(['CLS'], function () {
-            this.console.clear();
+            this.shell.clear();
         }, {
                 description: 'Clears the command prompt'
             });
+    }
+
+    on(event, callback) {
+        if (!this._eventHandlers[event]) {
+            this._eventHandlers[event] = [];
+        }
+        this._eventHandlers[event].push(callback);
+    }
+
+    off(event, callback) {
+        if (!this._eventHandlers[event]) {
+            return;
+        }
+        let index = this._eventHandlers[event].indexOf(callback);
+        if (index > -1) {
+            this._eventHandlers[event].splice(index, 1);
+        }
+    }
+    
+    _trigger(event, data) {
+        if (!this._eventHandlers[event]) return;
+        for (let callback of this._eventHandlers[event]) {
+            callback.call(this, data);
+        }
     }
 
     _activateInput(inline) {
@@ -380,15 +457,17 @@ class Console {
                 this._outputNode.removeChild(this._outputLineNode);
                 this._outputLineNode = null;
             }
+            this._isInputInline = true;
         } else {
-            this._prefixNode.textContent = this._options.promptPrefix;
+            this._prefixNode.textContent = this._promptPrefix;
+            this._isInputInline = false;
         }
         this._inputNode.style.display = '';
         setTimeout(() => {
             this._promptNode.setAttribute('disabled', false);
             this._setPromptIndent();
             this._promptNode.focus();
-            utils.smoothScroll(this._consoleNode, this._consoleNode.scrollHeight, 1000);
+            utils.smoothScroll(this._shellNode, this._shellNode.scrollHeight, 1000);
         }, 0);
     }
 
@@ -405,14 +484,10 @@ class Console {
         this._prefixNode.textContent = '';
         this._promptNode.textContent = '';
     }
-
-    _historyAdd(command) {
-        this._historyProvider.add(command);
-    }
     
     _historyCycle(forward) {
         Promise.all([this._historyProvider.cycle(forward)]).then((values) => {
-            var command = values[0];
+            let command = values[0];
             if (command) {
                 this._promptNode.textContent = command;
                 utils.cursorToEnd(this._promptNode);
@@ -420,9 +495,35 @@ class Console {
             }
         });
     }
+    
+    _autocompleteCycle(forward) {
+        let input = this._promptNode.textContent;
+        let cursorPosition = utils.getCursorPosition(this._promptNode);
+        let startIndex = input.lastIndexOf(' ', cursorPosition) + 1;
+        startIndex = startIndex !== -1 ? startIndex : 0;
+        if (this._autocompleteValue === null) {
+            let endIndex = input.indexOf(' ', startIndex);
+            endIndex = endIndex !== -1 ? endIndex : input.length;
+            this._autocompleteValue = input.substring(startIndex, endIndex);
+            console.log(this._autocompleteValue);
+        }
+        Promise.all([this._autocompleteProvider.cycle(forward, this._autocompleteValue)]).then((values) => {
+            let value = values[0];
+            if (value) {
+                this._promptNode.textContent = input.substring(0, startIndex) + value;
+                console.log(this._promptNode.textContent);
+                utils.cursorToEnd(this._promptNode);
+                utils.dispatchEvent(this._promptNode, 'change', true, false);
+            }
+        });
+    }
+    
+    _autocompleteReset() {
+        this._autocompleteValue = null;
+    }
 
     _parseCommand(command) {
-        var exp = /[^\s"]+|"([^"]*)"/gi,
+        let exp = /[^\s"]+|"([^"]*)"/gi,
             name = null,
             arg = null,
             args = [],
@@ -431,7 +532,7 @@ class Console {
         do {
             match = exp.exec(command);
             if (match !== null) {
-                var value = match[1] ? match[1] : match[0];
+                let value = match[1] ? match[1] : match[0];
                 if (match.index === 0) {
                     name = value;
                     arg = command.substr(value.length + (match[1] ? 3 : 1));
@@ -473,10 +574,10 @@ class Console {
             throw 'Invalid command definition';
         }
 
-        var definitions = [];
+        let definitions = [];
 
-        for (var i = 0, l = names.length; i < l; i++) {
-            var definition = {
+        for (let i = 0, l = names.length; i < l; i++) {
+            let definition = {
                 name: names[i].toUpperCase(),
                 callback: callback,
                 parse: true,
@@ -494,17 +595,17 @@ class Console {
     _getDefinitions(name) {
         name = name.toUpperCase();
 
-        var definition = this._definitions[name];
+        let definition = this._definitions[name];
 
         if (definition) {
             return [definition];
         }
         
-        var definitions = [];
+        let definitions = [];
         
         if (this._options.abbreviatedCommands)
         {
-            for (var key in this._definitions) {
+            for (let key in this._definitions) {
                 if (key.indexOf(name, 0) === 0 && utils.unwrap(this._definitions[key].available)) {
                     definitions.push(this._definitions[key]);
                 }
@@ -515,14 +616,14 @@ class Console {
     }
 
     _getPrefixWidth() {
-        var width = this._prefixNode.getBoundingClientRect().width;
-        var text = this._prefixNode.textContent;
-        var spacePadding = text.length - text.trim().length;
+        let width = this._prefixNode.getBoundingClientRect().width;
+        let text = this._prefixNode.textContent;
+        let spacePadding = text.length - text.trim().length;
 
         if (!this._prefixNode._spaceWidth) {
-            var elem1 = utils.createElement('<span style="visibility: hidden">| |</span>');
+            let elem1 = utils.createElement('<span style="visibility: hidden">| |</span>');
             this._prefixNode.appendChild(elem1);
-            var elem2 = utils.createElement('<span style="visibility: hidden">||</span>');
+            let elem2 = utils.createElement('<span style="visibility: hidden">||</span>');
             this._prefixNode.appendChild(elem2);
             this._prefixNode._spaceWidth = elem1.offsetWidth - elem2.offsetWidth;
             this._prefixNode.removeChild(elem1);
@@ -534,7 +635,7 @@ class Console {
     }
 
     _setPromptIndent() {
-        var prefixWidth = this._getPrefixWidth() + 'px';
+        let prefixWidth = this._getPrefixWidth() + 'px';
         if (_promptIndentPadding) {
             if (this._promptNode.textContent) {
                 this._promptNode.style.textIndent = prefixWidth;
@@ -550,4 +651,4 @@ class Console {
     }
 }
 
-export default Console;
+export default Shell;

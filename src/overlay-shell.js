@@ -1,5 +1,5 @@
 import * as utils from './utils.js';
-import Console from './console.js';
+import Shell from './shell.js';
 
 const _defaultOptions = {
     autoOpen: false,
@@ -9,10 +9,10 @@ const _defaultOptions = {
 
 let _instance = null;
 
-class OverlayConsole extends Console {
+class OverlayShell extends Shell {
     constructor(options) {
         
-        var overlayNode;
+        let overlayNode = null;
         if (_instance) {
             overlayNode = _instance._overlayNode;
             _instance.dispose();
@@ -89,11 +89,11 @@ class OverlayConsole extends Console {
         super.predefine();
 
         this.define(['CLOSE', 'EXIT'], function () {
-            this.console.close();
+            this.shell.close();
         }, {
                 description: 'Closes the command prompt'
             });
     }
 }
 
-export default OverlayConsole;
+export default OverlayShell;
