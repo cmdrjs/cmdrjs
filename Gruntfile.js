@@ -70,7 +70,7 @@
                             debug: true
                         },
                         plugin: [
-                            ["browserify-header"]
+                            //["browserify-header"]
                         ]
                     },
                     files: {
