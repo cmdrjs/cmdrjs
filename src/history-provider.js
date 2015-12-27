@@ -7,7 +7,7 @@ class HistoryProvider {
         this._preexecuteHandler = (command) => {
             this.history.unshift(command);
             this.historyIndex = -1;
-        }
+        };
         this.shell.on('preexecute', this._preexecuteHandler);
     }
     
