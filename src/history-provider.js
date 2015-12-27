@@ -12,7 +12,8 @@ class HistoryProvider {
     }
     
     dispose() {
-        this.clear();
+        this.history = [];
+        this.historyIndex = -1;
         this.shell.off('preexecute', this._preexecuteHandler);
     }
     
@@ -26,11 +27,6 @@ class HistoryProvider {
             return this.history[this.historyIndex];
         }
         return null;
-    }
-    
-    clear() {
-        this.history = [];
-        this.historyIndex = -1;  
     }
 }
 

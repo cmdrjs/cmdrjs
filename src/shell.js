@@ -71,6 +71,9 @@ class Shell {
         return this._historyProvider;
     }
     set historyProvider(value) {
+        if (this._historyProvider) {
+            this._historyProvider.dispose();
+        }
         this._historyProvider = value;
     }
     
@@ -78,6 +81,9 @@ class Shell {
         return this._autocompleteProvider;
     }
     set autocompleteProvider(value) {
+        if (this._autocompleteProvider) {
+            this._autocompleteProvider.dispose();
+        }
         this._autocompleteProvider = value;
     }
     
