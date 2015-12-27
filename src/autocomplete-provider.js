@@ -2,22 +2,48 @@ class AutocompleteProvider {
     constructor(shell) {
         this.shell = shell;
         this.values = [];
-        this.valuesIndex = -1;
+        this.index = -1;
+        this.incompleteValue = null;
     }
     
     dispose() {
+        this.values = [];
+        this.index = -1;
+        this.incompleteValue = null;
     }
     
-    cycle(forward) {
-        if (!forward && this.valuesIndex > 0) {
-            this.valuesIndex--;
-            return this.values[this.valuesIndex];
+    getNextValue(forward, incompleteValue) {
+        if (incompleteValue !== this.incompleteValue) {
+            this.index = -1;
         }
-        if (forward && this.values.length > this.valuesIndex + 1) {
-            this.valuesIndex++;
-            return this.values[this.valuesIndex];
+        this.incompleteValue = incompleteValue;
+        
+        let completeValues = this.values.filter((value) => {
+            return value.toLowerCase().slice(0, incompleteValue.toLowerCase()) === incompleteValue.toLowerCase();
+        });
+        
+        if (completeValues.length === 0) {
+            return null;
         }
-        return null;
+        
+        if (this.index >= completeValues.length) {
+            this.index = -1;
+        }
+                
+        if (forward && this.index < completeValues.length - 1) {
+            this.index++;
+        }
+        else if (forward && this.index >= completeValues.length - 1) {
+            this.index = 0;
+        }
+        else if (!forward && this.index > 0) {
+            this.index--;
+        }
+        else if (!forward && this.index <= 0) {
+            this.index = completeValues.length - 1;
+        }
+        
+        return completeValues[this.index];
     }
 }
 

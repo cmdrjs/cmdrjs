@@ -492,7 +492,7 @@ class Shell {
     }
     
     _historyCycle(forward) {
-        Promise.all([this._historyProvider.cycle(forward)]).then((values) => {
+        Promise.all([this._historyProvider.getNextValue(forward)]).then((values) => {
             let command = values[0];
             if (command) {
                 this._promptNode.textContent = command;
@@ -513,11 +513,10 @@ class Shell {
             endIndex = endIndex !== -1 ? endIndex : input.length;
             this._autocompleteValue = input.substring(startIndex, endIndex);
         }
-        Promise.all([this._autocompleteProvider.cycle(forward, this._autocompleteValue)]).then((values) => {
+        Promise.all([this._autocompleteProvider.getNextValue(forward, this._autocompleteValue)]).then((values) => {
             let value = values[0];
             if (value) {
                 this._promptNode.textContent = input.substring(0, startIndex) + value;
-                console.log(this._promptNode.textContent);
                 utils.cursorToEnd(this._promptNode);
                 utils.dispatchEvent(this._promptNode, 'change', true, false);
             }
