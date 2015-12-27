@@ -498,6 +498,7 @@ class Shell {
     
     _autocompleteCycle(forward) {
         let input = this._promptNode.textContent;
+        input = input.replace(/\s$/, ' '); //fixing end whitespace
         let cursorPosition = utils.getCursorPosition(this._promptNode);
         let startIndex = input.lastIndexOf(' ', cursorPosition) + 1;
         startIndex = startIndex !== -1 ? startIndex : 0;
@@ -505,7 +506,6 @@ class Shell {
             let endIndex = input.indexOf(' ', startIndex);
             endIndex = endIndex !== -1 ? endIndex : input.length;
             this._autocompleteValue = input.substring(startIndex, endIndex);
-            console.log(this._autocompleteValue);
         }
         Promise.all([this._autocompleteProvider.cycle(forward, this._autocompleteValue)]).then((values) => {
             let value = values[0];
