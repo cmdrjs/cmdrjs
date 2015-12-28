@@ -1254,7 +1254,10 @@ var DefinitionProvider = (function () {
             var definition = this.definitions[name];
 
             if (definition) {
-                return [definition];
+                if (definition.available) {
+                    return [definition];
+                }
+                return null;
             }
 
             var definitions = [];
