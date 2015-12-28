@@ -51,10 +51,6 @@ class Shell {
     get options() {
         return this._options;
     }
-
-    get definitions() {
-        return this._definitions;
-    }
     
     get promptPrefix() {
         return this._promptPrefix;

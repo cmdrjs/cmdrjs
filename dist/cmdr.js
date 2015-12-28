@@ -2150,11 +2150,6 @@ var Shell = (function () {
             return this._options;
         }
     }, {
-        key: 'definitions',
-        get: function get() {
-            return this._definitions;
-        }
-    }, {
         key: 'promptPrefix',
         get: function get() {
             return this._promptPrefix;
