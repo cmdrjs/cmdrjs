@@ -7,7 +7,7 @@ export function extend(out) {
         if (!obj) continue;
         for (let key in obj) {
             if (obj.hasOwnProperty(key)) {
-                if (typeof obj[key] === 'object')
+                if (typeof obj[key] === 'object' && !Array.isArray(obj[key]))
                     extend(out[key], obj[key]);
                 else
                     out[key] = obj[key];

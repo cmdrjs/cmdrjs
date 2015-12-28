@@ -1,14 +1,13 @@
 import * as utils from './utils.js';
 import HistoryProvider from './history-provider.js';
 import AutocompleteProvider from './autocomplete-provider.js';
+import DefinitionProvider from './definition-provider.js';
 
 const _defaultOptions = {
     autoInit: true,
     echo: true,
-    defaultPromptPrefix: '>',
-    template: '<div class="cmdr-shell"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>',
-    predefinedCommands: true,
-    abbreviatedCommands: true    
+    promptPrefix: '>',
+    template: '<div class="cmdr-shell"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>' 
 };
 
 const _promptIndentPadding = typeof InstallTrigger !== 'undefined'; // Firefox - misplaced cursor when using 'text-indent'
@@ -27,7 +26,7 @@ class Shell {
         this._promptNode = null;
         this._outputNode = null;
         this._outputLineNode = null;
-        this._definitions = {};
+        this._echo = true;
         this._current = null;
         this._queue = [];
         this._promptPrefix = null;
@@ -38,6 +37,7 @@ class Shell {
         
         this._historyProvider = null;
         this._autocompleteProvider = null;
+        this._definitionProvider = null;
         
         if (this._options.autoInit) {
             this.init();
@@ -67,6 +67,13 @@ class Shell {
         }
     }
     
+    get echo() {
+        return this._echo;
+    }
+    set echo(value) {
+        this._echo = value;
+    }
+    
     get historyProvider() {
         return this._historyProvider;
     }
@@ -85,6 +92,16 @@ class Shell {
             this._autocompleteProvider.dispose();
         }
         this._autocompleteProvider = value;
+    }
+    
+    get definitionProvider() {
+        return this._definitionProvider;
+    }
+    set definitionProvider(value) {
+        if (this._definitionProvider) {
+            this._definitionProvider.dispose();
+        }
+        this._definitionProvider = value;
     }
     
     init() {
@@ -186,10 +203,6 @@ class Shell {
                 this._promptNode.focus();
             }
         });
-
-        if (this._options.predefinedCommands) {
-            this.predefine();
-        }
         
         if (!this._historyProvider) {
             this._historyProvider = new HistoryProvider(this);
@@ -197,8 +210,12 @@ class Shell {
         if (!this._autocompleteProvider) {
             this._autocompleteProvider = new AutocompleteProvider(this);
         }
+        if (!this._definitionProvider) {
+            this._definitionProvider = new DefinitionProvider(this);
+        }
         
-        this._promptPrefix = this._options.defaultPromptPrefix;
+        this._promptPrefix = this._options.promptPrefix;
+        this._echo = this._options.echo;
 
         this._activateInput();
         
@@ -213,8 +230,8 @@ class Shell {
         this._outputNode = null;
         this._inputNode = null;
         this._prefixNode = null;
-        this._promptNode = null;
-        this._definitions = {};
+        this._promptNode = null;        
+        this._echo = true;
         this._current = null;
         this._queue = [];
         this._promptPrefix = null;
@@ -228,6 +245,10 @@ class Shell {
         if (this._autocompleteProvider) {
             this._autocompleteProvider.dispose();
             this._autocompleteProvider = null;
+        }
+        if (this._definitionProvider) {
+            this._definitionProvider.dispose();
+            this._definitionProvider = null;
         }
         
         this._isInitialized = false;      
@@ -329,14 +350,14 @@ class Shell {
         this._trigger('preexecute', command);
         
         this._promptNode.textContent = command;
-        this._flushInput(!this._options.echo);
+        this._flushInput(!this._echo);
         this._deactivateInput();
 
         command = command.trim();
 
         let parsed = this._parseCommand(command);
 
-        let definitions = this._getDefinitions(parsed.name);
+        let definitions = this._definitionProvider.getDefinitions(parsed.name);
         if (!definitions || definitions.length < 1) {
             this.writeLine('Invalid command', 'error');
             this._activateInput();
@@ -386,50 +407,6 @@ class Shell {
                 }
             }, 0);
         });
-    }
-
-    define(names, callback, options) {
-        let definitions = this._createDefinitions(names, callback, options);
-        for (let i = 0, l = definitions.length; i < l; i++) {
-            this._definitions[definitions[i].name] = definitions[i];
-        }
-    }
-    
-    predefine() {
-        this.define(['HELP', '?'], function () {
-            this.shell.writeLine('The following commands are available:');
-            this.shell.writeLine();
-            for (let key in this.shell.definitions) {
-                let definition = this.shell.definitions[key];
-                if (!!utils.unwrap(definition.available)) {
-                    this.shell.writePad(key, ' ', 10);
-                    this.shell.writeLine(definition.description);
-                }
-            }
-            this.shell.writeLine();
-        }, {
-                description: 'Lists the available commands'
-            });
-
-        this.define('ECHO', function (arg) {
-            let toggle = arg.toUpperCase();
-            if (toggle === 'ON') {
-                this.shell.options.echo = true;
-            } else if (toggle === 'OFF') {
-                this.shell.options.echo = false;
-            } else {
-                this.shell.writeLine(arg);
-            }
-        }, {
-                parse: false,
-                description: 'Displays provided text or toggles command echoing'
-            });
-
-        this.define(['CLS'], function () {
-            this.shell.clear();
-        }, {
-                description: 'Clears the command prompt'
-            });
     }
 
     on(event, callback) {
@@ -553,73 +530,7 @@ class Shell {
             args: args
         };
     }
-
-    _createDefinitions(names, callback, options) {
-        if (typeof names !== 'string' && !Array.isArray(names)) {
-            options = callback;
-            callback = names;
-            names = null;
-        }
-        if (typeof callback !== 'function') {
-            options = callback;
-            callback = null;
-        }
-
-        if (typeof names === 'string') {
-            names = [names];
-        } else if (Array.isArray(names)) {
-            names = names.filter(function (value) {
-                return typeof value === 'string';
-            });
-        }
-
-        if (!Array.isArray(names) ||
-            names.length === 0 ||
-            typeof callback !== 'function') {
-            throw 'Invalid command definition';
-        }
-
-        let definitions = [];
-
-        for (let i = 0, l = names.length; i < l; i++) {
-            let definition = {
-                name: names[i].toUpperCase(),
-                callback: callback,
-                parse: true,
-                available: true
-            };
-
-            utils.extend(definition, options);
-
-            definitions.push(definition);
-        }
-
-        return definitions;
-    }
-
-    _getDefinitions(name) {
-        name = name.toUpperCase();
-
-        let definition = this._definitions[name];
-
-        if (definition) {
-            return [definition];
-        }
-        
-        let definitions = [];
-        
-        if (this._options.abbreviatedCommands)
-        {
-            for (let key in this._definitions) {
-                if (key.indexOf(name, 0) === 0 && utils.unwrap(this._definitions[key].available)) {
-                    definitions.push(this._definitions[key]);
-                }
-            }
-        }
-
-        return definitions;
-    }
-
+    
     _getPrefixWidth() {
         let width = this._prefixNode.getBoundingClientRect().width;
         let text = this._prefixNode.textContent;

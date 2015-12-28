@@ -71,16 +71,6 @@ class OverlayShell extends Shell {
         this._overlayNode.style.display = 'none';
         this.blur();
     }
-
-    predefine() {
-        super.predefine();
-
-        this.define(['CLOSE', 'EXIT'], function () {
-            this.shell.close();
-        }, {
-                description: 'Closes the command prompt'
-            });
-    }
 }
 
 export default OverlayShell;
