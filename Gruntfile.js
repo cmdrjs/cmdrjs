@@ -1,6 +1,6 @@
 (function () {
     module.exports = function (grunt) {
-        require('load-grunt-tasks')(grunt); 
+        require('load-grunt-tasks')(grunt);
         grunt.initConfig({
             pkg: grunt.file.readJSON('package.json'),
             jshint: {
@@ -8,15 +8,6 @@
                     esnext: true
                 },
                 all: ['src/**/*.js', 'spec/**/*.js']
-            },
-            watch: {
-                options: {
-                    spawn: false
-                },
-                scripts: {
-                    files: ['src/**/*.js', 'src/**/*.scss'],
-                    tasks: ['jshint', 'browserify', 'sass']
-                }
             },
             bower: {
                 tests: {
@@ -42,19 +33,8 @@
                     background: true,
                 },
             },
-            babel: {
-                options: {
-                    sourceMap: true,
-                    presets: ['es2015']
-                },
-                dist: {
-                    files: {
-                        'dist/cmdr.js': 'src/cmdr.js'
-                    }
-                }
-            },
             browserify: {
-                dist: {
+                dev: {
                     options: {
                         transform: [["babelify", {
                             presets: ['es2015']
@@ -62,10 +42,20 @@
                         browserifyOptions: {
                             standalone: 'cmdr',
                             debug: true
-                        },
-                        plugin: [
-                            //["browserify-header"]
-                        ]
+                        }
+                    },
+                    files: {
+                        "dev/cmdr.js": "src/cmdr.js"
+                    }
+                },
+                dist: {
+                    options: {
+                        transform: [["babelify", {
+                            presets: ['es2015']
+                        }]],
+                        browserifyOptions: {
+                            standalone: 'cmdr'
+                        }
                     },
                     files: {
                         "dist/cmdr.js": "src/cmdr.js"
@@ -73,8 +63,10 @@
                 }
             },
             sass: {
-                options: {
-                    sourceMap: true
+                dev: {
+                    files: {
+                        'dev/cmdr.css': 'src/cmdr.scss'
+                    }
                 },
                 dist: {
                     files: {
@@ -83,9 +75,6 @@
                 }
             },
             uglify: {
-                options: {
-                    preserveComments: 'some'
-                },
                 dist: {
                     files: {
                         'dist/cmdr.min.js': ['dist/cmdr.js']
@@ -98,17 +87,37 @@
                         'dist/cmdr.min.css': ['dist/cmdr.css']
                     }
                 }
-            }
+            },
+            usebanner: {
+                dist: {
+                    options: {
+                        position: 'top',
+                        banner: '/* <%= pkg.name %> | version <%= pkg.version %> | license <%= pkg.license %> | (c) <%= grunt.template.today("yyyy") %> <%= pkg.author %> | <%= pkg.homepage %> */'
+                    },
+                    files: {
+                        src: 'dist/*.*'
+                    }
+                }
+            },
+            watch: {
+                options: {
+                    spawn: false
+                },
+                dev: {
+                    files: ['src/**/*.*'],
+                    tasks: ['jshint', 'browserify:dev', 'sass:dev']
+                }
+            },
         });
 
         //development
-        grunt.registerTask('dev', ['jshint', 'browserify', 'sass', 'watch:scripts']);
+        grunt.registerTask('dev', ['jshint', 'browserify:dev', 'sass:dev', 'watch:dev']);
 
         //test
         grunt.registerTask('test', ['jshint', 'karma:once']);
         grunt.registerTask('test:full', ['jshint', 'bowerVerify']);
     
         //build
-        grunt.registerTask('build', ['browserify', 'sass', 'uglify', 'cssmin']);
+        grunt.registerTask('build', ['browserify:dist', 'sass:dist', 'uglify:dist', 'cssmin:dist', 'usebanner:dist']);
     };
 })();
