@@ -6,9 +6,7 @@ env:
   - secure: hCddMWdTteqSjgQBsrVuAaPewpBDqSt2MyHt7fStxAQzQ7rJLggElw4Y2MhRASZ0INYxOgYbaze5sbPhArdrpB0Xc0lSF1NZ7PFWGH1ot9axZEnDGTqav0+O/Wnl78a8DzAmcAaJ8qxBXLnYxcjRBrc/mdCXQW5y9w4f6CnY1iw=
 before_script:
 - npm install -g grunt-cli
-- npm install -g bower
 script:
-- bower install
 - grunt test
 - grunt build
 after_success:
