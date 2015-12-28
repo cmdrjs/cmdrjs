@@ -16,7 +16,7 @@ export function extend(out) {
     }
     return out;
 }
-
+  
 //String
 
 export function pad(value, padding, length) {
