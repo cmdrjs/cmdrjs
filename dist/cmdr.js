@@ -1274,24 +1274,14 @@ var _defaultOptions = {
     closeKey: 27
 };
 
-var _instance = null;
-
 var OverlayShell = (function (_Shell) {
     _inherits(OverlayShell, _Shell);
 
     function OverlayShell(options) {
         _classCallCheck(this, OverlayShell);
 
-        var overlayNode = null;
-        if (_instance) {
-            overlayNode = _instance._overlayNode;
-            _instance.dispose();
-        }
-
-        if (!overlayNode) {
-            overlayNode = utils.createElement('<div style="display: none" class="cmdr-overlay"></div>');
-            document.body.appendChild(overlayNode);
-        }
+        var overlayNode = utils.createElement('<div style="display: none" class="cmdr-overlay"></div>');
+        document.body.appendChild(overlayNode);
 
         options = utils.extend({}, _defaultOptions, options);
 
@@ -1299,8 +1289,6 @@ var OverlayShell = (function (_Shell) {
 
         _this._overlayNode = overlayNode;
         _this._documentEventHandler = null;
-
-        _instance = _this;
         return _this;
     }
 
@@ -1333,11 +1321,10 @@ var OverlayShell = (function (_Shell) {
         value: function dispose() {
             if (!this.initialized) return;
 
-            document.removeEventListener('keydown', this._documentEventHandler);
-
-            this.close();
-
             _get(Object.getPrototypeOf(OverlayShell.prototype), 'dispose', this).call(this);
+
+            document.removeEventListener('keydown', this._documentEventHandler);
+            document.body.removeChild(this._overlayNode);
         }
     }, {
         key: 'open',
