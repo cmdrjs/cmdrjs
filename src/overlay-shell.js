@@ -7,21 +7,11 @@ const _defaultOptions = {
     closeKey: 27
 };
 
-let _instance = null;
-
 class OverlayShell extends Shell {
     constructor(options) {
-        
-        let overlayNode = null;
-        if (_instance) {
-            overlayNode = _instance._overlayNode;
-            _instance.dispose();
-        }
-        
-        if (!overlayNode) {
-            overlayNode = utils.createElement('<div style="display: none" class="cmdr-overlay"></div>');
-            document.body.appendChild(overlayNode);
-        }
+                
+        let overlayNode = utils.createElement('<div style="display: none" class="cmdr-overlay"></div>');
+        document.body.appendChild(overlayNode);
 
         options = utils.extend({}, _defaultOptions, options);
 
@@ -29,8 +19,6 @@ class OverlayShell extends Shell {
         
         this._overlayNode = overlayNode;
         this._documentEventHandler = null;
-        
-        _instance = this;
     }
     
     get isOpen() {
@@ -63,12 +51,11 @@ class OverlayShell extends Shell {
 
     dispose() {
         if (!this.initialized) return;
-
-        document.removeEventListener('keydown', this._documentEventHandler);
-
-        this.close();
-
+    
         super.dispose();
+        
+        document.removeEventListener('keydown', this._documentEventHandler);    
+        document.body.removeChild(this._overlayNode);
     }
 
     open() {
