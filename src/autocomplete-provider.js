@@ -1,12 +1,17 @@
 class AutocompleteProvider {
     constructor(shell) {
-        this.shell = shell;
+        this.shell = null;
         this.values = [];
         this.index = -1;
         this.incompleteValue = null;
     }
     
+    init(shell) {
+        this.shell = shell;
+    }
+    
     dispose() {
+        this.shell = null;
         this.values = [];
         this.index = -1;
         this.incompleteValue = null;

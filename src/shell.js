@@ -4,10 +4,12 @@ import AutocompleteProvider from './autocomplete-provider.js';
 import DefinitionProvider from './definition-provider.js';
 
 const _defaultOptions = {
-    autoInit: true,
     echo: true,
     promptPrefix: '>',
-    template: '<div class="cmdr-shell"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>' 
+    template: '<div class="cmdr-shell"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>',
+    definitionProvider: new DefinitionProvider(),
+    historyProvider: new HistoryProvider(),
+    autocompleteProvider: new AutocompleteProvider() 
 };
 
 const _promptIndentPadding = typeof InstallTrigger !== 'undefined'; // Firefox - misplaced cursor when using 'text-indent'
@@ -33,15 +35,12 @@ class Shell {
         this._isInputInline = false;
         this._autocompleteValue = null;
         this._eventHandlers = {};
-        this._isInitialized = false;
-        
+        this._isInitialized = false;        
         this._historyProvider = null;
         this._autocompleteProvider = null;
         this._definitionProvider = null;
         
-        if (this._options.autoInit) {
-            this.init();
-        }
+        this.init();
     }
     
     get isInitialized() {
@@ -199,19 +198,19 @@ class Shell {
                 this._promptNode.focus();
             }
         });
-        
-        if (!this._historyProvider) {
-            this._historyProvider = new HistoryProvider(this);
-        }
-        if (!this._autocompleteProvider) {
-            this._autocompleteProvider = new AutocompleteProvider(this);
-        }
-        if (!this._definitionProvider) {
-            this._definitionProvider = new DefinitionProvider(this);
-        }
-        
+                
         this._promptPrefix = this._options.promptPrefix;
+        
         this._echo = this._options.echo;
+        
+        this._definitionProvider = this._options.definitionProvider;
+        this._definitionProvider.init(this);
+        
+        this._historyProvider = this._options.historyProvider;
+        this._historyProvider.init(this);
+        
+        this._autocompleteProvider = this._options.autocompleteProvider;
+        this._autocompleteProvider.init(this);
 
         this._activateInput();
         

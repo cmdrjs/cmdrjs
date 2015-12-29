@@ -2,18 +2,17 @@
 
 export function extend(out) {
     out = out || {};
+
     for (let i = 1; i < arguments.length; i++) {
-        let obj = arguments[i];
-        if (!obj) continue;
-        for (let key in obj) {
-            if (obj.hasOwnProperty(key)) {
-                if (typeof obj[key] === 'object' && !Array.isArray(obj[key]))
-                    extend(out[key], obj[key]);
-                else
-                    out[key] = obj[key];
-            }
+        if (!arguments[i])
+            continue;
+
+        for (let key in arguments[i]) {
+            if (arguments[i].hasOwnProperty(key))
+                out[key] = arguments[i][key];
         }
     }
+
     return out;
 }
   
@@ -53,8 +52,8 @@ export function defer() {
 //DOM
 
 export function isElement(obj) {
-    return typeof HTMLElement === "object" ? 
-        obj instanceof HTMLElement : 
+    return typeof HTMLElement === "object" ?
+        obj instanceof HTMLElement :
         obj && typeof obj === "object" && obj !== null && obj.nodeType === 1 && typeof obj.nodeName === "string";
 }
 
