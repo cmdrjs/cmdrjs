@@ -437,7 +437,7 @@ class Shell {
             this._promptNode.setAttribute('disabled', false);
             this._setPromptIndent();
             this._promptNode.focus();
-            utils.smoothScroll(this._shellNode, this._shellNode.scrollHeight, 1000);
+            this._shellNode.scrollTop = this._shellNode.scrollHeight;
         }, 0);
     }
 
