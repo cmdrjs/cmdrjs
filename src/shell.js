@@ -217,7 +217,7 @@ class Shell {
         this._outputNode = null;
         this._inputNode = null;
         this._prefixNode = null;
-        this._promptNode = null;        
+        this._promptNode = null;
         this._echo = true;
         this._current = null;
         this._queue = [];
