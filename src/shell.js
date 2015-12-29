@@ -7,9 +7,9 @@ const _defaultOptions = {
     echo: true,
     promptPrefix: '>',
     template: '<div class="cmdr-shell"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>',
-    definitionProvider: new DefinitionProvider(),
-    historyProvider: new HistoryProvider(),
-    autocompleteProvider: new AutocompleteProvider() 
+    definitionProvider: null,
+    historyProvider: null,
+    autocompleteProvider: null
 };
 
 class Shell {
@@ -116,7 +116,7 @@ class Shell {
                 }                
                 switch (event.keyCode) {
                     case 13:
-                        let value = this._getPromptText();
+                        let value = this._promptNode.textContent;
                         if (value) {
                             this.execute(value);
                         }
@@ -136,7 +136,7 @@ class Shell {
                         return false;
                 }
             } else if (this._current.readLine && event.keyCode === 13) {
-                this._current.readLine.resolve(this._getPromptText());
+                this._current.readLine.resolve(this._promptNode.textContent);
                 return false;
             }
             return true;
@@ -164,7 +164,7 @@ class Shell {
 
         this._promptNode.addEventListener('paste', () => {
             setTimeout(() => {
-                let value = this._getPromptText();
+                let value = this._promptNode.textContent;
                 let lines = value.split(/\r\n|\r|\n/g);
                 let length = lines.length;
                 if (length > 1) {
@@ -199,19 +199,17 @@ class Shell {
         
         this._echo = this._options.echo;
         
-        this._definitionProvider = this._options.definitionProvider;
-        this._definitionProvider.init(this);
+        this._definitionProvider = this._options.definitionProvider || new DefinitionProvider();
+        this._definitionProvider.attach(this);
         
-        this._historyProvider = this._options.historyProvider;
-        this._historyProvider.init(this);
+        this._historyProvider = this._options.historyProvider || new HistoryProvider();
+        this._historyProvider.attach(this);
         
-        this._autocompleteProvider = this._options.autocompleteProvider;
-        this._autocompleteProvider.init(this);
+        this._autocompleteProvider = this._options.autocompleteProvider || new AutocompleteProvider();
+        this._autocompleteProvider.attach(this);
 
         this._activateInput();
-        
-        this._setPromptText('');
-        
+                
         this._isInitialized = true;
     }
 
@@ -232,15 +230,15 @@ class Shell {
         this._eventHandlers = {};
         
         if (this._historyProvider) {
-            this._historyProvider.dispose();
+            this._historyProvider.detach(this);
             this._historyProvider = null;
         }
         if (this._autocompleteProvider) {
-            this._autocompleteProvider.dispose();
+            this._autocompleteProvider.detach(this);
             this._autocompleteProvider = null;
         }
         if (this._definitionProvider) {
-            this._definitionProvider.dispose();
+            this._definitionProvider.detach(this);
             this._definitionProvider = null;
         }
         
@@ -261,7 +259,7 @@ class Shell {
         this._current.read.then((value) => {
             this._current.read = null;
             if (!capture) {
-                this._setPromptText(value);
+                this._promptNode.textContent = value;
             }
             this._deactivateInput();
             if (callback(value, this._current) === true) {
@@ -285,7 +283,7 @@ class Shell {
         this._current.readLine = utils.defer();
         this._current.readLine.then((value) => {
             this._current.readLine = null;
-            this._setPromptText(value);
+            this._promptNode.textContent = value;
             this._deactivateInput();
             this._flushInput();
             if (callback(value, this._current) === true) {
@@ -342,7 +340,7 @@ class Shell {
         
         this._trigger('preexecute', command);
         
-        this._setPromptText(command);
+        this._promptNode.textContent = command;
         this._flushInput(!this._echo);
         this._deactivateInput();
 
@@ -455,17 +453,17 @@ class Shell {
     _flushInput(preventWrite) {
         if (!preventWrite) {
             this.write(this._prefixNode.textContent);
-            this.writeLine(this._getPromptText());
+            this.writeLine(this._promptNode.textContent);
         }
         this._prefixNode.textContent = '';
-        this._setPromptText('');
+        this._promptNode.textContent = '';
     }
     
     _historyCycle(forward) {
         Promise.all([this._historyProvider.getNextValue(forward)]).then((values) => {
             let command = values[0];
             if (command) {
-                this._setPromptText(command);
+                this._promptNode.textContent = command;
                 utils.cursorToEnd(this._promptNode);
                 utils.dispatchEvent(this._promptNode, 'change', true, false);
             }
@@ -473,7 +471,7 @@ class Shell {
     }
     
     _autocompleteCycle(forward) {
-        let input = this._getPromptText();
+        let input = this._promptNode.textContent;
         input = input.replace(/\s$/, ' '); //fixing end whitespace
         let cursorPosition = utils.getCursorPosition(this._promptNode);
         let startIndex = input.lastIndexOf(' ', cursorPosition) + 1;
@@ -486,7 +484,7 @@ class Shell {
         Promise.all([this._autocompleteProvider.getNextValue(forward, this._autocompleteValue)]).then((values) => {
             let value = values[0];
             if (value) {
-                this._setPromptText(input.substring(0, startIndex) + value);
+                this._promptNode.textContent = input.substring(0, startIndex) + value;
                 utils.cursorToEnd(this._promptNode);
                 utils.dispatchEvent(this._promptNode, 'change', true, false);
             }
@@ -542,14 +540,6 @@ class Shell {
         prefixWidth += spacePadding * this._prefixNode._spaceWidth;
         
         this._promptNode.style.textIndent = prefixWidth + 'px';
-    }
-    
-    //including a zero width character ensures the cursor honors the text-indent
-    _getPromptText() {
-        return this._promptNode.textContent.replace(/\u200C/g, '');
-    }
-    _setPromptText(value) {
-        this._promptNode.textContent = '\u200C' + value;
     }
 }
 

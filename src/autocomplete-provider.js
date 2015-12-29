@@ -1,20 +1,14 @@
 class AutocompleteProvider {
-    constructor(shell) {
-        this.shell = null;
+    constructor() {
         this.values = [];
         this.index = -1;
         this.incompleteValue = null;
     }
-    
-    init(shell) {
-        this.shell = shell;
+        
+    attach(shell) { 
     }
     
-    dispose() {
-        this.shell = null;
-        this.values = [];
-        this.index = -1;
-        this.incompleteValue = null;
+    detach(shell) {
     }
     
     getNextValue(forward, incompleteValue) {

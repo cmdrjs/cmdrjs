@@ -1,4 +1,4 @@
-/* cmdrjs | version 1.1.0 | license MIT | (c) 2015 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
+/* cmdrjs | version 1.1.1-beta | license MIT | (c) 2015 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.cmdr = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function (process,global){
 /*!
@@ -1075,28 +1075,20 @@ Object.defineProperty(exports, "__esModule", {
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var AutocompleteProvider = (function () {
-    function AutocompleteProvider(shell) {
+    function AutocompleteProvider() {
         _classCallCheck(this, AutocompleteProvider);
 
-        this.shell = null;
         this.values = [];
         this.index = -1;
         this.incompleteValue = null;
     }
 
     _createClass(AutocompleteProvider, [{
-        key: "init",
-        value: function init(shell) {
-            this.shell = shell;
-        }
+        key: "attach",
+        value: function attach(shell) {}
     }, {
-        key: "dispose",
-        value: function dispose() {
-            this.shell = null;
-            this.values = [];
-            this.index = -1;
-            this.incompleteValue = null;
-        }
+        key: "detach",
+        value: function detach(shell) {}
     }, {
         key: "getNextValue",
         value: function getNextValue(forward, incompleteValue) {
@@ -1243,13 +1235,50 @@ var DefinitionProvider = (function () {
         this.options = utils.extend({}, _defaultOptions, options);
         this.shell = null;
         this.definitions = {};
+
+        this._predefine();
     }
 
     _createClass(DefinitionProvider, [{
-        key: 'init',
-        value: function init(shell) {
-            this.shell = shell;
+        key: 'attach',
+        value: function attach(shell) {}
+    }, {
+        key: 'detach',
+        value: function detach(shell) {}
+    }, {
+        key: 'getDefinitions',
+        value: function getDefinitions(name) {
+            name = name.toUpperCase();
 
+            var definition = this.definitions[name];
+
+            if (definition) {
+                if (definition.available) {
+                    return [definition];
+                }
+                return null;
+            }
+
+            var definitions = [];
+
+            if (this.options.allowAbbreviations) {
+                for (var key in this.definitions) {
+                    if (key.indexOf(name, 0) === 0 && utils.unwrap(this.definitions[key].available)) {
+                        definitions.push(this.definitions[key]);
+                    }
+                }
+            }
+
+            return definitions;
+        }
+    }, {
+        key: 'addDefinition',
+        value: function addDefinition(definition) {
+            this.definitions[definition.name] = definition;
+        }
+    }, {
+        key: '_predefine',
+        value: function _predefine() {
             var provider = this;
 
             if (this.options.predefined.indexOf('HELP') > -1) {
@@ -1292,43 +1321,6 @@ var DefinitionProvider = (function () {
                     description: 'Clears the command prompt'
                 }));
             }
-        }
-    }, {
-        key: 'dispose',
-        value: function dispose() {
-            this.shell = null;
-            this.definitions = {};
-        }
-    }, {
-        key: 'getDefinitions',
-        value: function getDefinitions(name) {
-            name = name.toUpperCase();
-
-            var definition = this.definitions[name];
-
-            if (definition) {
-                if (definition.available) {
-                    return [definition];
-                }
-                return null;
-            }
-
-            var definitions = [];
-
-            if (this.options.allowAbbreviations) {
-                for (var key in this.definitions) {
-                    if (key.indexOf(name, 0) === 0 && utils.unwrap(this.definitions[key].available)) {
-                        definitions.push(this.definitions[key]);
-                    }
-                }
-            }
-
-            return definitions;
-        }
-    }, {
-        key: 'addDefinition',
-        value: function addDefinition(definition) {
-            this.definitions[definition.name] = definition;
         }
     }]);
 
@@ -1394,34 +1386,28 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var HistoryProvider = (function () {
     function HistoryProvider() {
+        var _this = this;
+
         _classCallCheck(this, HistoryProvider);
 
-        this.shell = null;
         this.values = [];
         this.index = -1;
+
+        this._preexecuteHandler = function (command) {
+            _this.values.unshift(command);
+            _this.index = -1;
+        };
     }
 
     _createClass(HistoryProvider, [{
-        key: 'init',
-        value: function init(shell) {
-            var _this = this;
-
-            this.shell = shell;
-
-            this._preexecuteHandler = function (command) {
-                _this.values.unshift(command);
-                _this.index = -1;
-            };
-            this.shell.on('preexecute', this._preexecuteHandler);
+        key: 'attach',
+        value: function attach(shell) {
+            shell.on('preexecute', this._preexecuteHandler);
         }
     }, {
-        key: 'dispose',
-        value: function dispose() {
-            this.shell = null;
-            this.values = [];
-            this.index = -1;
-
-            this.shell.off('preexecute', this._preexecuteHandler);
+        key: 'detach',
+        value: function detach(shell) {
+            shell.off('preexecute', this._preexecuteHandler);
         }
     }, {
         key: 'getNextValue',
@@ -1595,12 +1581,10 @@ var _defaultOptions = {
     echo: true,
     promptPrefix: '>',
     template: '<div class="cmdr-shell"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>',
-    definitionProvider: new _definitionProvider2.default(),
-    historyProvider: new _historyProvider2.default(),
-    autocompleteProvider: new _autocompleteProvider2.default()
+    definitionProvider: null,
+    historyProvider: null,
+    autocompleteProvider: null
 };
-
-var _promptPlaceholder = '&zwnj;';
 
 var Shell = (function () {
     function Shell(containerNode, options) {
@@ -1656,7 +1640,7 @@ var Shell = (function () {
                     }
                     switch (event.keyCode) {
                         case 13:
-                            var value = _this._getPromptText();
+                            var value = _this._promptNode.textContent;
                             if (value) {
                                 _this.execute(value);
                             }
@@ -1676,7 +1660,7 @@ var Shell = (function () {
                             return false;
                     }
                 } else if (_this._current.readLine && event.keyCode === 13) {
-                    _this._current.readLine.resolve(_this._getPromptText());
+                    _this._current.readLine.resolve(_this._promptNode.textContent);
                     return false;
                 }
                 return true;
@@ -1704,7 +1688,7 @@ var Shell = (function () {
 
             this._promptNode.addEventListener('paste', function () {
                 setTimeout(function () {
-                    var value = _this._getPromptText();
+                    var value = _this._promptNode.textContent;
                     var lines = value.split(/\r\n|\r|\n/g);
                     var length = lines.length;
                     if (length > 1) {
@@ -1736,18 +1720,16 @@ var Shell = (function () {
 
             this._echo = this._options.echo;
 
-            this._definitionProvider = this._options.definitionProvider;
-            this._definitionProvider.init(this);
+            this._definitionProvider = this._options.definitionProvider || new _definitionProvider2.default();
+            this._definitionProvider.attach(this);
 
-            this._historyProvider = this._options.historyProvider;
-            this._historyProvider.init(this);
+            this._historyProvider = this._options.historyProvider || new _historyProvider2.default();
+            this._historyProvider.attach(this);
 
-            this._autocompleteProvider = this._options.autocompleteProvider;
-            this._autocompleteProvider.init(this);
+            this._autocompleteProvider = this._options.autocompleteProvider || new _autocompleteProvider2.default();
+            this._autocompleteProvider.attach(this);
 
             this._activateInput();
-
-            this._setPromptText('');
 
             this._isInitialized = true;
         }
@@ -1770,15 +1752,15 @@ var Shell = (function () {
             this._eventHandlers = {};
 
             if (this._historyProvider) {
-                this._historyProvider.dispose();
+                this._historyProvider.detach(this);
                 this._historyProvider = null;
             }
             if (this._autocompleteProvider) {
-                this._autocompleteProvider.dispose();
+                this._autocompleteProvider.detach(this);
                 this._autocompleteProvider = null;
             }
             if (this._definitionProvider) {
-                this._definitionProvider.dispose();
+                this._definitionProvider.detach(this);
                 this._definitionProvider = null;
             }
 
@@ -1803,7 +1785,7 @@ var Shell = (function () {
             this._current.read.then(function (value) {
                 _this2._current.read = null;
                 if (!capture) {
-                    _this2._setPromptText(value);
+                    _this2._promptNode.textContent = value;
                 }
                 _this2._deactivateInput();
                 if (callback(value, _this2._current) === true) {
@@ -1830,7 +1812,7 @@ var Shell = (function () {
             this._current.readLine = utils.defer();
             this._current.readLine.then(function (value) {
                 _this3._current.readLine = null;
-                _this3._setPromptText(value);
+                _this3._promptNode.textContent = value;
                 _this3._deactivateInput();
                 _this3._flushInput();
                 if (callback(value, _this3._current) === true) {
@@ -1896,7 +1878,7 @@ var Shell = (function () {
 
             this._trigger('preexecute', command);
 
-            this._setPromptText(command);
+            this._promptNode.textContent = command;
             this._flushInput(!this._echo);
             this._deactivateInput();
 
@@ -2038,10 +2020,10 @@ var Shell = (function () {
         value: function _flushInput(preventWrite) {
             if (!preventWrite) {
                 this.write(this._prefixNode.textContent);
-                this.writeLine(this._getPromptText());
+                this.writeLine(this._promptNode.textContent);
             }
             this._prefixNode.textContent = '';
-            this._setPromptText('');
+            this._promptNode.textContent = '';
         }
     }, {
         key: '_historyCycle',
@@ -2051,7 +2033,7 @@ var Shell = (function () {
             Promise.all([this._historyProvider.getNextValue(forward)]).then(function (values) {
                 var command = values[0];
                 if (command) {
-                    _this6._setPromptText(command);
+                    _this6._promptNode.textContent = command;
                     utils.cursorToEnd(_this6._promptNode);
                     utils.dispatchEvent(_this6._promptNode, 'change', true, false);
                 }
@@ -2062,7 +2044,7 @@ var Shell = (function () {
         value: function _autocompleteCycle(forward) {
             var _this7 = this;
 
-            var input = this._getPromptText();
+            var input = this._promptNode.textContent;
             input = input.replace(/\s$/, ' '); //fixing end whitespace
             var cursorPosition = utils.getCursorPosition(this._promptNode);
             var startIndex = input.lastIndexOf(' ', cursorPosition) + 1;
@@ -2075,7 +2057,7 @@ var Shell = (function () {
             Promise.all([this._autocompleteProvider.getNextValue(forward, this._autocompleteValue)]).then(function (values) {
                 var value = values[0];
                 if (value) {
-                    _this7._setPromptText(input.substring(0, startIndex) + value);
+                    _this7._promptNode.textContent = input.substring(0, startIndex) + value;
                     utils.cursorToEnd(_this7._promptNode);
                     utils.dispatchEvent(_this7._promptNode, 'change', true, false);
                 }
@@ -2134,19 +2116,6 @@ var Shell = (function () {
             prefixWidth += spacePadding * this._prefixNode._spaceWidth;
 
             this._promptNode.style.textIndent = prefixWidth + 'px';
-        }
-
-        //including a zero width character ensures the cursor honors the text-indent
-
-    }, {
-        key: '_getPromptText',
-        value: function _getPromptText() {
-            return this._promptNode.textContent.replace(/\u200C/g, '');
-        }
-    }, {
-        key: '_setPromptText',
-        value: function _setPromptText(value) {
-            this._promptNode.textContent = '‌' + value;
         }
     }, {
         key: 'isInitialized',

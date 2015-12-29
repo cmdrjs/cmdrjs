@@ -1,26 +1,20 @@
 class HistoryProvider {
     constructor() {
-        this.shell = null;
         this.values = [];
         this.index = -1;
-    }
-    
-    init(shell) {
-        this.shell = shell;
         
         this._preexecuteHandler = (command) => {
             this.values.unshift(command);
             this.index = -1;
         };
-        this.shell.on('preexecute', this._preexecuteHandler);
     }
     
-    dispose() {
-        this.shell = null;
-        this.values = [];
-        this.index = -1;
-        
-        this.shell.off('preexecute', this._preexecuteHandler);
+    attach(shell) { 
+        shell.on('preexecute', this._preexecuteHandler);
+    }
+    
+    detach(shell) {
+        shell.off('preexecute', this._preexecuteHandler);
     }
     
     getNextValue(forward) {

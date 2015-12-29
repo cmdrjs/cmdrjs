@@ -10,12 +10,48 @@ class DefinitionProvider {
     constructor(options) { 
         this.options = utils.extend({}, _defaultOptions, options);
         this.shell = null;
-        this.definitions = {};        
+        this.definitions = {};
+        
+        this._predefine();
     }
     
-    init(shell) {
-        this.shell = shell;
+    attach(shell) { 
+    }
+    
+    detach(shell) {
+    }
+       
+    getDefinitions(name) {
+        name = name.toUpperCase();
+
+        let definition = this.definitions[name];
+
+        if (definition) {
+            if (definition.available) {
+                return [definition];
+            }
+            return null;
+        }
         
+        let definitions = [];
+        
+        if (this.options.allowAbbreviations)
+        {
+            for (let key in this.definitions) {
+                if (key.indexOf(name, 0) === 0 && utils.unwrap(this.definitions[key].available)) {
+                    definitions.push(this.definitions[key]);
+                }
+            }
+        }
+
+        return definitions;
+    }
+    
+    addDefinition(definition) {
+        this.definitions[definition.name] = definition;
+    }
+        
+    _predefine() {        
         let provider = this;
         
         if (this.options.predefined.indexOf('HELP') > -1) {
@@ -58,41 +94,6 @@ class DefinitionProvider {
                     description: 'Clears the command prompt'
                 }));
         }    
-    }
-    
-    dispose() {
-        this.shell = null;
-        this.definitions = {};
-    }
-    
-    getDefinitions(name) {
-        name = name.toUpperCase();
-
-        let definition = this.definitions[name];
-
-        if (definition) {
-            if (definition.available) {
-                return [definition];
-            }
-            return null;
-        }
-        
-        let definitions = [];
-        
-        if (this.options.allowAbbreviations)
-        {
-            for (let key in this.definitions) {
-                if (key.indexOf(name, 0) === 0 && utils.unwrap(this.definitions[key].available)) {
-                    definitions.push(this.definitions[key]);
-                }
-            }
-        }
-
-        return definitions;
-    }
-    
-    addDefinition(definition) {
-        this.definitions[definition.name] = definition;
     }
 }
 
