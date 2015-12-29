@@ -12,8 +12,6 @@ const _defaultOptions = {
     autocompleteProvider: new AutocompleteProvider() 
 };
 
-const _promptIndentPadding = typeof InstallTrigger !== 'undefined'; // Firefox - misplaced cursor when using 'text-indent'
-
 class Shell {
     constructor(containerNode, options) {
         if (!containerNode || !utils.isElement(containerNode)) {
@@ -185,12 +183,6 @@ class Shell {
                 }
             }, 0);
         });
-
-        if (_promptIndentPadding) {
-            this._promptNode.addEventListener('input', () => {
-                prompt.css(this._getPromptIndent());
-            });
-        }
 
         this._shellNode.addEventListener('click', (event) => {
             if (event.target !== this._inputNode && !this._inputNode.contains(event.target) &&
@@ -525,9 +517,9 @@ class Shell {
             args: args
         };
     }
-    
-    _getPrefixWidth() {
-        let width = this._prefixNode.getBoundingClientRect().width;
+
+    _setPromptIndent() {
+        let prefixWidth = this._prefixNode.getBoundingClientRect().width;
         let text = this._prefixNode.textContent;
         let spacePadding = text.length - text.trim().length;
 
@@ -541,24 +533,9 @@ class Shell {
             this._prefixNode.removeChild(elem2);
         }
 
-        width += spacePadding * this._prefixNode._spaceWidth;
-        return width;
-    }
-
-    _setPromptIndent() {
-        let prefixWidth = this._getPrefixWidth() + 'px';
-        if (_promptIndentPadding) {
-            if (this._promptNode.textContent) {
-                this._promptNode.style.textIndent = prefixWidth;
-                this._promptNode.style.paddingLeft = '';
-            } else {
-                this._promptNode.style.textIndent = '';
-                this._promptNode.style.paddingLeft = prefixWidth;
-            }
-        }
-        else {
-            this._promptNode.style.textIndent = prefixWidth;
-        }
+        prefixWidth += spacePadding * this._prefixNode._spaceWidth;
+        
+        this._promptNode.style.textIndent = prefixWidth + 'px';
     }
 }
 

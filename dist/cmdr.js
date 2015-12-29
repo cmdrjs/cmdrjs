@@ -1078,15 +1078,21 @@ var AutocompleteProvider = (function () {
     function AutocompleteProvider(shell) {
         _classCallCheck(this, AutocompleteProvider);
 
-        this.shell = shell;
+        this.shell = null;
         this.values = [];
         this.index = -1;
         this.incompleteValue = null;
     }
 
     _createClass(AutocompleteProvider, [{
+        key: "init",
+        value: function init(shell) {
+            this.shell = shell;
+        }
+    }, {
         key: "dispose",
         value: function dispose() {
+            this.shell = null;
             this.values = [];
             this.index = -1;
             this.incompleteValue = null;
@@ -1231,55 +1237,19 @@ var _defaultOptions = {
 };
 
 var DefinitionProvider = (function () {
-    function DefinitionProvider(shell, options) {
+    function DefinitionProvider(options) {
         _classCallCheck(this, DefinitionProvider);
 
-        this.shell = shell;
         this.options = utils.extend({}, _defaultOptions, options);
+        this.shell = null;
         this.definitions = {};
-
-        this._predefine();
     }
 
     _createClass(DefinitionProvider, [{
-        key: 'dispose',
-        value: function dispose() {
-            this.definitions = {};
-        }
-    }, {
-        key: 'getDefinitions',
-        value: function getDefinitions(name) {
-            name = name.toUpperCase();
+        key: 'init',
+        value: function init(shell) {
+            this.shell = shell;
 
-            var definition = this.definitions[name];
-
-            if (definition) {
-                if (definition.available) {
-                    return [definition];
-                }
-                return null;
-            }
-
-            var definitions = [];
-
-            if (this.options.allowAbbreviations) {
-                for (var key in this.definitions) {
-                    if (key.indexOf(name, 0) === 0 && utils.unwrap(this.definitions[key].available)) {
-                        definitions.push(this.definitions[key]);
-                    }
-                }
-            }
-
-            return definitions;
-        }
-    }, {
-        key: 'addDefinition',
-        value: function addDefinition(definition) {
-            this.definitions[definition.name] = definition;
-        }
-    }, {
-        key: '_predefine',
-        value: function _predefine() {
             var provider = this;
 
             if (this.options.predefined.indexOf('HELP') > -1) {
@@ -1322,6 +1292,43 @@ var DefinitionProvider = (function () {
                     description: 'Clears the command prompt'
                 }));
             }
+        }
+    }, {
+        key: 'dispose',
+        value: function dispose() {
+            this.shell = null;
+            this.definitions = {};
+        }
+    }, {
+        key: 'getDefinitions',
+        value: function getDefinitions(name) {
+            name = name.toUpperCase();
+
+            var definition = this.definitions[name];
+
+            if (definition) {
+                if (definition.available) {
+                    return [definition];
+                }
+                return null;
+            }
+
+            var definitions = [];
+
+            if (this.options.allowAbbreviations) {
+                for (var key in this.definitions) {
+                    if (key.indexOf(name, 0) === 0 && utils.unwrap(this.definitions[key].available)) {
+                        definitions.push(this.definitions[key]);
+                    }
+                }
+            }
+
+            return definitions;
+        }
+    }, {
+        key: 'addDefinition',
+        value: function addDefinition(definition) {
+            this.definitions[definition.name] = definition;
         }
     }]);
 
@@ -1386,27 +1393,34 @@ Object.defineProperty(exports, "__esModule", {
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var HistoryProvider = (function () {
-    function HistoryProvider(shell) {
-        var _this = this;
-
+    function HistoryProvider() {
         _classCallCheck(this, HistoryProvider);
 
-        this.shell = shell;
+        this.shell = null;
         this.values = [];
         this.index = -1;
-
-        this._preexecuteHandler = function (command) {
-            _this.values.unshift(command);
-            _this.index = -1;
-        };
-        this.shell.on('preexecute', this._preexecuteHandler);
     }
 
     _createClass(HistoryProvider, [{
+        key: 'init',
+        value: function init(shell) {
+            var _this = this;
+
+            this.shell = shell;
+
+            this._preexecuteHandler = function (command) {
+                _this.values.unshift(command);
+                _this.index = -1;
+            };
+            this.shell.on('preexecute', this._preexecuteHandler);
+        }
+    }, {
         key: 'dispose',
         value: function dispose() {
+            this.shell = null;
             this.values = [];
             this.index = -1;
+
             this.shell.off('preexecute', this._preexecuteHandler);
         }
     }, {
@@ -1578,13 +1592,13 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var _defaultOptions = {
-    autoInit: true,
     echo: true,
     promptPrefix: '>',
-    template: '<div class="cmdr-shell"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>'
+    template: '<div class="cmdr-shell"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>',
+    definitionProvider: new _definitionProvider2.default(),
+    historyProvider: new _historyProvider2.default(),
+    autocompleteProvider: new _autocompleteProvider2.default()
 };
-
-var _promptIndentPadding = typeof InstallTrigger !== 'undefined'; // Firefox - misplaced cursor when using 'text-indent'
 
 var Shell = (function () {
     function Shell(containerNode, options) {
@@ -1610,14 +1624,11 @@ var Shell = (function () {
         this._autocompleteValue = null;
         this._eventHandlers = {};
         this._isInitialized = false;
-
         this._historyProvider = null;
         this._autocompleteProvider = null;
         this._definitionProvider = null;
 
-        if (this._options.autoInit) {
-            this.init();
-        }
+        this.init();
     }
 
     _createClass(Shell, [{
@@ -1711,30 +1722,24 @@ var Shell = (function () {
                 }, 0);
             });
 
-            if (_promptIndentPadding) {
-                this._promptNode.addEventListener('input', function () {
-                    prompt.css(_this._getPromptIndent());
-                });
-            }
-
             this._shellNode.addEventListener('click', function (event) {
                 if (event.target !== _this._inputNode && !_this._inputNode.contains(event.target) && event.target !== _this._outputNode && !_this._outputNode.contains(event.target)) {
                     _this._promptNode.focus();
                 }
             });
 
-            if (!this._historyProvider) {
-                this._historyProvider = new _historyProvider2.default(this);
-            }
-            if (!this._autocompleteProvider) {
-                this._autocompleteProvider = new _autocompleteProvider2.default(this);
-            }
-            if (!this._definitionProvider) {
-                this._definitionProvider = new _definitionProvider2.default(this);
-            }
-
             this._promptPrefix = this._options.promptPrefix;
+
             this._echo = this._options.echo;
+
+            this._definitionProvider = this._options.definitionProvider;
+            this._definitionProvider.init(this);
+
+            this._historyProvider = this._options.historyProvider;
+            this._historyProvider.init(this);
+
+            this._autocompleteProvider = this._options.autocompleteProvider;
+            this._autocompleteProvider.init(this);
 
             this._activateInput();
 
@@ -2104,9 +2109,9 @@ var Shell = (function () {
             };
         }
     }, {
-        key: '_getPrefixWidth',
-        value: function _getPrefixWidth() {
-            var width = this._prefixNode.getBoundingClientRect().width;
+        key: '_setPromptIndent',
+        value: function _setPromptIndent() {
+            var prefixWidth = this._prefixNode.getBoundingClientRect().width;
             var text = this._prefixNode.textContent;
             var spacePadding = text.length - text.trim().length;
 
@@ -2120,24 +2125,9 @@ var Shell = (function () {
                 this._prefixNode.removeChild(elem2);
             }
 
-            width += spacePadding * this._prefixNode._spaceWidth;
-            return width;
-        }
-    }, {
-        key: '_setPromptIndent',
-        value: function _setPromptIndent() {
-            var prefixWidth = this._getPrefixWidth() + 'px';
-            if (_promptIndentPadding) {
-                if (this._promptNode.textContent) {
-                    this._promptNode.style.textIndent = prefixWidth;
-                    this._promptNode.style.paddingLeft = '';
-                } else {
-                    this._promptNode.style.textIndent = '';
-                    this._promptNode.style.paddingLeft = prefixWidth;
-                }
-            } else {
-                this._promptNode.style.textIndent = prefixWidth;
-            }
+            prefixWidth += spacePadding * this._prefixNode._spaceWidth;
+
+            this._promptNode.style.textIndent = prefixWidth + 'px';
         }
     }, {
         key: 'isInitialized',
@@ -2210,7 +2200,7 @@ var Shell = (function () {
 exports.default = Shell;
 
 },{"./autocomplete-provider.js":3,"./definition-provider.js":5,"./history-provider.js":7,"./utils.js":10}],10:[function(require,module,exports){
-'use strict';
+"use strict";
 
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -2233,15 +2223,15 @@ function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.const
 
 function extend(out) {
     out = out || {};
+
     for (var i = 1; i < arguments.length; i++) {
-        var obj = arguments[i];
-        if (!obj) continue;
-        for (var key in obj) {
-            if (obj.hasOwnProperty(key)) {
-                if (_typeof(obj[key]) === 'object' && !Array.isArray(obj[key])) extend(out[key], obj[key]);else out[key] = obj[key];
-            }
+        if (!arguments[i]) continue;
+
+        for (var key in arguments[i]) {
+            if (arguments[i].hasOwnProperty(key)) out[key] = arguments[i][key];
         }
     }
+
     return out;
 }
 
@@ -2283,7 +2273,7 @@ function defer() {
 //DOM
 
 function isElement(obj) {
-    return (typeof HTMLElement === 'undefined' ? 'undefined' : _typeof(HTMLElement)) === "object" ? obj instanceof HTMLElement : obj && (typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) === "object" && obj !== null && obj.nodeType === 1 && typeof obj.nodeName === "string";
+    return (typeof HTMLElement === "undefined" ? "undefined" : _typeof(HTMLElement)) === "object" ? obj instanceof HTMLElement : obj && (typeof obj === "undefined" ? "undefined" : _typeof(obj)) === "object" && obj !== null && obj.nodeType === 1 && typeof obj.nodeName === "string";
 }
 
 function createElement(html) {
