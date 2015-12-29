@@ -2018,7 +2018,7 @@ var Shell = (function () {
                 _this5._promptNode.setAttribute('disabled', false);
                 _this5._setPromptIndent();
                 _this5._promptNode.focus();
-                utils.smoothScroll(_this5._shellNode, _this5._shellNode.scrollHeight, 1000);
+                _this5._shellNode.scrollTop = _this5._shellNode.scrollHeight;
             }, 0);
         }
     }, {
@@ -2215,7 +2215,6 @@ exports.dispatchEvent = dispatchEvent;
 exports.blur = blur;
 exports.cursorToEnd = cursorToEnd;
 exports.getCursorPosition = getCursorPosition;
-exports.smoothScroll = smoothScroll;
 
 function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj; }
 
@@ -2329,66 +2328,6 @@ function getCursorPosition(element) {
         pos = preCursorTextRange.text.length;
     }
     return pos;
-}
-
-function smoothScroll(element, target, duration) {
-    target = Math.round(target);
-    duration = Math.round(duration);
-    if (duration < 0) {
-        return Promise.reject("Invalid duration");
-    }
-    if (duration === 0) {
-        element.scrollTop = target;
-        return Promise.resolve();
-    }
-
-    var startTime = Date.now();
-    var endTime = startTime + duration;
-
-    var startTop = element.scrollTop;
-    var distance = target - startTop;
-
-    var smoothStep = function smoothStep(start, end, point) {
-        if (point <= start) {
-            return 0;
-        }
-        if (point >= end) {
-            return 1;
-        }
-        var x = (point - start) / (end - start);
-        return x * x * (3 - 2 * x);
-    };
-
-    return new Promise(function (resolve, reject) {
-        var previousTop = element.scrollTop;
-
-        var scrollFrame = function scrollFrame() {
-            if (element.scrollTop != previousTop) {
-                reject("interrupted");
-                return;
-            }
-
-            var now = Date.now();
-            var point = smoothStep(startTime, endTime, now);
-            var frameTop = Math.round(startTop + distance * point);
-            element.scrollTop = frameTop;
-
-            if (now >= endTime) {
-                resolve();
-                return;
-            }
-
-            if (element.scrollTop === previousTop && element.scrollTop !== frameTop) {
-                resolve();
-                return;
-            }
-            previousTop = element.scrollTop;
-
-            setTimeout(scrollFrame, 0);
-        };
-
-        setTimeout(scrollFrame, 0);
-    });
 }
 
 },{}]},{},[4])(4)

@@ -12,6 +12,8 @@ const _defaultOptions = {
     autocompleteProvider: new AutocompleteProvider() 
 };
 
+const _promptPlaceholder = '&zwnj;';
+
 class Shell {
     constructor(containerNode, options) {
         if (!containerNode || !utils.isElement(containerNode)) {
@@ -56,7 +58,7 @@ class Shell {
         this._promptPrefix = value;
         if (!this._isInputInline) {
             this._prefixNode.textContent = value;
-            this._setPromptIndent();
+            this._fixPromptIndent();
         }
     }
     
@@ -116,7 +118,7 @@ class Shell {
                 }                
                 switch (event.keyCode) {
                     case 13:
-                        let value = this._promptNode.textContent;
+                        let value = this._getPromptText();
                         if (value) {
                             this.execute(value);
                         }
@@ -136,7 +138,7 @@ class Shell {
                         return false;
                 }
             } else if (this._current.readLine && event.keyCode === 13) {
-                this._current.readLine.resolve(this._promptNode.textContent);
+                this._current.readLine.resolve(this._getPromptText());
                 return false;
             }
             return true;
@@ -164,7 +166,7 @@ class Shell {
 
         this._promptNode.addEventListener('paste', () => {
             setTimeout(() => {
-                let value = this._promptNode.textContent;
+                let value = this._getPromptText();
                 let lines = value.split(/\r\n|\r|\n/g);
                 let length = lines.length;
                 if (length > 1) {
@@ -183,7 +185,11 @@ class Shell {
                 }
             }, 0);
         });
-
+        
+        this._promptNode.addEventListener('input', () => {
+            
+        });
+        
         this._shellNode.addEventListener('click', (event) => {
             if (event.target !== this._inputNode && !this._inputNode.contains(event.target) &&
                 event.target !== this._outputNode && !this._outputNode.contains(event.target)) {
@@ -205,6 +211,8 @@ class Shell {
         this._autocompleteProvider.init(this);
 
         this._activateInput();
+        
+        this._setPromptText('');
         
         this._isInitialized = true;
     }
@@ -255,7 +263,7 @@ class Shell {
         this._current.read.then((value) => {
             this._current.read = null;
             if (!capture) {
-                this._promptNode.textContent = value;
+                this._setPromptText(value);
             }
             this._deactivateInput();
             if (callback(value, this._current) === true) {
@@ -279,7 +287,7 @@ class Shell {
         this._current.readLine = utils.defer();
         this._current.readLine.then((value) => {
             this._current.readLine = null;
-            this._promptNode.textContent = value;
+            this._setPromptText(value);
             this._deactivateInput();
             this._flushInput();
             if (callback(value, this._current) === true) {
@@ -336,7 +344,7 @@ class Shell {
         
         this._trigger('preexecute', command);
         
-        this._promptNode.textContent = command;
+        this._setPromptText(command);
         this._flushInput(!this._echo);
         this._deactivateInput();
 
@@ -435,7 +443,7 @@ class Shell {
         this._inputNode.style.display = '';
         setTimeout(() => {
             this._promptNode.setAttribute('disabled', false);
-            this._setPromptIndent();
+            this._fixPromptIndent();
             this._promptNode.focus();
             this._shellNode.scrollTop = this._shellNode.scrollHeight;
         }, 0);
@@ -449,17 +457,17 @@ class Shell {
     _flushInput(preventWrite) {
         if (!preventWrite) {
             this.write(this._prefixNode.textContent);
-            this.writeLine(this._promptNode.textContent);
+            this.writeLine(this._getPromptText());
         }
         this._prefixNode.textContent = '';
-        this._promptNode.textContent = '';
+        this._setPromptText('');
     }
     
     _historyCycle(forward) {
         Promise.all([this._historyProvider.getNextValue(forward)]).then((values) => {
             let command = values[0];
             if (command) {
-                this._promptNode.textContent = command;
+                this._setPromptText(command);
                 utils.cursorToEnd(this._promptNode);
                 utils.dispatchEvent(this._promptNode, 'change', true, false);
             }
@@ -467,7 +475,7 @@ class Shell {
     }
     
     _autocompleteCycle(forward) {
-        let input = this._promptNode.textContent;
+        let input = this._getPromptText();
         input = input.replace(/\s$/, ' '); //fixing end whitespace
         let cursorPosition = utils.getCursorPosition(this._promptNode);
         let startIndex = input.lastIndexOf(' ', cursorPosition) + 1;
@@ -480,7 +488,7 @@ class Shell {
         Promise.all([this._autocompleteProvider.getNextValue(forward, this._autocompleteValue)]).then((values) => {
             let value = values[0];
             if (value) {
-                this._promptNode.textContent = input.substring(0, startIndex) + value;
+                this._setPromptText(input.substring(0, startIndex) + value);
                 utils.cursorToEnd(this._promptNode);
                 utils.dispatchEvent(this._promptNode, 'change', true, false);
             }
@@ -518,7 +526,7 @@ class Shell {
         };
     }
 
-    _setPromptIndent() {
+    _fixPromptIndent() {
         let prefixWidth = this._prefixNode.getBoundingClientRect().width;
         let text = this._prefixNode.textContent;
         let spacePadding = text.length - text.trim().length;
@@ -536,6 +544,14 @@ class Shell {
         prefixWidth += spacePadding * this._prefixNode._spaceWidth;
         
         this._promptNode.style.textIndent = prefixWidth + 'px';
+    }
+    
+    //including a zero width character ensures the cursor honors the text-indent
+    _getPromptText() {
+        return this._promptNode.textContent.replace(/\u200C/g, '');
+    }
+    _setPromptText(value) {
+        this._promptNode.textContent = '\u200C' + value;
     }
 }
 

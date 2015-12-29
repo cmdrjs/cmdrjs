@@ -62,7 +62,7 @@ class OverlayShell extends Shell {
         this._overlayNode.style.display = '';
 
         setTimeout(() => {
-            this._setPromptIndent();  //hack: using 'private' method from base class to fix indent
+            this._fixPromptIndent();  //hack: using 'private' method from base class to fix indent
             this.focus();
         }, 0);
     }
