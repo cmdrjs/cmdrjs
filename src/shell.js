@@ -12,8 +12,6 @@ const _defaultOptions = {
     autocompleteProvider: new AutocompleteProvider() 
 };
 
-const _promptPlaceholder = '&zwnj;';
-
 class Shell {
     constructor(containerNode, options) {
         if (!containerNode || !utils.isElement(containerNode)) {
