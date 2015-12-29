@@ -1538,7 +1538,7 @@ var OverlayShell = (function (_Shell) {
             this._overlayNode.style.display = '';
 
             setTimeout(function () {
-                _this3._setPromptIndent(); //hack: using 'private' method from base class to fix indent
+                _this3._fixPromptIndent(); //hack: using 'private' method from base class to fix indent
                 _this3.focus();
             }, 0);
         }
@@ -1600,6 +1600,8 @@ var _defaultOptions = {
     autocompleteProvider: new _autocompleteProvider2.default()
 };
 
+var _promptPlaceholder = '&zwnj;';
+
 var Shell = (function () {
     function Shell(containerNode, options) {
         _classCallCheck(this, Shell);
@@ -1654,7 +1656,7 @@ var Shell = (function () {
                     }
                     switch (event.keyCode) {
                         case 13:
-                            var value = _this._promptNode.textContent;
+                            var value = _this._getPromptText();
                             if (value) {
                                 _this.execute(value);
                             }
@@ -1674,7 +1676,7 @@ var Shell = (function () {
                             return false;
                     }
                 } else if (_this._current.readLine && event.keyCode === 13) {
-                    _this._current.readLine.resolve(_this._promptNode.textContent);
+                    _this._current.readLine.resolve(_this._getPromptText());
                     return false;
                 }
                 return true;
@@ -1702,7 +1704,7 @@ var Shell = (function () {
 
             this._promptNode.addEventListener('paste', function () {
                 setTimeout(function () {
-                    var value = _this._promptNode.textContent;
+                    var value = _this._getPromptText();
                     var lines = value.split(/\r\n|\r|\n/g);
                     var length = lines.length;
                     if (length > 1) {
@@ -1721,6 +1723,8 @@ var Shell = (function () {
                     }
                 }, 0);
             });
+
+            this._promptNode.addEventListener('input', function () {});
 
             this._shellNode.addEventListener('click', function (event) {
                 if (event.target !== _this._inputNode && !_this._inputNode.contains(event.target) && event.target !== _this._outputNode && !_this._outputNode.contains(event.target)) {
@@ -1742,6 +1746,8 @@ var Shell = (function () {
             this._autocompleteProvider.init(this);
 
             this._activateInput();
+
+            this._setPromptText('');
 
             this._isInitialized = true;
         }
@@ -1797,7 +1803,7 @@ var Shell = (function () {
             this._current.read.then(function (value) {
                 _this2._current.read = null;
                 if (!capture) {
-                    _this2._promptNode.textContent = value;
+                    _this2._setPromptText(value);
                 }
                 _this2._deactivateInput();
                 if (callback(value, _this2._current) === true) {
@@ -1824,7 +1830,7 @@ var Shell = (function () {
             this._current.readLine = utils.defer();
             this._current.readLine.then(function (value) {
                 _this3._current.readLine = null;
-                _this3._promptNode.textContent = value;
+                _this3._setPromptText(value);
                 _this3._deactivateInput();
                 _this3._flushInput();
                 if (callback(value, _this3._current) === true) {
@@ -1890,7 +1896,7 @@ var Shell = (function () {
 
             this._trigger('preexecute', command);
 
-            this._promptNode.textContent = command;
+            this._setPromptText(command);
             this._flushInput(!this._echo);
             this._deactivateInput();
 
@@ -2016,7 +2022,7 @@ var Shell = (function () {
             this._inputNode.style.display = '';
             setTimeout(function () {
                 _this5._promptNode.setAttribute('disabled', false);
-                _this5._setPromptIndent();
+                _this5._fixPromptIndent();
                 _this5._promptNode.focus();
                 _this5._shellNode.scrollTop = _this5._shellNode.scrollHeight;
             }, 0);
@@ -2032,10 +2038,10 @@ var Shell = (function () {
         value: function _flushInput(preventWrite) {
             if (!preventWrite) {
                 this.write(this._prefixNode.textContent);
-                this.writeLine(this._promptNode.textContent);
+                this.writeLine(this._getPromptText());
             }
             this._prefixNode.textContent = '';
-            this._promptNode.textContent = '';
+            this._setPromptText('');
         }
     }, {
         key: '_historyCycle',
@@ -2045,7 +2051,7 @@ var Shell = (function () {
             Promise.all([this._historyProvider.getNextValue(forward)]).then(function (values) {
                 var command = values[0];
                 if (command) {
-                    _this6._promptNode.textContent = command;
+                    _this6._setPromptText(command);
                     utils.cursorToEnd(_this6._promptNode);
                     utils.dispatchEvent(_this6._promptNode, 'change', true, false);
                 }
@@ -2056,7 +2062,7 @@ var Shell = (function () {
         value: function _autocompleteCycle(forward) {
             var _this7 = this;
 
-            var input = this._promptNode.textContent;
+            var input = this._getPromptText();
             input = input.replace(/\s$/, ' '); //fixing end whitespace
             var cursorPosition = utils.getCursorPosition(this._promptNode);
             var startIndex = input.lastIndexOf(' ', cursorPosition) + 1;
@@ -2069,7 +2075,7 @@ var Shell = (function () {
             Promise.all([this._autocompleteProvider.getNextValue(forward, this._autocompleteValue)]).then(function (values) {
                 var value = values[0];
                 if (value) {
-                    _this7._promptNode.textContent = input.substring(0, startIndex) + value;
+                    _this7._setPromptText(input.substring(0, startIndex) + value);
                     utils.cursorToEnd(_this7._promptNode);
                     utils.dispatchEvent(_this7._promptNode, 'change', true, false);
                 }
@@ -2109,8 +2115,8 @@ var Shell = (function () {
             };
         }
     }, {
-        key: '_setPromptIndent',
-        value: function _setPromptIndent() {
+        key: '_fixPromptIndent',
+        value: function _fixPromptIndent() {
             var prefixWidth = this._prefixNode.getBoundingClientRect().width;
             var text = this._prefixNode.textContent;
             var spacePadding = text.length - text.trim().length;
@@ -2128,6 +2134,19 @@ var Shell = (function () {
             prefixWidth += spacePadding * this._prefixNode._spaceWidth;
 
             this._promptNode.style.textIndent = prefixWidth + 'px';
+        }
+
+        //including a zero width character ensures the cursor honors the text-indent
+
+    }, {
+        key: '_getPromptText',
+        value: function _getPromptText() {
+            return this._promptNode.textContent.replace(/\u200C/g, '');
+        }
+    }, {
+        key: '_setPromptText',
+        value: function _setPromptText(value) {
+            this._promptNode.textContent = '‌' + value;
         }
     }, {
         key: 'isInitialized',
@@ -2148,7 +2167,7 @@ var Shell = (function () {
             this._promptPrefix = value;
             if (!this._isInputInline) {
                 this._prefixNode.textContent = value;
-                this._setPromptIndent();
+                this._fixPromptIndent();
             }
         }
     }, {
