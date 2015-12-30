@@ -1,4 +1,4 @@
-/* cmdrjs | version 1.1.2-beta | license MIT | (c) 2015 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
+/* cmdrjs | version 1.1.3-beta | license MIT | (c) 2015 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.cmdr = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function (process,global){
 /*!
@@ -1988,8 +1988,6 @@ var Shell = (function () {
     }, {
         key: '_activateInput',
         value: function _activateInput(inline) {
-            var _this5 = this;
-
             if (inline) {
                 if (this._outputLineNode) {
                     this._prefixNode.textContent = this._outputLineNode.textContent;
@@ -2002,12 +2000,10 @@ var Shell = (function () {
                 this._isInputInline = false;
             }
             this._inputNode.style.display = '';
-            setTimeout(function () {
-                _this5._promptNode.setAttribute('disabled', false);
-                _this5._fixPromptIndent();
-                _this5._promptNode.focus();
-                _this5._shellNode.scrollTop = _this5._shellNode.scrollHeight;
-            }, 0);
+            this._promptNode.setAttribute('disabled', false);
+            this._fixPromptIndent();
+            this._promptNode.focus();
+            this._shellNode.scrollTop = this._shellNode.scrollHeight;
         }
     }, {
         key: '_deactivateInput',
@@ -2028,21 +2024,21 @@ var Shell = (function () {
     }, {
         key: '_historyCycle',
         value: function _historyCycle(forward) {
-            var _this6 = this;
+            var _this5 = this;
 
             Promise.all([this._historyProvider.getNextValue(forward)]).then(function (values) {
                 var command = values[0];
                 if (command) {
-                    _this6._promptNode.textContent = command;
-                    utils.cursorToEnd(_this6._promptNode);
-                    utils.dispatchEvent(_this6._promptNode, 'change', true, false);
+                    _this5._promptNode.textContent = command;
+                    utils.cursorToEnd(_this5._promptNode);
+                    utils.dispatchEvent(_this5._promptNode, 'change', true, false);
                 }
             });
         }
     }, {
         key: '_autocompleteCycle',
         value: function _autocompleteCycle(forward) {
-            var _this7 = this;
+            var _this6 = this;
 
             var input = this._promptNode.textContent;
             input = input.replace(/\s$/, ' '); //fixing end whitespace
@@ -2057,9 +2053,9 @@ var Shell = (function () {
             Promise.all([this._autocompleteProvider.getNextValue(forward, this._autocompleteValue)]).then(function (values) {
                 var value = values[0];
                 if (value) {
-                    _this7._promptNode.textContent = input.substring(0, startIndex) + value;
-                    utils.cursorToEnd(_this7._promptNode);
-                    utils.dispatchEvent(_this7._promptNode, 'change', true, false);
+                    _this6._promptNode.textContent = input.substring(0, startIndex) + value;
+                    utils.cursorToEnd(_this6._promptNode);
+                    utils.dispatchEvent(_this6._promptNode, 'change', true, false);
                 }
             });
         }

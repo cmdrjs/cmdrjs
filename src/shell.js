@@ -437,12 +437,10 @@ class Shell {
             this._isInputInline = false;
         }
         this._inputNode.style.display = '';
-        setTimeout(() => {
-            this._promptNode.setAttribute('disabled', false);
-            this._fixPromptIndent();
-            this._promptNode.focus();
-            this._shellNode.scrollTop = this._shellNode.scrollHeight;
-        }, 0);
+        this._promptNode.setAttribute('disabled', false);
+        this._fixPromptIndent();
+        this._promptNode.focus();
+        this._shellNode.scrollTop = this._shellNode.scrollHeight;
     }
 
     _deactivateInput() {

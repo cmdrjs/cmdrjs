@@ -5,6 +5,7 @@
   overflow-y: auto;
   padding: 5px;
   color: #fff;
+  background: #000;
   font-family: "Courier New";
   font-size: 10pt;
   width: 100%;
@@ -55,3 +56,5 @@
   background: #000;
   opacity: 0.9;
   overflow-y: auto; }
+  .cmdr-overlay .cmdr-shell {
+    background: transparent; }
