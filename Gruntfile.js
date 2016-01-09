@@ -33,6 +33,11 @@
                     background: true,
                 },
             },
+            version: {
+                default: {
+                    src: ['package.json', 'src/cmdr.js']
+                }
+            },
             browserify: {
                 dev: {
                     options: {
@@ -108,6 +113,13 @@
                     tasks: ['jshint', 'browserify:dev', 'sass:dev']
                 }
             },
+            readpkg: {
+                default: {}
+            }
+        });
+        //Utils
+        grunt.registerTask('readpkg', function () {
+            grunt.config.set('pkg', grunt.file.readJSON('package.json'));
         });
 
         //development
@@ -118,6 +130,12 @@
         grunt.registerTask('test:full', ['jshint', 'bowerVerify']);
     
         //build
-        grunt.registerTask('build', ['browserify:dist', 'sass:dist', 'uglify:dist', 'cssmin:dist', 'usebanner:dist']);
+        grunt.registerTask('build', ['browserify:dist', 'sass:dist', 'uglify:dist', 'cssmin:dist', 'usebanner:dist']);    
+        
+        //For releasing
+        grunt.registerTask('release', ['release:patch']);
+        grunt.registerTask('release:major', ['version::major', 'readpkg', 'build']);
+        grunt.registerTask('release:minor', ['version::minor', 'readpkg', 'build']);
+        grunt.registerTask('release:patch', ['version::patch', 'readpkg', 'build']);
     };
 })();
