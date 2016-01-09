@@ -7,8 +7,14 @@ A JavaScript based command line interface for web pages.
 
 ## Installing the module
 
+#### Bower
 ```
 bower install cmdrjs
+```
+
+#### JSPM
+```
+jspm install cmdrjs
 ```
 
 ## Loading the module
