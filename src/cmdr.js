@@ -3,8 +3,9 @@ promise.polyfill();
 
 export { default as Shell } from './shell.js';
 export { default as OverlayShell } from './overlay-shell.js';
+export { default as CommandHandler } from './command-handler.js';
 export { default as HistoryProvider } from './history-provider.js';
 export { default as AutocompleteProvider } from './autocomplete-provider.js';
 export { default as DefinitionProvider } from './definition-provider.js';
 export { default as Definition } from './definition.js';
-export const version = '1.1.0-alpha';
+export const version = '1.1.3';

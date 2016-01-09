@@ -2,6 +2,7 @@ import * as utils from './utils.js';
 import HistoryProvider from './history-provider.js';
 import AutocompleteProvider from './autocomplete-provider.js';
 import DefinitionProvider from './definition-provider.js';
+import CommandHandler from './command-handler.js';
 
 const _defaultOptions = {
     echo: true,
@@ -9,7 +10,8 @@ const _defaultOptions = {
     template: '<div class="cmdr-shell"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>',
     definitionProvider: null,
     historyProvider: null,
-    autocompleteProvider: null
+    autocompleteProvider: null,
+    commandHandler: null
 };
 
 class Shell {
@@ -37,6 +39,7 @@ class Shell {
         this._historyProvider = null;
         this._autocompleteProvider = null;
         this._definitionProvider = null;
+        this._commandHandler = null;
         
         this.init();
     }
@@ -72,7 +75,7 @@ class Shell {
     }
     set historyProvider(value) {
         if (this._historyProvider) {
-            this._historyProvider.dispose();
+            this._historyProvider.unbind(this);
         }
         this._historyProvider = value;
     }
@@ -82,7 +85,7 @@ class Shell {
     }
     set autocompleteProvider(value) {
         if (this._autocompleteProvider) {
-            this._autocompleteProvider.dispose();
+            this._autocompleteProvider.unbind(this);
         }
         this._autocompleteProvider = value;
     }
@@ -92,9 +95,16 @@ class Shell {
     }
     set definitionProvider(value) {
         if (this._definitionProvider) {
-            this._definitionProvider.dispose();
+            this._definitionProvider.unbind(this);
         }
         this._definitionProvider = value;
+    }
+    
+    get commandHandler() {
+        return this._commandHandler;
+    }
+    set commandHandler(value) {
+        this._commandHandler = value;
     }
     
     init() {
@@ -200,13 +210,15 @@ class Shell {
         this._echo = this._options.echo;
         
         this._definitionProvider = this._options.definitionProvider || new DefinitionProvider();
-        this._definitionProvider.attach(this);
+        this._definitionProvider.bind(this);
         
         this._historyProvider = this._options.historyProvider || new HistoryProvider();
-        this._historyProvider.attach(this);
+        this._historyProvider.bind(this);
         
         this._autocompleteProvider = this._options.autocompleteProvider || new AutocompleteProvider();
-        this._autocompleteProvider.attach(this);
+        this._autocompleteProvider.bind(this);
+        
+        this._commandHandler = this.options.commandHandler || new CommandHandler();
 
         this._activateInput();
                 
@@ -230,17 +242,19 @@ class Shell {
         this._eventHandlers = {};
         
         if (this._historyProvider) {
-            this._historyProvider.detach(this);
+            this._historyProvider.unbind(this);
             this._historyProvider = null;
         }
         if (this._autocompleteProvider) {
-            this._autocompleteProvider.detach(this);
+            this._autocompleteProvider.unbind(this);
             this._autocompleteProvider = null;
         }
         if (this._definitionProvider) {
-            this._definitionProvider.detach(this);
+            this._definitionProvider.unbind(this);
             this._definitionProvider = null;
         }
+        
+        this._commandHandler = null;
         
         this._isInitialized = false;      
     }
@@ -345,44 +359,14 @@ class Shell {
         this._deactivateInput();
 
         command = command.trim();
-
-        let parsed = this._parseCommand(command);
-
-        let definitions = this._definitionProvider.getDefinitions(parsed.name);
-        if (!definitions || definitions.length < 1) {
-            this.writeLine('Invalid command', 'error');
-            this._activateInput();
-            return;
-        } else if (definitions.length > 1) {
-            this.writeLine('Ambiguous command', 'error');
-            this.writeLine();
-            for (let i = 0; i < definitions.length; i++) {
-                this.writePad(definitions[i].name, ' ', 10);
-                this.writeLine(definitions[i].description);
-            }
-            this.writeLine();
-            this._activateInput();
-            return;
-        }
-
-        let definition = definitions[0];
-
-        this._current = {
-            command: command,
-            definition: definition,
-            shell: this
+        
+        this._current = { 
+            command: command
         };
         
-        let args = parsed.args;
-        if (!definition.parse) {
-            args = [parsed.arg];
-        }       
-        
-        this._trigger('executing', this._current);
-
-        let result;
+        let result;        
         try {
-            result = definition.callback.apply(this._current, args);
+            result = this._commandHandler.executeCommand(this, command);
         } catch (error) {
             this.writeLine('Unhandled exception. See browser console log for details.', 'error');
             console.error(error);
@@ -390,7 +374,7 @@ class Shell {
 
         Promise.all([result]).then(() => {
             setTimeout(() => {
-                this._trigger('execute', this._current);
+                this._trigger('execute', command);
                 this._current = null;
                 this._activateInput();
                 if (this._queue.length > 0) {
@@ -491,33 +475,6 @@ class Shell {
     
     _autocompleteReset() {
         this._autocompleteValue = null;
-    }
-
-    _parseCommand(command) {
-        let exp = /[^\s"]+|"([^"]*)"/gi,
-            name = null,
-            arg = null,
-            args = [],
-            match = null;
-
-        do {
-            match = exp.exec(command);
-            if (match !== null) {
-                let value = match[1] ? match[1] : match[0];
-                if (match.index === 0) {
-                    name = value;
-                    arg = command.substr(value.length + (match[1] ? 3 : 1));
-                } else {
-                    args.push(value);
-                }
-            }
-        } while (match !== null);
-
-        return {
-            name: name,
-            arg: arg,
-            args: args
-        };
     }
 
     _fixPromptIndent() {

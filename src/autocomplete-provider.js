@@ -5,10 +5,10 @@ class AutocompleteProvider {
         this.incompleteValue = null;
     }
         
-    attach(shell) { 
+    bind(shell) { 
     }
     
-    detach(shell) {
+    unbind(shell) {
     }
     
     getNextValue(forward, incompleteValue) {

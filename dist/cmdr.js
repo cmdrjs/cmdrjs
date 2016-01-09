@@ -1,4 +1,4 @@
-/* cmdrjs | version 1.1.3-beta | license MIT | (c) 2015 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
+/* cmdrjs | version 1.1.3 | license MIT | (c) 2016 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.cmdr = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function (process,global){
 /*!
@@ -1066,7 +1066,7 @@ process.umask = function() { return 0; };
 },{}],3:[function(require,module,exports){
 "use strict";
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -1074,7 +1074,7 @@ Object.defineProperty(exports, "__esModule", {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var AutocompleteProvider = (function () {
+var AutocompleteProvider = function () {
     function AutocompleteProvider() {
         _classCallCheck(this, AutocompleteProvider);
 
@@ -1084,11 +1084,11 @@ var AutocompleteProvider = (function () {
     }
 
     _createClass(AutocompleteProvider, [{
-        key: "attach",
-        value: function attach(shell) {}
+        key: "bind",
+        value: function bind(shell) {}
     }, {
-        key: "detach",
-        value: function detach(shell) {}
+        key: "unbind",
+        value: function unbind(shell) {}
     }, {
         key: "getNextValue",
         value: function getNextValue(forward, incompleteValue) {
@@ -1124,7 +1124,7 @@ var AutocompleteProvider = (function () {
     }]);
 
     return AutocompleteProvider;
-})();
+}();
 
 exports.default = AutocompleteProvider;
 
@@ -1134,7 +1134,7 @@ exports.default = AutocompleteProvider;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.version = exports.Definition = exports.DefinitionProvider = exports.AutocompleteProvider = exports.HistoryProvider = exports.OverlayShell = exports.Shell = undefined;
+exports.version = exports.Definition = exports.DefinitionProvider = exports.AutocompleteProvider = exports.HistoryProvider = exports.CommandHandler = exports.OverlayShell = exports.Shell = undefined;
 
 var _shell = require('./shell.js');
 
@@ -1151,6 +1151,15 @@ Object.defineProperty(exports, 'OverlayShell', {
   enumerable: true,
   get: function get() {
     return _overlayShell.default;
+  }
+});
+
+var _commandHandler = require('./command-handler.js');
+
+Object.defineProperty(exports, 'CommandHandler', {
+  enumerable: true,
+  get: function get() {
+    return _commandHandler.default;
   }
 });
 
@@ -1198,12 +1207,97 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 _es6Promise2.default.polyfill();
 
-var version = exports.version = '1.1.0-alpha';
+var version = exports.version = '1.1.3';
 
-},{"./autocomplete-provider.js":3,"./definition-provider.js":5,"./definition.js":6,"./history-provider.js":7,"./overlay-shell.js":8,"./shell.js":9,"es6-promise":1}],5:[function(require,module,exports){
+},{"./autocomplete-provider.js":3,"./command-handler.js":5,"./definition-provider.js":6,"./definition.js":7,"./history-provider.js":8,"./overlay-shell.js":9,"./shell.js":10,"es6-promise":1}],5:[function(require,module,exports){
 'use strict';
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var CommandHandler = function () {
+    function CommandHandler() {
+        _classCallCheck(this, CommandHandler);
+    }
+
+    _createClass(CommandHandler, [{
+        key: 'executeCommand',
+        value: function executeCommand(shell, command) {
+            var parsed = this._parseCommand(command);
+
+            var definitions = shell.definitionProvider.getDefinitions(parsed.name);
+            if (!definitions || definitions.length < 1) {
+                shell.writeLine('Invalid command', 'error');
+                return false;
+            } else if (definitions.length > 1) {
+                shell.writeLine('Ambiguous command', 'error');
+                shell.writeLine();
+                for (var i = 0; i < definitions.length; i++) {
+                    shell.writePad(definitions[i].name, ' ', 10);
+                    shell.writeLine(definitions[i].description);
+                }
+                shell.writeLine();
+                return false;
+            }
+
+            var definition = definitions[0];
+
+            var thisArg = {
+                shell: shell,
+                command: command,
+                definition: definition,
+                args: parsed.args,
+                argString: parsed.argString
+            };
+
+            var args = parsed.args;
+
+            return definition.callback.apply(thisArg, args);
+        }
+    }, {
+        key: '_parseCommand',
+        value: function _parseCommand(command) {
+            var exp = /[^\s"]+|"([^"]*)"/gi,
+                name = null,
+                argString = null,
+                args = [],
+                match = null;
+
+            do {
+                match = exp.exec(command);
+                if (match !== null) {
+                    var value = match[1] ? match[1] : match[0];
+                    if (match.index === 0) {
+                        name = value;
+                        argString = command.substr(value.length + (match[1] ? 3 : 1));
+                    } else {
+                        args.push(value);
+                    }
+                }
+            } while (match !== null);
+
+            return {
+                name: name,
+                argString: argString,
+                args: args
+            };
+        }
+    }]);
+
+    return CommandHandler;
+}();
+
+exports.default = CommandHandler;
+
+},{}],6:[function(require,module,exports){
+'use strict';
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -1228,7 +1322,7 @@ var _defaultOptions = {
     allowAbbreviations: true
 };
 
-var DefinitionProvider = (function () {
+var DefinitionProvider = function () {
     function DefinitionProvider(options) {
         _classCallCheck(this, DefinitionProvider);
 
@@ -1240,11 +1334,11 @@ var DefinitionProvider = (function () {
     }
 
     _createClass(DefinitionProvider, [{
-        key: 'attach',
-        value: function attach(shell) {}
+        key: 'bind',
+        value: function bind(shell) {}
     }, {
-        key: 'detach',
-        value: function detach(shell) {}
+        key: 'unbind',
+        value: function unbind(shell) {}
     }, {
         key: 'getDefinitions',
         value: function getDefinitions(name) {
@@ -1299,17 +1393,16 @@ var DefinitionProvider = (function () {
             }
 
             if (this.options.predefined.indexOf('ECHO') > -1) {
-                this.addDefinition(new _definition2.default('ECHO', function (arg) {
-                    var toggle = arg.toUpperCase();
+                this.addDefinition(new _definition2.default('ECHO', function () {
+                    var toggle = this.argString.toUpperCase();
                     if (toggle === 'ON') {
                         this.shell.echo = true;
                     } else if (toggle === 'OFF') {
                         this.shell.echo = false;
                     } else {
-                        this.shell.writeLine(arg);
+                        this.shell.writeLine(this.argString);
                     }
                 }, {
-                    parse: false,
                     description: 'Displays provided text or toggles command echoing'
                 }));
             }
@@ -1325,11 +1418,11 @@ var DefinitionProvider = (function () {
     }]);
 
     return DefinitionProvider;
-})();
+}();
 
 exports.default = DefinitionProvider;
 
-},{"./definition.js":6,"./utils.js":10}],6:[function(require,module,exports){
+},{"./definition.js":7,"./utils.js":11}],7:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1373,10 +1466,10 @@ var Definition = function Definition(name, callback, options) {
 
 exports.default = Definition;
 
-},{"./utils.js":10}],7:[function(require,module,exports){
+},{"./utils.js":11}],8:[function(require,module,exports){
 'use strict';
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -1384,7 +1477,7 @@ Object.defineProperty(exports, "__esModule", {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var HistoryProvider = (function () {
+var HistoryProvider = function () {
     function HistoryProvider() {
         var _this = this;
 
@@ -1400,13 +1493,13 @@ var HistoryProvider = (function () {
     }
 
     _createClass(HistoryProvider, [{
-        key: 'attach',
-        value: function attach(shell) {
+        key: 'bind',
+        value: function bind(shell) {
             shell.on('preexecute', this._preexecuteHandler);
         }
     }, {
-        key: 'detach',
-        value: function detach(shell) {
+        key: 'unbind',
+        value: function unbind(shell) {
             shell.off('preexecute', this._preexecuteHandler);
         }
     }, {
@@ -1425,14 +1518,14 @@ var HistoryProvider = (function () {
     }]);
 
     return HistoryProvider;
-})();
+}();
 
 exports.default = HistoryProvider;
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 'use strict';
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
@@ -1464,7 +1557,7 @@ var _defaultOptions = {
     closeKey: 27
 };
 
-var OverlayShell = (function (_Shell) {
+var OverlayShell = function (_Shell) {
     _inherits(OverlayShell, _Shell);
 
     function OverlayShell(options) {
@@ -1542,14 +1635,14 @@ var OverlayShell = (function (_Shell) {
     }]);
 
     return OverlayShell;
-})(_shell2.default);
+}(_shell2.default);
 
 exports.default = OverlayShell;
 
-},{"./shell.js":9,"./utils.js":10}],9:[function(require,module,exports){
+},{"./shell.js":10,"./utils.js":11}],10:[function(require,module,exports){
 'use strict';
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -1571,6 +1664,10 @@ var _definitionProvider = require('./definition-provider.js');
 
 var _definitionProvider2 = _interopRequireDefault(_definitionProvider);
 
+var _commandHandler = require('./command-handler.js');
+
+var _commandHandler2 = _interopRequireDefault(_commandHandler);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
@@ -1583,10 +1680,11 @@ var _defaultOptions = {
     template: '<div class="cmdr-shell"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>',
     definitionProvider: null,
     historyProvider: null,
-    autocompleteProvider: null
+    autocompleteProvider: null,
+    commandHandler: null
 };
 
-var Shell = (function () {
+var Shell = function () {
     function Shell(containerNode, options) {
         _classCallCheck(this, Shell);
 
@@ -1613,6 +1711,7 @@ var Shell = (function () {
         this._historyProvider = null;
         this._autocompleteProvider = null;
         this._definitionProvider = null;
+        this._commandHandler = null;
 
         this.init();
     }
@@ -1721,13 +1820,15 @@ var Shell = (function () {
             this._echo = this._options.echo;
 
             this._definitionProvider = this._options.definitionProvider || new _definitionProvider2.default();
-            this._definitionProvider.attach(this);
+            this._definitionProvider.bind(this);
 
             this._historyProvider = this._options.historyProvider || new _historyProvider2.default();
-            this._historyProvider.attach(this);
+            this._historyProvider.bind(this);
 
             this._autocompleteProvider = this._options.autocompleteProvider || new _autocompleteProvider2.default();
-            this._autocompleteProvider.attach(this);
+            this._autocompleteProvider.bind(this);
+
+            this._commandHandler = this.options.commandHandler || new _commandHandler2.default();
 
             this._activateInput();
 
@@ -1752,17 +1853,19 @@ var Shell = (function () {
             this._eventHandlers = {};
 
             if (this._historyProvider) {
-                this._historyProvider.detach(this);
+                this._historyProvider.unbind(this);
                 this._historyProvider = null;
             }
             if (this._autocompleteProvider) {
-                this._autocompleteProvider.detach(this);
+                this._autocompleteProvider.unbind(this);
                 this._autocompleteProvider = null;
             }
             if (this._definitionProvider) {
-                this._definitionProvider.detach(this);
+                this._definitionProvider.unbind(this);
                 this._definitionProvider = null;
             }
+
+            this._commandHandler = null;
 
             this._isInitialized = false;
         }
@@ -1884,43 +1987,13 @@ var Shell = (function () {
 
             command = command.trim();
 
-            var parsed = this._parseCommand(command);
-
-            var definitions = this._definitionProvider.getDefinitions(parsed.name);
-            if (!definitions || definitions.length < 1) {
-                this.writeLine('Invalid command', 'error');
-                this._activateInput();
-                return;
-            } else if (definitions.length > 1) {
-                this.writeLine('Ambiguous command', 'error');
-                this.writeLine();
-                for (var i = 0; i < definitions.length; i++) {
-                    this.writePad(definitions[i].name, ' ', 10);
-                    this.writeLine(definitions[i].description);
-                }
-                this.writeLine();
-                this._activateInput();
-                return;
-            }
-
-            var definition = definitions[0];
-
             this._current = {
-                command: command,
-                definition: definition,
-                shell: this
+                command: command
             };
-
-            var args = parsed.args;
-            if (!definition.parse) {
-                args = [parsed.arg];
-            }
-
-            this._trigger('executing', this._current);
 
             var result = undefined;
             try {
-                result = definition.callback.apply(this._current, args);
+                result = this._commandHandler.executeCommand(this, command);
             } catch (error) {
                 this.writeLine('Unhandled exception. See browser console log for details.', 'error');
                 console.error(error);
@@ -1928,7 +2001,7 @@ var Shell = (function () {
 
             Promise.all([result]).then(function () {
                 setTimeout(function () {
-                    _this4._trigger('execute', _this4._current);
+                    _this4._trigger('execute', command);
                     _this4._current = null;
                     _this4._activateInput();
                     if (_this4._queue.length > 0) {
@@ -2065,34 +2138,6 @@ var Shell = (function () {
             this._autocompleteValue = null;
         }
     }, {
-        key: '_parseCommand',
-        value: function _parseCommand(command) {
-            var exp = /[^\s"]+|"([^"]*)"/gi,
-                name = null,
-                arg = null,
-                args = [],
-                match = null;
-
-            do {
-                match = exp.exec(command);
-                if (match !== null) {
-                    var value = match[1] ? match[1] : match[0];
-                    if (match.index === 0) {
-                        name = value;
-                        arg = command.substr(value.length + (match[1] ? 3 : 1));
-                    } else {
-                        args.push(value);
-                    }
-                }
-            } while (match !== null);
-
-            return {
-                name: name,
-                arg: arg,
-                args: args
-            };
-        }
-    }, {
         key: '_fixPromptIndent',
         value: function _fixPromptIndent() {
             var prefixWidth = this._prefixNode.getBoundingClientRect().width;
@@ -2150,7 +2195,7 @@ var Shell = (function () {
         },
         set: function set(value) {
             if (this._historyProvider) {
-                this._historyProvider.dispose();
+                this._historyProvider.unbind(this);
             }
             this._historyProvider = value;
         }
@@ -2161,7 +2206,7 @@ var Shell = (function () {
         },
         set: function set(value) {
             if (this._autocompleteProvider) {
-                this._autocompleteProvider.dispose();
+                this._autocompleteProvider.unbind(this);
             }
             this._autocompleteProvider = value;
         }
@@ -2172,19 +2217,29 @@ var Shell = (function () {
         },
         set: function set(value) {
             if (this._definitionProvider) {
-                this._definitionProvider.dispose();
+                this._definitionProvider.unbind(this);
             }
             this._definitionProvider = value;
+        }
+    }, {
+        key: 'commandHandler',
+        get: function get() {
+            return this._commandHandler;
+        },
+        set: function set(value) {
+            this._commandHandler = value;
         }
     }]);
 
     return Shell;
-})();
+}();
 
 exports.default = Shell;
 
-},{"./autocomplete-provider.js":3,"./definition-provider.js":5,"./history-provider.js":7,"./utils.js":10}],10:[function(require,module,exports){
+},{"./autocomplete-provider.js":3,"./command-handler.js":5,"./definition-provider.js":6,"./history-provider.js":8,"./utils.js":11}],11:[function(require,module,exports){
 "use strict";
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -2199,9 +2254,6 @@ exports.dispatchEvent = dispatchEvent;
 exports.blur = blur;
 exports.cursorToEnd = cursorToEnd;
 exports.getCursorPosition = getCursorPosition;
-
-function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj; }
-
 //Object
 
 function extend(out) {

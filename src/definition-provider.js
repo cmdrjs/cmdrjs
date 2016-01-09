@@ -15,10 +15,10 @@ class DefinitionProvider {
         this._predefine();
     }
     
-    attach(shell) { 
+    bind(shell) { 
     }
     
-    detach(shell) {
+    unbind(shell) {
     }
        
     getDefinitions(name) {
@@ -72,17 +72,16 @@ class DefinitionProvider {
         }
 
         if (this.options.predefined.indexOf('ECHO') > -1) {
-            this.addDefinition(new Definition('ECHO', function (arg) {
-                let toggle = arg.toUpperCase();
+            this.addDefinition(new Definition('ECHO', function () {
+                let toggle = this.argString.toUpperCase();
                 if (toggle === 'ON') {
                     this.shell.echo = true;
                 } else if (toggle === 'OFF') {
                     this.shell.echo = false;
                 } else {
-                    this.shell.writeLine(arg);
+                    this.shell.writeLine(this.argString);
                 }
             }, {
-                    parse: false,
                     description: 'Displays provided text or toggles command echoing'
                 }));
         }
