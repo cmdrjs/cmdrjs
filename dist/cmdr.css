@@ -1,4 +1,4 @@
-/* cmdrjs | version 1.1.4 | license MIT | (c) 2016 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
+/* cmdrjs | version 1.1.5 | license MIT | (c) 2016 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
 .cmdr-shell {
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
@@ -80,11 +80,8 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: #000;
   opacity: 0.9;
   overflow-y: auto; }
-  .cmdr-overlay .cmdr-shell {
-    background: transparent; }
 
 .cmdr-shell--cmd {
   color: #C0C0C0;
