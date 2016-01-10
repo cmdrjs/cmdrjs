@@ -8,6 +8,7 @@ const _defaultOptions = {
     echo: true,
     promptPrefix: '>',
     template: '<div class="cmdr-shell"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>',
+    theme: 'cmd',
     definitionProvider: null,
     historyProvider: null,
     autocompleteProvider: null,
@@ -110,7 +111,8 @@ class Shell {
     init() {
         if (this._isInitialized) return;
                 
-        this._shellNode = utils.createElement(this._options.template);
+        this._shellNode = utils.createElement(this._options.template);        
+        this._shellNode.className += ' cmdr-shell--' + this._options.theme;
 
         this._containerNode.appendChild(this._shellNode);
 

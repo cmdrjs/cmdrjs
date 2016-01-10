@@ -1,0 +1,15 @@
+.cmdr-shell {
+    &--cmd {
+        color: #C0C0C0;
+        background: #000000;
+        font-family: Consolas, monaco, monospace;
+        font-size: 10pt;
+    }
+    
+    &--powershell {
+        color: #EEEDF0;
+        background: #012456;
+        font-family: 'Lucida Console', 'Lucida Sans Typewriter', monaco, 'Bitstream Vera Sans Mono', monospace;
+        font-size: 10pt;        
+    }
+}

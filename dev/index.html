@@ -4,12 +4,16 @@
     <title>cmdrjs</title>
     <link rel="stylesheet" type="text/css" href="cmdr.css" />
     <style>
+        #container {
+            height: 300px;
+        }
     </style>
 </head>
 <body>
+    <div id="container"></div>
     <script src="cmdr.js"></script>
     <script>        
-        var shell = new cmdr.OverlayShell();
+        var shell = new cmdr.Shell(document.getElementById('container'), { theme: 'ubuntu' });
     </script>
 </body>
 </html>
