@@ -111,7 +111,8 @@ class Shell {
     init() {
         if (this._isInitialized) return;
                 
-        this._shellNode = utils.createElement(this._options.template);        
+        this._shellNode = utils.createElement(this._options.template);
+                
         this._shellNode.className += ' cmdr-shell--' + this._options.theme;
 
         this._containerNode.appendChild(this._shellNode);
@@ -423,14 +424,14 @@ class Shell {
             this._isInputInline = false;
         }
         this._inputNode.style.display = '';
-        this._promptNode.setAttribute('disabled', false);
+        this._promptNode.removeAttribute('disabled');
         this._fixPromptIndent();
         this._promptNode.focus();
         this._shellNode.scrollTop = this._shellNode.scrollHeight;
     }
 
     _deactivateInput() {
-        this._promptNode.setAttribute('disabled', true);
+        this._promptNode.setAttribute('disabled', 'disabled');
         this._inputNode.style.display = 'none';
     }
 
