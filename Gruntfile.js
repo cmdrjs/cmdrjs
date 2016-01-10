@@ -104,6 +104,13 @@
                     }
                 }
             },
+            connect: {
+                dev: {
+                    options: {
+                        base: 'dev'
+                    }
+                }
+            },
             watch: {
                 options: {
                     spawn: false
@@ -123,7 +130,7 @@
         });
 
         //development
-        grunt.registerTask('dev', ['jshint', 'browserify:dev', 'sass:dev', 'watch:dev']);
+        grunt.registerTask('dev', ['jshint', 'browserify:dev', 'sass:dev', 'connect:dev', 'watch:dev']);
 
         //test
         grunt.registerTask('test', ['jshint', 'karma:once']);
