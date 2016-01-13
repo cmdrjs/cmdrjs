@@ -15,7 +15,6 @@ class Definition {
         this.name = name;
         this.callback = callback;
         this.description = null;
-        this.parse = true;
         this.available = true;
         
         utils.extend(this, options);
