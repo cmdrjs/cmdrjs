@@ -365,7 +365,7 @@ class Shell {
         }
         for (let row of data) {
             for (let col of columns) {
-                writeCell(row[col.name].toString(), col.padding);
+                writeCell(row[col.name] ? row[col.name].toString() : '', col.padding);
             }
             this.writeLine(); 
         }        
