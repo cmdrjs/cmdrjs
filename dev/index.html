@@ -16,7 +16,7 @@
         var shell = new cmdr.Shell(document.getElementById('container'), { theme: 'cmd' });
         //var shell = new cmdr.OverlayShell({ theme: 'cmd' });
         
-        shell.definitionProvider.addDefinition(new cmdr.Definition({
+        shell.define({
             name: 'test',
             callback: function () {
                 var defer = this.defer();
@@ -29,7 +29,7 @@
                 
                 return defer;
             }
-        }));
+        });
     </script>
 </body>
 </html>

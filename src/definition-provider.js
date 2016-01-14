@@ -12,13 +12,23 @@ class DefinitionProvider {
         this.shell = null;
         this.definitions = {};
         
+        this.define = (...args) => {
+            this.addDefinition(new Definition(...args));
+        };
+        
         this._predefine();
     }
     
-    bind(shell) { 
+    bind(shell) {
+        if (typeof shell.define === 'undefined') {
+            shell.define = this.define;
+        }
     }
     
     unbind(shell) {
+        if (shell.define === this.define) {
+            delete shell.define;
+        }
     }
        
     getDefinitions(name) {

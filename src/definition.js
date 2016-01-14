@@ -26,6 +26,10 @@ class Definition {
             
         this.name = this.name.toUpperCase();
     }
+    
+    static create(name, callback, options) {
+        return new Definition(name, callback, options);
+    }
 }
 
 export default Definition;
