@@ -324,18 +324,16 @@ class Shell {
             this._outputNode.appendChild(this._outputLineNode);
         }
         this._outputLineNode.appendChild(outputValue);
-        return this;
     }
 
     writeLine(value, cssClass) {
         value = (value || '') + '\n';
         this.write(value, cssClass);
         this._outputLineNode = null;
-        return this;
     }
 
     writePad(value, length, char = ' ', cssClass = null) {
-        return this.write(utils.pad(value, length, char), cssClass);
+        this.write(utils.pad(value, length, char), cssClass);
     }
     
     writeTable(data, columns, showHeaders, cssClass) {
@@ -371,7 +369,6 @@ class Shell {
             }
             this.writeLine(); 
         }        
-        return this;
     }
 
     clear() {
