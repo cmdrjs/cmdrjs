@@ -22,14 +22,13 @@ class CommandHandler {
 
         let definition = definitions[0];
 
-        let thisArg = {
+        let thisArg = utils.extend({}, definition, {
             shell: shell,
             command: command,
-            definition: definition,
             args: parsed.args,
             argString: parsed.argString,
             defer: utils.defer
-        };
+        });
         
         let args = parsed.args;
         
