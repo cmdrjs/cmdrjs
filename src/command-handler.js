@@ -33,7 +33,7 @@ class CommandHandler {
         
         let args = parsed.args;
         
-        return definition.callback.apply(thisArg, args);
+        return definition.main.apply(thisArg, args);
     }
     
     _parseCommand(command) {

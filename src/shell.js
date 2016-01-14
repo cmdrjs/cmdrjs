@@ -198,7 +198,7 @@ class Shell {
         });
 
         this._promptNode.addEventListener('input', () => {
-
+           
         });
 
         this._shellNode.addEventListener('click', (event) => {
@@ -390,18 +390,18 @@ class Shell {
         });
     }
 
-    on(event, callback) {
+    on(event, handler) {
         if (!this._eventHandlers[event]) {
             this._eventHandlers[event] = [];
         }
-        this._eventHandlers[event].push(callback);
+        this._eventHandlers[event].push(handler);
     }
 
-    off(event, callback) {
+    off(event, handler) {
         if (!this._eventHandlers[event]) {
             return;
         }
-        let index = this._eventHandlers[event].indexOf(callback);
+        let index = this._eventHandlers[event].indexOf(handler);
         if (index > -1) {
             this._eventHandlers[event].splice(index, 1);
         }
@@ -409,8 +409,8 @@ class Shell {
 
     _trigger(event, data) {
         if (!this._eventHandlers[event]) return;
-        for (let callback of this._eventHandlers[event]) {
-            callback.call(this, data);
+        for (let handler of this._eventHandlers[event]) {
+            handler.call(this, data);
         }
     }
 
