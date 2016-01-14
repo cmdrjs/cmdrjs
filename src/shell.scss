@@ -47,20 +47,20 @@
             white-space: -pre-wrap; 
             white-space: -o-pre-wrap; 
             white-space: pre-wrap; 
-        }
-
-        .success {
-            color: #4cff00;
-        }
-
-        .warning {
-            color: yellow;
-        }
-
-        .error {
-            color: red;
-        }        
+        }      
     }
+    
+    .success {
+        color: #4cff00;
+    }
+
+    .warning {
+        color: yellow;
+    }
+
+    .error {
+        color: red;
+    }  
     
     &--cmd {
         color: #C0C0C0;

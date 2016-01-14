@@ -20,7 +20,7 @@ class Shell {
         if (!containerNode || !utils.isElement(containerNode)) {
             throw '"containerNode" must be an HTMLElement.';
         }
-        
+
         this._options = utils.extend({}, _defaultOptions, options);
         this._containerNode = containerNode;
         this._shellNode = null;
@@ -36,23 +36,23 @@ class Shell {
         this._isInputInline = false;
         this._autocompleteValue = null;
         this._eventHandlers = {};
-        this._isInitialized = false;        
+        this._isInitialized = false;
         this._historyProvider = null;
         this._autocompleteProvider = null;
         this._definitionProvider = null;
         this._commandHandler = null;
-        
+
         this.init();
     }
-    
+
     get isInitialized() {
         return this._isInitialized;
     }
-    
+
     get options() {
         return this._options;
     }
-    
+
     get promptPrefix() {
         return this._promptPrefix;
     }
@@ -63,14 +63,14 @@ class Shell {
             this._fixPromptIndent();
         }
     }
-    
+
     get echo() {
         return this._echo;
     }
     set echo(value) {
         this._echo = value;
     }
-    
+
     get historyProvider() {
         return this._historyProvider;
     }
@@ -80,7 +80,7 @@ class Shell {
         }
         this._historyProvider = value;
     }
-    
+
     get autocompleteProvider() {
         return this._autocompleteProvider;
     }
@@ -90,7 +90,7 @@ class Shell {
         }
         this._autocompleteProvider = value;
     }
-    
+
     get definitionProvider() {
         return this._definitionProvider;
     }
@@ -100,19 +100,19 @@ class Shell {
         }
         this._definitionProvider = value;
     }
-    
+
     get commandHandler() {
         return this._commandHandler;
     }
     set commandHandler(value) {
         this._commandHandler = value;
     }
-    
+
     init() {
         if (this._isInitialized) return;
-                
+
         this._shellNode = utils.createElement(this._options.template);
-                
+
         this._shellNode.className += ' cmdr-shell--' + this._options.theme;
 
         this._containerNode.appendChild(this._shellNode);
@@ -126,7 +126,7 @@ class Shell {
             if (!this._current) {
                 if (event.keyCode !== 9) {
                     this._autocompleteReset();
-                }                
+                }
                 switch (event.keyCode) {
                     case 13:
                         let value = this._promptNode.textContent;
@@ -196,41 +196,41 @@ class Shell {
                 }
             }, 0);
         });
-        
+
         this._promptNode.addEventListener('input', () => {
-            
+
         });
-        
+
         this._shellNode.addEventListener('click', (event) => {
             if (event.target !== this._inputNode && !this._inputNode.contains(event.target) &&
                 event.target !== this._outputNode && !this._outputNode.contains(event.target)) {
                 this._promptNode.focus();
             }
         });
-                
+
         this._promptPrefix = this._options.promptPrefix;
-        
+
         this._echo = this._options.echo;
-        
+
         this._definitionProvider = this._options.definitionProvider || new DefinitionProvider();
         this._definitionProvider.bind(this);
-        
+
         this._historyProvider = this._options.historyProvider || new HistoryProvider();
         this._historyProvider.bind(this);
-        
+
         this._autocompleteProvider = this._options.autocompleteProvider || new AutocompleteProvider();
         this._autocompleteProvider.bind(this);
-        
+
         this._commandHandler = this.options.commandHandler || new CommandHandler();
 
         this._activateInput();
-                
+
         this._isInitialized = true;
     }
 
     dispose() {
         if (!this._isInitialized) return;
-        
+
         this._containerNode.removeChild(this._shellNode);
         this._shellNode = null;
         this._outputNode = null;
@@ -243,7 +243,7 @@ class Shell {
         this._promptPrefix = null;
         this._isInputInline = false;
         this._eventHandlers = {};
-        
+
         if (this._historyProvider) {
             this._historyProvider.unbind(this);
             this._historyProvider = null;
@@ -256,12 +256,12 @@ class Shell {
             this._definitionProvider.unbind(this);
             this._definitionProvider = null;
         }
-        
+
         this._commandHandler = null;
-        
-        this._isInitialized = false;      
+
+        this._isInitialized = false;
     }
-        
+
     reset() {
         this.dispose();
         this.init();
@@ -314,8 +314,11 @@ class Shell {
     }
 
     write(value, cssClass) {
-        value = value || '';
-        let outputValue = utils.createElement(`<span class="${cssClass}">${value}</span>`);
+        value = utils.encodeHtml(value || '');
+        let outputValue = utils.createElement(`<span>${value}</span>`);
+        if (cssClass) {
+            outputValue.className = cssClass;
+        }
         if (!this._outputLineNode) {
             this._outputLineNode = utils.createElement('<div></div>');
             this._outputNode.appendChild(this._outputLineNode);
@@ -336,11 +339,11 @@ class Shell {
     clear() {
         this._outputNode.innerHTML = '';
     }
-    
+
     focus() {
         this._promptNode.focus();
     }
-    
+
     blur() {
         utils.blur(this._promptNode);
     }
@@ -354,20 +357,20 @@ class Shell {
         if (typeof command !== 'string' || command.length === 0) {
             throw 'Invalid command';
         }
-        
+
         this._trigger('preexecute', command);
-        
+
         this._promptNode.textContent = command;
         this._flushInput(!this._echo);
         this._deactivateInput();
 
         command = command.trim();
-        
-        this._current = { 
+
+        this._current = {
             command: command
         };
-        
-        let result;        
+
+        let result;
         try {
             result = this._commandHandler.executeCommand(this, command);
         } catch (error) {
@@ -403,7 +406,7 @@ class Shell {
             this._eventHandlers[event].splice(index, 1);
         }
     }
-    
+
     _trigger(event, data) {
         if (!this._eventHandlers[event]) return;
         for (let callback of this._eventHandlers[event]) {
@@ -414,13 +417,13 @@ class Shell {
     _activateInput(inline) {
         if (inline) {
             if (this._outputLineNode) {
-                this._prefixNode.textContent = this._outputLineNode.textContent;
+                this._prefixNode.innerHTML = this._outputLineNode.innerHTML;
                 this._outputNode.removeChild(this._outputLineNode);
                 this._outputLineNode = null;
             }
             this._isInputInline = true;
         } else {
-            this._prefixNode.textContent = this._promptPrefix;
+            this._prefixNode.innerHTML = this._promptPrefix;
             this._isInputInline = false;
         }
         this._inputNode.style.display = '';
@@ -437,13 +440,13 @@ class Shell {
 
     _flushInput(preventWrite) {
         if (!preventWrite) {
-            this.write(this._prefixNode.textContent);
-            this.writeLine(this._promptNode.textContent);
+            let outputValue = utils.createElement(`<div>${this._prefixNode.innerHTML}${this._promptNode.innerHTML}</div>`);
+            this._outputNode.appendChild(outputValue);
         }
         this._prefixNode.textContent = '';
         this._promptNode.textContent = '';
     }
-    
+
     _historyCycle(forward) {
         Promise.all([this._historyProvider.getNextValue(forward)]).then((values) => {
             let command = values[0];
@@ -454,7 +457,7 @@ class Shell {
             }
         });
     }
-    
+
     _autocompleteCycle(forward) {
         let input = this._promptNode.textContent;
         input = input.replace(/\s$/, ' '); //fixing end whitespace
@@ -475,7 +478,7 @@ class Shell {
             }
         });
     }
-    
+
     _autocompleteReset() {
         this._autocompleteValue = null;
     }
@@ -496,7 +499,7 @@ class Shell {
         }
 
         prefixWidth += spacePadding * this._prefixNode._spaceWidth;
-        
+
         this._promptNode.style.textIndent = prefixWidth + 'px';
     }
 }

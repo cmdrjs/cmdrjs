@@ -27,6 +27,12 @@ export function pad(value, padding, length) {
     return value;
 }
 
+export function encodeHtml(value) {
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(value));
+    return div.innerHTML;
+}
+
 //Function
 
 export function unwrap(value) {
