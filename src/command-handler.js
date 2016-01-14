@@ -1,3 +1,5 @@
+import * as utils from './utils.js';
+
 class CommandHandler {
     
      executeCommand(shell, command) { 
@@ -25,7 +27,8 @@ class CommandHandler {
             command: command,
             definition: definition,
             args: parsed.args,
-            argString: parsed.argString
+            argString: parsed.argString,
+            defer: utils.defer
         };
         
         let args = parsed.args;
