@@ -417,6 +417,9 @@ class Shell {
             setTimeout(() => {
                 this._trigger('execute', command);
                 this._current = null;
+                if (this._outputNode.children.length > 0) {
+                    this.writeLine();
+                }
                 this._activateInput();
                 if (this._queue.length > 0) {
                     this.execute(this._queue.shift());

@@ -21,7 +21,7 @@ class CommandHandler {
         }
 
         let definition = definitions[0];
-
+        
         let thisArg = utils.extend({}, definition, {
             shell: shell,
             command: command,
@@ -32,6 +32,15 @@ class CommandHandler {
         
         let args = parsed.args;
         
+        if (definition.help && args.length > 0 && args[args.length-1] === "/?") {
+            if (typeof definition.help === 'string') {
+                shell.writeLine(definition.help);
+                return false;
+            } else if (typeof definition.help === 'function') {
+                return definition.help.apply(thisArg, args);
+            }
+        }
+                        
         return definition.main.apply(thisArg, args);
     }
     

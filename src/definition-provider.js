@@ -73,9 +73,8 @@ class DefinitionProvider {
                         .map((key) => { return provider.definitions[key]; })
                         .filter((def) => { return def.available; });
                     this.shell.writeTable(availableDefinitions, ['name:10', 'description:40']);
-                    this.shell.writeLine();
                 },
-                description: 'Lists the available commands'
+                description: 'Lists the available commands.'
             });
         }
 
@@ -88,11 +87,14 @@ class DefinitionProvider {
                         this.shell.echo = true;
                     } else if (toggle === 'OFF') {
                         this.shell.echo = false;
-                    } else {
+                    } else if (this.argString) {
                         this.shell.writeLine(this.argString);
+                    } else {
+                        this.shell.writeLine('ECHO is ' + (this.shell.echo ? 'on.' : 'off.'));
                     }
                 },
-                description: 'Displays provided text or toggles command echoing'
+                description: 'Displays messages, or toggles command echoing.',
+                usage: 'ECHO [ON | OFF]\nECHO [message]\n\nType ECHO without parameters to display the current echo setting.'
             });
         }
 
@@ -102,7 +104,7 @@ class DefinitionProvider {
                 main: function () {
                     this.shell.clear();
                 },
-                description: 'Clears the command prompt'
+                description: 'Clears the command prompt.'
             });
         }
     }
