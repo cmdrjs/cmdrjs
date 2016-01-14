@@ -1,4 +1,4 @@
-/* cmdrjs | version 1.1.5 | license MIT | (c) 2016 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
+/* cmdrjs | version 1.1.6 | license MIT | (c) 2016 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.cmdr = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function (process,global){
 /*!
@@ -1207,7 +1207,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 _es6Promise2.default.polyfill();
 
-var version = exports.version = '1.1.5';
+var version = exports.version = '1.1.6';
 
 },{"./autocomplete-provider.js":3,"./command-handler.js":5,"./definition-provider.js":6,"./definition.js":7,"./history-provider.js":8,"./overlay-shell.js":9,"./shell.js":10,"es6-promise":1}],5:[function(require,module,exports){
 'use strict';
@@ -1217,6 +1217,12 @@ var _createClass = function () { function defineProperties(target, props) { for 
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
+
+var _utils = require('./utils.js');
+
+var utils = _interopRequireWildcard(_utils);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -1238,7 +1244,7 @@ var CommandHandler = function () {
                 shell.writeLine('Ambiguous command', 'error');
                 shell.writeLine();
                 for (var i = 0; i < definitions.length; i++) {
-                    shell.writePad(definitions[i].name, ' ', 10);
+                    shell.writePad(definitions[i].name, 10);
                     shell.writeLine(definitions[i].description);
                 }
                 shell.writeLine();
@@ -1247,17 +1253,26 @@ var CommandHandler = function () {
 
             var definition = definitions[0];
 
-            var thisArg = {
+            var thisArg = utils.extend({}, definition, {
                 shell: shell,
                 command: command,
-                definition: definition,
                 args: parsed.args,
-                argString: parsed.argString
-            };
+                argString: parsed.argString,
+                defer: utils.defer
+            });
 
             var args = parsed.args;
 
-            return definition.callback.apply(thisArg, args);
+            if (definition.help && args.length > 0 && args[args.length - 1] === "/?") {
+                if (typeof definition.help === 'string') {
+                    shell.writeLine(definition.help);
+                    return false;
+                } else if (typeof definition.help === 'function') {
+                    return definition.help.apply(thisArg, args);
+                }
+            }
+
+            return definition.main.apply(thisArg, args);
         }
     }, {
         key: '_parseCommand',
@@ -1294,7 +1309,7 @@ var CommandHandler = function () {
 
 exports.default = CommandHandler;
 
-},{}],6:[function(require,module,exports){
+},{"./utils.js":11}],6:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1324,21 +1339,39 @@ var _defaultOptions = {
 
 var DefinitionProvider = function () {
     function DefinitionProvider(options) {
+        var _this = this;
+
         _classCallCheck(this, DefinitionProvider);
 
         this.options = utils.extend({}, _defaultOptions, options);
         this.shell = null;
         this.definitions = {};
 
+        this.define = function () {
+            for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+                args[_key] = arguments[_key];
+            }
+
+            _this.addDefinition(new (Function.prototype.bind.apply(_definition2.default, [null].concat(args)))());
+        };
+
         this._predefine();
     }
 
     _createClass(DefinitionProvider, [{
         key: 'bind',
-        value: function bind(shell) {}
+        value: function bind(shell) {
+            if (typeof shell.define === 'undefined') {
+                shell.define = this.define;
+            }
+        }
     }, {
         key: 'unbind',
-        value: function unbind(shell) {}
+        value: function unbind(shell) {
+            if (shell.define === this.define) {
+                delete shell.define;
+            }
+        }
     }, {
         key: 'getDefinitions',
         value: function getDefinitions(name) {
@@ -1376,43 +1409,50 @@ var DefinitionProvider = function () {
             var provider = this;
 
             if (this.options.predefined.indexOf('HELP') > -1) {
-                this.addDefinition(new _definition2.default('HELP', function () {
-                    this.shell.writeLine('The following commands are available:');
-                    this.shell.writeLine();
-                    for (var key in provider.definitions) {
-                        var definition = provider.definitions[key];
-                        if (!!utils.unwrap(definition.available)) {
-                            this.shell.writePad(key, ' ', 10);
-                            this.shell.writeLine(definition.description);
-                        }
-                    }
-                    this.shell.writeLine();
-                }, {
-                    description: 'Lists the available commands'
-                }));
+                this.define({
+                    name: 'HELP',
+                    main: function main() {
+                        this.shell.writeLine('The following commands are available:');
+                        this.shell.writeLine();
+                        var availableDefinitions = Object.keys(provider.definitions).map(function (key) {
+                            return provider.definitions[key];
+                        }).filter(function (def) {
+                            return def.available;
+                        });
+                        this.shell.writeTable(availableDefinitions, ['name:10', 'description:40']);
+                    },
+                    description: 'Lists the available commands.'
+                });
             }
 
             if (this.options.predefined.indexOf('ECHO') > -1) {
-                this.addDefinition(new _definition2.default('ECHO', function () {
-                    var toggle = this.argString.toUpperCase();
-                    if (toggle === 'ON') {
-                        this.shell.echo = true;
-                    } else if (toggle === 'OFF') {
-                        this.shell.echo = false;
-                    } else {
-                        this.shell.writeLine(this.argString);
-                    }
-                }, {
-                    description: 'Displays provided text or toggles command echoing'
-                }));
+                this.define({
+                    name: 'ECHO',
+                    main: function main() {
+                        var toggle = this.argString.toUpperCase();
+                        if (toggle === 'ON') {
+                            this.shell.echo = true;
+                        } else if (toggle === 'OFF') {
+                            this.shell.echo = false;
+                        } else if (this.argString) {
+                            this.shell.writeLine(this.argString);
+                        } else {
+                            this.shell.writeLine('ECHO is ' + (this.shell.echo ? 'on.' : 'off.'));
+                        }
+                    },
+                    description: 'Displays messages, or toggles command echoing.',
+                    usage: 'ECHO [ON | OFF]\nECHO [message]\n\nType ECHO without parameters to display the current echo setting.'
+                });
             }
 
             if (this.options.predefined.indexOf('CLS') > -1) {
-                this.addDefinition(new _definition2.default('CLS', function () {
-                    this.shell.clear();
-                }, {
-                    description: 'Clears the command prompt'
-                }));
+                this.define({
+                    name: 'CLS',
+                    main: function main() {
+                        this.shell.clear();
+                    },
+                    description: 'Clears the command prompt.'
+                });
             }
         }
     }]);
@@ -1437,31 +1477,46 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Definition = function Definition(name, callback, options) {
+var Definition = function Definition(name, main, options) {
     _classCallCheck(this, Definition);
 
     if (typeof name !== 'string') {
-        options = callback;
-        callback = name;
+        options = main;
+        main = name;
         name = null;
     }
-    if (typeof callback !== 'function') {
-        options = callback;
-        callback = null;
+    if (typeof main !== 'function') {
+        options = main;
+        main = null;
     }
 
     this.name = name;
-    this.callback = callback;
+    this.main = main;
     this.description = null;
-    this.parse = true;
+    this.usage = null;
     this.available = true;
+    this.help = function () {
+        if (this.description) {
+            this.shell.writeLine(this.description);
+        }
+        if (this.description && this.usage) {
+            this.shell.writeLine();
+        }
+        if (this.usage) {
+            this.shell.writeLine(this.usage);
+        }
+    };
 
     utils.extend(this, options);
 
     if (typeof this.name !== 'string') throw '"name" must be a string.';
-    if (typeof this.callback !== 'function') throw '"callback" must be a function.';
+    if (typeof this.main !== 'function') throw '"main" must be a function.';
 
     this.name = this.name.toUpperCase();
+
+    if (!this.usage) {
+        this.usage = this.name;
+    }
 };
 
 exports.default = Definition;
@@ -1933,8 +1988,11 @@ var Shell = function () {
     }, {
         key: 'write',
         value: function write(value, cssClass) {
-            value = value || '';
-            var outputValue = utils.createElement('<span class="' + cssClass + '">' + value + '</span>');
+            value = utils.encodeHtml(value || '');
+            var outputValue = utils.createElement('<span>' + value + '</span>');
+            if (cssClass) {
+                outputValue.className = cssClass;
+            }
             if (!this._outputLineNode) {
                 this._outputLineNode = utils.createElement('<div></div>');
                 this._outputNode.appendChild(this._outputLineNode);
@@ -1950,8 +2008,135 @@ var Shell = function () {
         }
     }, {
         key: 'writePad',
-        value: function writePad(value, padding, length, cssClass) {
-            this.write(utils.pad(value, padding, length), cssClass);
+        value: function writePad(value, length) {
+            var char = arguments.length <= 2 || arguments[2] === undefined ? ' ' : arguments[2];
+            var cssClass = arguments.length <= 3 || arguments[3] === undefined ? null : arguments[3];
+
+            this.write(utils.pad(value, length, char), cssClass);
+        }
+    }, {
+        key: 'writeTable',
+        value: function writeTable(data, columns, showHeaders, cssClass) {
+            var _this4 = this;
+
+            columns = columns.map(function (value) {
+                var values = value.split(':');
+                return {
+                    name: values[0],
+                    padding: values.length > 1 ? values[1] : 10,
+                    header: values.length > 2 ? values[2] : values[0]
+                };
+            });
+            var writeCell = function writeCell(value, padding) {
+                value = value || '';
+                if (padding === '*') {
+                    _this4.write(value, cssClass);
+                } else {
+                    _this4.writePad(value, parseInt(padding, 10), ' ', cssClass);
+                }
+            };
+            if (showHeaders) {
+                var _iteratorNormalCompletion = true;
+                var _didIteratorError = false;
+                var _iteratorError = undefined;
+
+                try {
+                    for (var _iterator = columns[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                        var col = _step.value;
+
+                        writeCell(col.header, col.padding);
+                    }
+                } catch (err) {
+                    _didIteratorError = true;
+                    _iteratorError = err;
+                } finally {
+                    try {
+                        if (!_iteratorNormalCompletion && _iterator.return) {
+                            _iterator.return();
+                        }
+                    } finally {
+                        if (_didIteratorError) {
+                            throw _iteratorError;
+                        }
+                    }
+                }
+
+                this.writeLine();
+                var _iteratorNormalCompletion2 = true;
+                var _didIteratorError2 = false;
+                var _iteratorError2 = undefined;
+
+                try {
+                    for (var _iterator2 = columns[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                        var col = _step2.value;
+
+                        writeCell(Array(col.header.length + 1).join('-'), col.padding);
+                    }
+                } catch (err) {
+                    _didIteratorError2 = true;
+                    _iteratorError2 = err;
+                } finally {
+                    try {
+                        if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                            _iterator2.return();
+                        }
+                    } finally {
+                        if (_didIteratorError2) {
+                            throw _iteratorError2;
+                        }
+                    }
+                }
+
+                this.writeLine();
+            }
+            var _iteratorNormalCompletion3 = true;
+            var _didIteratorError3 = false;
+            var _iteratorError3 = undefined;
+
+            try {
+                for (var _iterator3 = data[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+                    var row = _step3.value;
+                    var _iteratorNormalCompletion4 = true;
+                    var _didIteratorError4 = false;
+                    var _iteratorError4 = undefined;
+
+                    try {
+                        for (var _iterator4 = columns[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+                            var col = _step4.value;
+
+                            writeCell(row[col.name], col.padding);
+                        }
+                    } catch (err) {
+                        _didIteratorError4 = true;
+                        _iteratorError4 = err;
+                    } finally {
+                        try {
+                            if (!_iteratorNormalCompletion4 && _iterator4.return) {
+                                _iterator4.return();
+                            }
+                        } finally {
+                            if (_didIteratorError4) {
+                                throw _iteratorError4;
+                            }
+                        }
+                    }
+
+                    this.writeLine();
+                }
+            } catch (err) {
+                _didIteratorError3 = true;
+                _iteratorError3 = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion3 && _iterator3.return) {
+                        _iterator3.return();
+                    }
+                } finally {
+                    if (_didIteratorError3) {
+                        throw _iteratorError3;
+                    }
+                }
+            }
         }
     }, {
         key: 'clear',
@@ -1971,7 +2156,7 @@ var Shell = function () {
     }, {
         key: 'execute',
         value: function execute(command) {
-            var _this4 = this;
+            var _this5 = this;
 
             if (this._current) {
                 this._queue.push(command);
@@ -2004,30 +2189,33 @@ var Shell = function () {
 
             Promise.all([result]).then(function () {
                 setTimeout(function () {
-                    _this4._trigger('execute', command);
-                    _this4._current = null;
-                    _this4._activateInput();
-                    if (_this4._queue.length > 0) {
-                        _this4.execute(_this4._queue.shift());
+                    _this5._trigger('execute', command);
+                    _this5._current = null;
+                    if (_this5._outputNode.children.length > 0) {
+                        _this5.writeLine();
+                    }
+                    _this5._activateInput();
+                    if (_this5._queue.length > 0) {
+                        _this5.execute(_this5._queue.shift());
                     }
                 }, 0);
             });
         }
     }, {
         key: 'on',
-        value: function on(event, callback) {
+        value: function on(event, handler) {
             if (!this._eventHandlers[event]) {
                 this._eventHandlers[event] = [];
             }
-            this._eventHandlers[event].push(callback);
+            this._eventHandlers[event].push(handler);
         }
     }, {
         key: 'off',
-        value: function off(event, callback) {
+        value: function off(event, handler) {
             if (!this._eventHandlers[event]) {
                 return;
             }
-            var index = this._eventHandlers[event].indexOf(callback);
+            var index = this._eventHandlers[event].indexOf(handler);
             if (index > -1) {
                 this._eventHandlers[event].splice(index, 1);
             }
@@ -2036,27 +2224,27 @@ var Shell = function () {
         key: '_trigger',
         value: function _trigger(event, data) {
             if (!this._eventHandlers[event]) return;
-            var _iteratorNormalCompletion = true;
-            var _didIteratorError = false;
-            var _iteratorError = undefined;
+            var _iteratorNormalCompletion5 = true;
+            var _didIteratorError5 = false;
+            var _iteratorError5 = undefined;
 
             try {
-                for (var _iterator = this._eventHandlers[event][Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                    var callback = _step.value;
+                for (var _iterator5 = this._eventHandlers[event][Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+                    var handler = _step5.value;
 
-                    callback.call(this, data);
+                    handler.call(this, data);
                 }
             } catch (err) {
-                _didIteratorError = true;
-                _iteratorError = err;
+                _didIteratorError5 = true;
+                _iteratorError5 = err;
             } finally {
                 try {
-                    if (!_iteratorNormalCompletion && _iterator.return) {
-                        _iterator.return();
+                    if (!_iteratorNormalCompletion5 && _iterator5.return) {
+                        _iterator5.return();
                     }
                 } finally {
-                    if (_didIteratorError) {
-                        throw _iteratorError;
+                    if (_didIteratorError5) {
+                        throw _iteratorError5;
                     }
                 }
             }
@@ -2066,13 +2254,13 @@ var Shell = function () {
         value: function _activateInput(inline) {
             if (inline) {
                 if (this._outputLineNode) {
-                    this._prefixNode.textContent = this._outputLineNode.textContent;
+                    this._prefixNode.innerHTML = this._outputLineNode.innerHTML;
                     this._outputNode.removeChild(this._outputLineNode);
                     this._outputLineNode = null;
                 }
                 this._isInputInline = true;
             } else {
-                this._prefixNode.textContent = this._promptPrefix;
+                this._prefixNode.innerHTML = this._promptPrefix;
                 this._isInputInline = false;
             }
             this._inputNode.style.display = '';
@@ -2091,8 +2279,8 @@ var Shell = function () {
         key: '_flushInput',
         value: function _flushInput(preventWrite) {
             if (!preventWrite) {
-                this.write(this._prefixNode.textContent);
-                this.writeLine(this._promptNode.textContent);
+                var outputValue = utils.createElement('<div>' + this._prefixNode.innerHTML + this._promptNode.innerHTML + '</div>');
+                this._outputNode.appendChild(outputValue);
             }
             this._prefixNode.textContent = '';
             this._promptNode.textContent = '';
@@ -2100,21 +2288,21 @@ var Shell = function () {
     }, {
         key: '_historyCycle',
         value: function _historyCycle(forward) {
-            var _this5 = this;
+            var _this6 = this;
 
             Promise.all([this._historyProvider.getNextValue(forward)]).then(function (values) {
                 var command = values[0];
                 if (command) {
-                    _this5._promptNode.textContent = command;
-                    utils.cursorToEnd(_this5._promptNode);
-                    utils.dispatchEvent(_this5._promptNode, 'change', true, false);
+                    _this6._promptNode.textContent = command;
+                    utils.cursorToEnd(_this6._promptNode);
+                    utils.dispatchEvent(_this6._promptNode, 'change', true, false);
                 }
             });
         }
     }, {
         key: '_autocompleteCycle',
         value: function _autocompleteCycle(forward) {
-            var _this6 = this;
+            var _this7 = this;
 
             var input = this._promptNode.textContent;
             input = input.replace(/\s$/, ' '); //fixing end whitespace
@@ -2129,9 +2317,9 @@ var Shell = function () {
             Promise.all([this._autocompleteProvider.getNextValue(forward, this._autocompleteValue)]).then(function (values) {
                 var value = values[0];
                 if (value) {
-                    _this6._promptNode.textContent = input.substring(0, startIndex) + value;
-                    utils.cursorToEnd(_this6._promptNode);
-                    utils.dispatchEvent(_this6._promptNode, 'change', true, false);
+                    _this7._promptNode.textContent = input.substring(0, startIndex) + value;
+                    utils.cursorToEnd(_this7._promptNode);
+                    utils.dispatchEvent(_this7._promptNode, 'change', true, false);
                 }
             });
         }
@@ -2240,7 +2428,7 @@ var Shell = function () {
 exports.default = Shell;
 
 },{"./autocomplete-provider.js":3,"./command-handler.js":5,"./definition-provider.js":6,"./history-provider.js":8,"./utils.js":11}],11:[function(require,module,exports){
-"use strict";
+'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
@@ -2249,6 +2437,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.extend = extend;
 exports.pad = pad;
+exports.encodeHtml = encodeHtml;
 exports.unwrap = unwrap;
 exports.defer = defer;
 exports.isElement = isElement;
@@ -2275,13 +2464,19 @@ function extend(out) {
 
 //String
 
-function pad(value, padding, length) {
+function pad(value, length, char) {
     var right = length >= 0;
     length = Math.abs(length);
     while (value.length < length) {
-        value = right ? value + padding : padding + value;
+        value = right ? value + char : char + value;
     }
     return value;
+}
+
+function encodeHtml(value) {
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(value));
+    return div.innerHTML;
 }
 
 //Function
@@ -2311,7 +2506,7 @@ function defer() {
 //DOM
 
 function isElement(obj) {
-    return (typeof HTMLElement === "undefined" ? "undefined" : _typeof(HTMLElement)) === "object" ? obj instanceof HTMLElement : obj && (typeof obj === "undefined" ? "undefined" : _typeof(obj)) === "object" && obj !== null && obj.nodeType === 1 && typeof obj.nodeName === "string";
+    return (typeof HTMLElement === 'undefined' ? 'undefined' : _typeof(HTMLElement)) === "object" ? obj instanceof HTMLElement : obj && (typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) === "object" && obj !== null && obj.nodeType === 1 && typeof obj.nodeName === "string";
 }
 
 function createElement(html) {
