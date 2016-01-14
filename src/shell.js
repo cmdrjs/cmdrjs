@@ -412,8 +412,8 @@ class Shell {
             this.writeLine('Unhandled exception. See browser console log for details.', 'error');
             console.error(error);
         }
-
-        Promise.all([result]).then(() => {
+        
+        var onComplete = () => {
             setTimeout(() => {
                 this._trigger('execute', command);
                 this._current = null;
@@ -425,7 +425,9 @@ class Shell {
                     this.execute(this._queue.shift());
                 }
             }, 0);
-        });
+        };
+
+        Promise.all([result]).then(onComplete, onComplete);
     }
 
     on(event, handler) {
