@@ -18,11 +18,11 @@ export function extend(out) {
   
 //String
 
-export function pad(value, padding, length) {
+export function pad(value, length, char) {
     let right = length >= 0;
     length = Math.abs(length);
     while (value.length < length) {
-        value = right ? value + padding : padding + value;
+        value = right ? value + char : char + value;
     }
     return value;
 }

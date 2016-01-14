@@ -13,7 +13,7 @@ class CommandHandler {
             shell.writeLine('Ambiguous command', 'error');
             shell.writeLine();
             for (let i = 0; i < definitions.length; i++) {
-                shell.writePad(definitions[i].name, ' ', 10);
+                shell.writePad(definitions[i].name, 10);
                 shell.writeLine(definitions[i].description);
             }
             shell.writeLine();
