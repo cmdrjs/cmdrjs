@@ -72,7 +72,8 @@ class DefinitionProvider {
                     var availableDefinitions = Object.keys(provider.definitions)
                         .map((key) => { return provider.definitions[key]; })
                         .filter((def) => { return def.available; });
-                    this.shell.writeTable(availableDefinitions, ['name:10', 'description:40']);
+                    var length = availableDefinitions.slice().sort(function (a, b) { return b.name.length - a.name.length; })[0].name.length;
+                    this.shell.writeTable(availableDefinitions, ['name:' + (length + 2).toString(), 'description:40']);
                 },
                 description: 'Lists the available commands.'
             });
