@@ -175,32 +175,6 @@ class Shell {
             }
         });
 
-        this._promptNode.addEventListener('paste', () => {
-            setTimeout(() => {
-                let value = this._promptNode.textContent;
-                let lines = value.split(/\r\n|\r|\n/g);
-                let length = lines.length;
-                if (length > 1) {
-                    for (let i = 1; i < length; i++) {
-                        if (lines[i].length > 0) {
-                            this._queue.get(this).push(lines[i]);
-                        }
-                    }
-                    if (this._current && this._current.readLine) {
-                        this._current.readLine.resolve(lines[0]);
-                    } else if (this._current && this._current.read) {
-                        this._current.read.resolve(lines[0][0]);
-                    } else {
-                        this._current(lines[0]);
-                    }
-                }
-            }, 0);
-        });
-
-        this._promptNode.addEventListener('input', () => {
-           
-        });
-
         this._shellNode.addEventListener('click', (event) => {
             if (event.target !== this._inputNode && !this._inputNode.contains(event.target) &&
                 event.target !== this._outputNode && !this._outputNode.contains(event.target)) {
@@ -286,10 +260,6 @@ class Shell {
             }
         });
         this._current.read.capture = capture;
-
-        if (this._queue.length > 0) {
-            this._current.read.resolve(this._queue.shift()[0]);
-        }
     }
 
     readLine(callback) {
@@ -307,10 +277,6 @@ class Shell {
                 this.readLine(callback);
             }
         });
-
-        if (this._queue.length > 0) {
-            this._current.readLine.resolve(this._queue.shift());
-        }
     }
 
     write(value, cssClass) {
@@ -382,54 +348,7 @@ class Shell {
     blur() {
         utils.blur(this._promptNode);
     }
-
-    execute(command) {
-        if (this._current) {
-            this._queue.push(command);
-            return;
-        }
-
-        if (typeof command !== 'string' || command.length === 0) {
-            throw 'Invalid command';
-        }
-
-        this._trigger('preexecute', command);
-
-        this._promptNode.textContent = command;
-        this._flushInput(!this._echo);
-        this._deactivateInput();
-
-        command = command.trim();
-
-        this._current = {
-            command: command
-        };
-
-        let result;
-        try {
-            result = this._commandHandler.executeCommand(this, command);
-        } catch (error) {
-            this.writeLine('Unhandled exception. See browser console log for details.', 'error');
-            console.error(error);
-        }
         
-        var onComplete = () => {
-            setTimeout(() => {
-                this._trigger('execute', command);
-                this._current = null;
-                if (this._outputNode.children.length > 0) {
-                    this.writeLine();
-                }
-                this._activateInput();
-                if (this._queue.length > 0) {
-                    this.execute(this._queue.shift());
-                }
-            }, 0);
-        };
-
-        Promise.all([result]).then(onComplete, onComplete);
-    }
-
     on(event, handler) {
         if (!this._eventHandlers[event]) {
             this._eventHandlers[event] = [];
@@ -447,11 +366,97 @@ class Shell {
         }
     }
 
-    _trigger(event, data) {
-        if (!this._eventHandlers[event]) return;
-        for (let handler of this._eventHandlers[event]) {
-            handler.call(this, data);
+    execute(command, ...args) {        
+        let deferred;
+        if (typeof command === 'object') {
+            deferred = command.deferred;
+            command = command.text;
         }
+        else if (typeof command === 'string' && command.length > 0) {
+            deferred = utils.defer();
+            if (args) {
+                command = this._buildCommand(command, args);
+            }
+        }
+        else {
+            deferred = utils.defer();
+            deferred.reject('Invalid command');
+            return deferred;
+        }
+        
+        if (this._current) {
+            this._queue.push({
+                deferred: deferred,
+                text: command,
+                executeOnly: true
+            });
+            return deferred;
+        }
+        
+        let commandText = command;
+        command = command.trim();
+
+        this._trigger('preexecute', command);
+
+        this._promptNode.textContent = commandText;
+        this._flushInput(!this._echo);
+        this._deactivateInput();
+
+        this._current = {
+            command: command
+        };
+        
+        let complete = () => {
+            setTimeout(() => {
+                this._current = null;
+                if (this._outputNode.children.length > 0) {
+                    this.writeLine();
+                }
+                this._activateInput();
+                if (this._queue.length > 0) {
+                    this.execute(this._queue.shift());
+                }
+            }, 0);
+        };
+
+        let result;
+        try {
+            result = this._commandHandler.executeCommand(this, command);
+        } catch (error) {
+            this.writeLine('Unhandled exception', 'error');
+            this.writeLine(error, 'error');
+            deferred.reject('Unhandled exception');
+            complete();
+            return deferred;
+        }
+
+        Promise.all([result]).then(() => {
+            this._trigger('execute', { 
+                command: command 
+            });
+            deferred.resolve();
+            complete();
+        }, (reason) => {
+            this._trigger('execute', { 
+                command: command,
+                error: reason
+            });
+            deferred.reject(reason);
+            complete();
+        });
+        
+        return deferred;
+    }
+    
+    _buildCommand(command, args) {
+        for (let arg of args) {
+            if (typeof arg === 'string' && arg.indexOf(' ') > -1) {
+                command += ` "${arg}"`;
+            } else {
+                command += ' ' + arg.toString();
+            }
+        }        
+        return command;
     }
 
     _activateInput(inline) {
@@ -485,6 +490,13 @@ class Shell {
         }
         this._prefixNode.textContent = '';
         this._promptNode.textContent = '';
+    }
+    
+    _trigger(event, data) {
+        if (!this._eventHandlers[event]) return;
+        for (let handler of this._eventHandlers[event]) {
+            handler.call(this, data);
+        }
     }
 
     _historyCycle(forward) {

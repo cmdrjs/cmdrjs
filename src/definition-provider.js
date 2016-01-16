@@ -83,16 +83,13 @@ class DefinitionProvider {
             this.define({
                 name: 'ECHO',
                 main: function () {
-                    let arg = this.argString || this.args[0];
-                    if (arg) {
-                        let toggle = arg.toString().trim().toUpperCase();
-                        if (toggle === 'ON') {
-                            this.shell.echo = true;
-                        } else if (toggle === 'OFF') {
-                            this.shell.echo = false;
-                        } else {
-                            this.shell.writeLine(arg);
-                        } 
+                    let toggle = this.argString.toUpperCase();
+                    if (toggle === 'ON') {
+                        this.shell.echo = true;
+                    } else if (toggle === 'OFF') {
+                        this.shell.echo = false;
+                    } else if (this.argString) {
+                        this.shell.writeLine(this.argString);
                     } else {
                         this.shell.writeLine('ECHO is ' + (this.shell.echo ? 'on.' : 'off.'));
                     }
