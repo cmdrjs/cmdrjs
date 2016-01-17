@@ -9,7 +9,6 @@ const _defaultOptions = {
 class DefinitionProvider {
     constructor(options) {
         this.options = utils.extend({}, _defaultOptions, options);
-        this.shell = null;
         this.definitions = {};
 
         this.define = (...args) => {
