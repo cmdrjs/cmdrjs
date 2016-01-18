@@ -430,11 +430,11 @@ class Shell {
             return deferred;
         }
 
-        Promise.all([result]).then(() => {
+        Promise.all([result]).then((values) => {
             this._trigger('execute', { 
                 command: command 
             });
-            deferred.resolve();
+            deferred.resolve(values[0]);
             complete();
         }, (reason) => {
             this._trigger('execute', { 

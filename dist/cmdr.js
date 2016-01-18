@@ -2215,11 +2215,11 @@ var Shell = (function () {
                 return deferred;
             }
 
-            Promise.all([result]).then(function () {
+            Promise.all([result]).then(function (values) {
                 _this5._trigger('execute', {
                     command: command
                 });
-                deferred.resolve();
+                deferred.resolve(values[0]);
                 complete();
             }, function (reason) {
                 _this5._trigger('execute', {
