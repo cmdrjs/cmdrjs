@@ -1,4 +1,4 @@
-/* cmdrjs | version 1.1.7 | license MIT | (c) 2016 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
+/* cmdrjs | version 1.1.8 | license MIT | (c) 2016 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.cmdr = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function (process,global){
 /*!
@@ -1207,7 +1207,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 _es6Promise2.default.polyfill();
 
-var version = exports.version = '1.1.7';
+var version = exports.version = '1.1.8';
 
 },{"./autocomplete-provider.js":3,"./command-handler.js":5,"./definition-provider.js":6,"./definition.js":7,"./history-provider.js":8,"./overlay-shell.js":9,"./shell.js":10,"es6-promise":1}],5:[function(require,module,exports){
 'use strict';
@@ -1344,7 +1344,6 @@ var DefinitionProvider = (function () {
         _classCallCheck(this, DefinitionProvider);
 
         this.options = utils.extend({}, _defaultOptions, options);
-        this.shell = null;
         this.definitions = {};
 
         this.define = function () {
@@ -1419,7 +1418,10 @@ var DefinitionProvider = (function () {
                         }).filter(function (def) {
                             return def.available;
                         });
-                        this.shell.writeTable(availableDefinitions, ['name:10', 'description:40']);
+                        var length = availableDefinitions.slice().sort(function (a, b) {
+                            return b.name.length - a.name.length;
+                        })[0].name.length;
+                        this.shell.writeTable(availableDefinitions, ['name:' + (length + 2).toString(), 'description:40']);
                     },
                     description: 'Lists the available commands.'
                 });
@@ -1727,6 +1729,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
+function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var _defaultOptions = {
@@ -1843,30 +1847,6 @@ var Shell = (function () {
                 }
             });
 
-            this._promptNode.addEventListener('paste', function () {
-                setTimeout(function () {
-                    var value = _this._promptNode.textContent;
-                    var lines = value.split(/\r\n|\r|\n/g);
-                    var length = lines.length;
-                    if (length > 1) {
-                        for (var i = 1; i < length; i++) {
-                            if (lines[i].length > 0) {
-                                _this._queue.get(_this).push(lines[i]);
-                            }
-                        }
-                        if (_this._current && _this._current.readLine) {
-                            _this._current.readLine.resolve(lines[0]);
-                        } else if (_this._current && _this._current.read) {
-                            _this._current.read.resolve(lines[0][0]);
-                        } else {
-                            _this._current(lines[0]);
-                        }
-                    }
-                }, 0);
-            });
-
-            this._promptNode.addEventListener('input', function () {});
-
             this._shellNode.addEventListener('click', function (event) {
                 if (event.target !== _this._inputNode && !_this._inputNode.contains(event.target) && event.target !== _this._outputNode && !_this._outputNode.contains(event.target)) {
                     _this._promptNode.focus();
@@ -1956,10 +1936,6 @@ var Shell = (function () {
                 }
             });
             this._current.read.capture = capture;
-
-            if (this._queue.length > 0) {
-                this._current.read.resolve(this._queue.shift()[0]);
-            }
         }
     }, {
         key: 'readLine',
@@ -1980,10 +1956,6 @@ var Shell = (function () {
                     _this3.readLine(callback);
                 }
             });
-
-            if (this._queue.length > 0) {
-                this._current.readLine.resolve(this._queue.shift());
-            }
         }
     }, {
         key: 'write',
@@ -2154,56 +2126,6 @@ var Shell = (function () {
             utils.blur(this._promptNode);
         }
     }, {
-        key: 'execute',
-        value: function execute(command) {
-            var _this5 = this;
-
-            if (this._current) {
-                this._queue.push(command);
-                return;
-            }
-
-            if (typeof command !== 'string' || command.length === 0) {
-                throw 'Invalid command';
-            }
-
-            this._trigger('preexecute', command);
-
-            this._promptNode.textContent = command;
-            this._flushInput(!this._echo);
-            this._deactivateInput();
-
-            command = command.trim();
-
-            this._current = {
-                command: command
-            };
-
-            var result = undefined;
-            try {
-                result = this._commandHandler.executeCommand(this, command);
-            } catch (error) {
-                this.writeLine('Unhandled exception. See browser console log for details.', 'error');
-                console.error(error);
-            }
-
-            var onComplete = function onComplete() {
-                setTimeout(function () {
-                    _this5._trigger('execute', command);
-                    _this5._current = null;
-                    if (_this5._outputNode.children.length > 0) {
-                        _this5.writeLine();
-                    }
-                    _this5._activateInput();
-                    if (_this5._queue.length > 0) {
-                        _this5.execute(_this5._queue.shift());
-                    }
-                }, 0);
-            };
-
-            Promise.all([result]).then(onComplete, onComplete);
-        }
-    }, {
         key: 'on',
         value: function on(event, handler) {
             if (!this._eventHandlers[event]) {
@@ -2223,18 +2145,109 @@ var Shell = (function () {
             }
         }
     }, {
-        key: '_trigger',
-        value: function _trigger(event, data) {
-            if (!this._eventHandlers[event]) return;
+        key: 'execute',
+        value: function execute(command) {
+            var _this5 = this;
+
+            var deferred = undefined;
+            if ((typeof command === 'undefined' ? 'undefined' : _typeof(command)) === 'object') {
+                deferred = command.deferred;
+                command = command.text;
+            } else if (typeof command === 'string' && command.length > 0) {
+                deferred = utils.defer();
+
+                for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+                    args[_key - 1] = arguments[_key];
+                }
+
+                if (args) {
+                    command = this._buildCommand(command, args);
+                }
+            } else {
+                deferred = utils.defer();
+                deferred.reject('Invalid command');
+                return deferred;
+            }
+
+            if (this._current) {
+                this._queue.push({
+                    deferred: deferred,
+                    text: command,
+                    executeOnly: true
+                });
+                return deferred;
+            }
+
+            var commandText = command;
+            command = command.trim();
+
+            this._trigger('preexecute', command);
+
+            this._promptNode.textContent = commandText;
+            this._flushInput(!this._echo);
+            this._deactivateInput();
+
+            this._current = {
+                command: command
+            };
+
+            var complete = function complete() {
+                setTimeout(function () {
+                    _this5._current = null;
+                    if (_this5._outputNode.children.length > 0) {
+                        _this5.writeLine();
+                    }
+                    _this5._activateInput();
+                    if (_this5._queue.length > 0) {
+                        _this5.execute(_this5._queue.shift());
+                    }
+                }, 0);
+            };
+
+            var result = undefined;
+            try {
+                result = this._commandHandler.executeCommand(this, command);
+            } catch (error) {
+                this.writeLine('Unhandled exception', 'error');
+                this.writeLine(error, 'error');
+                deferred.reject('Unhandled exception');
+                complete();
+                return deferred;
+            }
+
+            Promise.all([result]).then(function () {
+                _this5._trigger('execute', {
+                    command: command
+                });
+                deferred.resolve();
+                complete();
+            }, function (reason) {
+                _this5._trigger('execute', {
+                    command: command,
+                    error: reason
+                });
+                deferred.reject(reason);
+                complete();
+            });
+
+            return deferred;
+        }
+    }, {
+        key: '_buildCommand',
+        value: function _buildCommand(command, args) {
             var _iteratorNormalCompletion5 = true;
             var _didIteratorError5 = false;
             var _iteratorError5 = undefined;
 
             try {
-                for (var _iterator5 = this._eventHandlers[event][Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-                    var handler = _step5.value;
+                for (var _iterator5 = args[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+                    var arg = _step5.value;
 
-                    handler.call(this, data);
+                    if (typeof arg === 'string' && arg.indexOf(' ') > -1) {
+                        command += ' "' + arg + '"';
+                    } else {
+                        command += ' ' + arg.toString();
+                    }
                 }
             } catch (err) {
                 _didIteratorError5 = true;
@@ -2250,6 +2263,8 @@ var Shell = (function () {
                     }
                 }
             }
+
+            return command;
         }
     }, {
         key: '_activateInput',
@@ -2286,6 +2301,35 @@ var Shell = (function () {
             }
             this._prefixNode.textContent = '';
             this._promptNode.textContent = '';
+        }
+    }, {
+        key: '_trigger',
+        value: function _trigger(event, data) {
+            if (!this._eventHandlers[event]) return;
+            var _iteratorNormalCompletion6 = true;
+            var _didIteratorError6 = false;
+            var _iteratorError6 = undefined;
+
+            try {
+                for (var _iterator6 = this._eventHandlers[event][Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+                    var handler = _step6.value;
+
+                    handler.call(this, data);
+                }
+            } catch (err) {
+                _didIteratorError6 = true;
+                _iteratorError6 = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion6 && _iterator6.return) {
+                        _iterator6.return();
+                    }
+                } finally {
+                    if (_didIteratorError6) {
+                        throw _iteratorError6;
+                    }
+                }
+            }
         }
     }, {
         key: '_historyCycle',
