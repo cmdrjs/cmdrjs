@@ -521,20 +521,20 @@ class Shell {
     }
 
     _autocompleteCycle(forward) {
-        let input = this._promptNode.textContent;
-        input = input.replace(/\s$/, ' '); //fixing end whitespace
+        let inputValue = this._promptNode.textContent;
+        inputValue = inputValue.replace(/\s$/, ' '); //fixing end whitespace
         let cursorPosition = utils.getCursorPosition(this._promptNode);
-        let startIndex = input.lastIndexOf(' ', cursorPosition) + 1;
+        let startIndex = inputValue.lastIndexOf(' ', cursorPosition) + 1;
         startIndex = startIndex !== -1 ? startIndex : 0;
         if (this._autocompleteValue === null) {
-            let endIndex = input.indexOf(' ', startIndex);
-            endIndex = endIndex !== -1 ? endIndex : input.length;
-            this._autocompleteValue = input.substring(startIndex, endIndex);
+            let endIndex = inputValue.indexOf(' ', startIndex);
+            endIndex = endIndex !== -1 ? endIndex : inputValue.length;
+            this._autocompleteValue = inputValue.substring(startIndex, endIndex);
         }
-        Promise.all([this._autocompleteProvider.getNextValue(forward, this._autocompleteValue)]).then((values) => {
+        Promise.all([this._autocompleteProvider.getNextValue(forward, this._autocompleteValue, inputValue)]).then((values) => {
             let value = values[0];
             if (value) {
-                this._promptNode.textContent = input.substring(0, startIndex) + value;
+                this._promptNode.textContent = inputValue.substring(0, startIndex) + value;
                 utils.cursorToEnd(this._promptNode);
                 utils.dispatchEvent(this._promptNode, 'change', true, false);
             }

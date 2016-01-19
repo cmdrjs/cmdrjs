@@ -1,5 +1,6 @@
 ﻿<!DOCTYPE html>
 <html>
+
 <head>
     <title>cmdrjs</title>
     <link rel="stylesheet" type="text/css" href="cmdr.css" />
@@ -9,30 +10,23 @@
         }
     </style>
 </head>
+
 <body>
     <div id="container"></div>
     <script src="cmdr.js"></script>
-    <script>        
-        var shell = new cmdr.Shell(document.getElementById('container'), { theme: 'cmd' });
-        //var shell = new cmdr.OverlayShell({ theme: 'cmd' });
+    <script>
+        var ap = new cmdr.AutocompleteProvider();
         
-        shell.define({
-            name: 'test',
-            main: function () {
-                var defer = this.defer();
-                                
-                this.shell.write('hi there', 'success');
-                this.shell.readLine(function() {
-                    
-                    defer.reject('so tired');
-                });
-                
-                return defer;
-            },
-            help: function() {
-                this.shell.writeLine('make it happen', 'success');
-            }
-        });
+        ap.lookups.push({ 
+            match: /^CLS/i, 
+            values: function () { 
+                return ['John', 'Jack', 'Jean', 'James', 'Mark', 'Melissa', 'Dwight']; 
+                }
+            });
+        
+        var shell = new cmdr.Shell(document.getElementById('container'), { theme: 'cmd', autocompleteProvider: ap });
+        //var shell = new cmdr.OverlayShell({ theme: 'cmd' });
     </script>
 </body>
+
 </html>
