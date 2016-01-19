@@ -2,7 +2,7 @@ import * as utils from './utils.js';
 
 class CommandHandler {
     
-     executeCommand(shell, command) { 
+     executeCommand(shell, command, cancelToken) { 
         let parsed = this._parseCommand(command);
 
         let definitions = shell.definitionProvider.getDefinitions(parsed.name);
@@ -27,7 +27,8 @@ class CommandHandler {
             command: command,
             args: parsed.args,
             argString: parsed.argString,
-            defer: utils.defer
+            defer: utils.defer,
+            cancelToken: cancelToken
         });
         
         let args = parsed.args;

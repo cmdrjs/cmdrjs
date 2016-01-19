@@ -3,6 +3,7 @@ import HistoryProvider from './history-provider.js';
 import AutocompleteProvider from './autocomplete-provider.js';
 import DefinitionProvider from './definition-provider.js';
 import CommandHandler from './command-handler.js';
+import CancelToken from './cancel-token.js';
 
 const _defaultOptions = {
     echo: true,
@@ -148,31 +149,31 @@ class Shell {
                         event.preventDefault();
                         return false;
                 }
-            } else if (this._current.readLine && event.keyCode === 13) {
-                this._current.readLine.resolve(this._promptNode.textContent);
-                return false;
+            } else {
+                if (event.ctrlKey && event.keyCode === 67) {
+                    this.cancel(); 
+                } else if (this._current.readLine && event.keyCode === 13) {
+                    this._current.readLine.resolve(this._promptNode.textContent); 
+                } 
+                
+                if (!this._current.read && !this._current.readLine) {
+                    event.preventDefault();
+                    return false;
+                }
             }
+                        
             return true;
         });
 
         this._promptNode.addEventListener('keypress', (event) => {
             if (this._current && this._current.read) {
                 if (event.charCode !== 0) {
-                    this._current.read.char = String.fromCharCode(event.charCode);
-                    if (this._current.read.capture) {
-                        return false;
-                    }
-                } else {
-                    return false;
+                    this._current.read.resolve(String.fromCharCode(event.charCode));
                 }
+                event.preventDefault();
+                return false;
             }
             return true;
-        });
-
-        this._promptNode.addEventListener('keyup', () => {
-            if (this._current && this._current.read && this._current.read.char) {
-                this._current.read.resolve(this._current.read.char);
-            }
         });
 
         this._shellNode.addEventListener('click', (event) => {
@@ -241,7 +242,7 @@ class Shell {
         this.init();
     }
 
-    read(callback, capture) {
+    read(callback, intercept) {
         if (!this._current) return;
 
         this._activateInput(true);
@@ -249,17 +250,18 @@ class Shell {
         this._current.read = utils.defer();
         this._current.read.then((value) => {
             this._current.read = null;
-            if (!capture) {
-                this._promptNode.textContent = value;
-            }
             this._deactivateInput();
+            if (!intercept) {
+                this._prefixNode.textContent += value;
+                this._promptNode.textContent = '';
+            }
             if (callback(value, this._current) === true) {
-                this.read(callback, capture);
+                this.read(callback, intercept);
             } else {
                 this._flushInput();
             }
         });
-        this._current.read.capture = capture;
+        this._current.read.intercept = intercept;
     }
 
     readLine(callback) {
@@ -301,7 +303,7 @@ class Shell {
     writePad(value, length, char = ' ', cssClass = null) {
         this.write(utils.pad(value, length, char), cssClass);
     }
-    
+
     writeTable(data, columns, showHeaders, cssClass) {
         columns = columns.map((value) => {
             let values = value.split(':');
@@ -319,11 +321,11 @@ class Shell {
                 this.writePad(value, parseInt(padding, 10), ' ', cssClass);
             }
         };
-        if (showHeaders) {            
+        if (showHeaders) {
             for (let col of columns) {
                 writeCell(col.header, col.padding);
             }
-            this.writeLine(); 
+            this.writeLine();
             for (let col of columns) {
                 writeCell(Array(col.header.length + 1).join('-'), col.padding);
             }
@@ -333,8 +335,8 @@ class Shell {
             for (let col of columns) {
                 writeCell(row[col.name] ? row[col.name].toString() : '', col.padding);
             }
-            this.writeLine(); 
-        }        
+            this.writeLine();
+        }
     }
 
     clear() {
@@ -348,7 +350,7 @@ class Shell {
     blur() {
         utils.blur(this._promptNode);
     }
-        
+
     on(event, handler) {
         if (!this._eventHandlers[event]) {
             this._eventHandlers[event] = [];
@@ -366,7 +368,7 @@ class Shell {
         }
     }
 
-    execute(command, ...args) {        
+    execute(command, ...args) {
         let deferred;
         if (typeof command === 'object') {
             deferred = command.deferred;
@@ -383,7 +385,7 @@ class Shell {
             deferred.reject('Invalid command');
             return deferred;
         }
-        
+
         if (this._current) {
             this._queue.push({
                 deferred: deferred,
@@ -392,7 +394,7 @@ class Shell {
             });
             return deferred;
         }
-        
+
         let commandText = command;
         command = command.trim();
 
@@ -402,10 +404,13 @@ class Shell {
         this._flushInput(!this._echo);
         this._deactivateInput();
 
+        let cancelToken = new CancelToken();
+
         this._current = {
-            command: command
+            command: command,
+            cancelToken: cancelToken
         };
-        
+
         let complete = () => {
             setTimeout(() => {
                 this._current = null;
@@ -421,18 +426,18 @@ class Shell {
 
         let result;
         try {
-            result = this._commandHandler.executeCommand(this, command);
+            result = this._commandHandler.executeCommand(this, command, cancelToken);
         } catch (error) {
             this.writeLine('Unhandled exception', 'error');
             this.writeLine(error, 'error');
-            deferred.reject('Unhandled exception');    
+            deferred.reject('Unhandled exception');
             complete();
             return deferred;
         }
 
         Promise.all([result]).then((values) => {
-            this._trigger('execute', { 
-                command: command 
+            this._trigger('execute', {
+                command: command
             });
             try {
                 deferred.resolve(values[0]);
@@ -440,7 +445,7 @@ class Shell {
                 complete();
             }
         }, (reason) => {
-            this._trigger('execute', { 
+            this._trigger('execute', {
                 command: command,
                 error: reason
             });
@@ -450,10 +455,15 @@ class Shell {
                 complete();
             }
         });
-        
+
         return deferred;
     }
-    
+
+    cancel() {
+        if (!this._current) return;
+        this._current.cancelToken.cancel();
+    }
+
     _buildCommand(command, args) {
         for (let arg of args) {
             if (typeof arg === 'string' && arg.indexOf(' ') > -1) {
@@ -461,7 +471,7 @@ class Shell {
             } else {
                 command += ' ' + arg.toString();
             }
-        }        
+        }
         return command;
     }
 
@@ -485,8 +495,8 @@ class Shell {
     }
 
     _deactivateInput() {
-        this._promptNode.setAttribute('disabled', 'disabled');
-        this._inputNode.style.display = 'none';
+        this._promptNode.style.textIndent = '';
+        this._promptNode.setAttribute('disabled', 'disabled');        
     }
 
     _flushInput(preventWrite) {
@@ -497,12 +507,12 @@ class Shell {
         this._prefixNode.textContent = '';
         this._promptNode.textContent = '';
     }
-    
+
     _trigger(event, data) {
         if (!this._eventHandlers[event]) return;
         for (let handler of this._eventHandlers[event]) {
             try {
-                handler.call(this, data);
+                handler(data);
             } catch (error) {
                 console.error(error);
             }

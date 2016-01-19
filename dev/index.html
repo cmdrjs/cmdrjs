@@ -15,17 +15,26 @@
     <div id="container"></div>
     <script src="cmdr.js"></script>
     <script>
-        var ap = new cmdr.AutocompleteProvider();
-        
-        ap.lookups.push({ 
-            match: /^CLS/i, 
-            values: function () { 
-                return ['John', 'Jack', 'Jean', 'James', 'Mark', 'Melissa', 'Dwight']; 
-                }
-            });
-        
-        var shell = new cmdr.Shell(document.getElementById('container'), { theme: 'cmd', autocompleteProvider: ap });
+        var shell = new cmdr.Shell(document.getElementById('container'), { theme: 'cmd' });
         //var shell = new cmdr.OverlayShell({ theme: 'cmd' });
+        
+        shell.define({
+            name: 'test',
+            main: function () {
+                var d = this.defer();
+                
+                this.cancelToken.onCancel(function () {
+                    d.reject('canceled');
+                });
+                
+                this.shell.write('type something: ');
+                this.shell.readLine(function (value) {
+                    this.shell.writeLine(value);
+                }, false);
+                                
+                return d;
+            }
+        })
     </script>
 </body>
 
