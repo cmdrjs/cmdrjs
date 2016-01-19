@@ -73,6 +73,11 @@ class DefinitionProvider {
                         .filter((def) => { return def.available; });
                     var length = availableDefinitions.slice().sort(function (a, b) { return b.name.length - a.name.length; })[0].name.length;
                     this.shell.writeTable(availableDefinitions, ['name:' + (length + 2).toString(), 'description:40']);
+                    this.shell.writeLine();
+                    this.shell.writeLine('* Pass "/?" into any command to display help for that command.');
+                    if (provider.options.allowAbbreviations) {
+                        this.shell.writeLine('* Command abbreviations are allowed (e.g. "H" for "HELP").');
+                    }
                 },
                 description: 'Lists the available commands.'
             });
