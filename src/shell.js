@@ -425,7 +425,7 @@ class Shell {
         } catch (error) {
             this.writeLine('Unhandled exception', 'error');
             this.writeLine(error, 'error');
-            deferred.reject('Unhandled exception');
+            deferred.reject('Unhandled exception');    
             complete();
             return deferred;
         }
@@ -434,15 +434,21 @@ class Shell {
             this._trigger('execute', { 
                 command: command 
             });
-            deferred.resolve(values[0]);
-            complete();
+            try {
+                deferred.resolve(values[0]);
+            } finally {
+                complete();
+            }
         }, (reason) => {
             this._trigger('execute', { 
                 command: command,
                 error: reason
             });
-            deferred.reject(reason);
-            complete();
+            try {
+                deferred.reject(reason);
+            } finally {
+                complete();
+            }
         });
         
         return deferred;
@@ -495,7 +501,11 @@ class Shell {
     _trigger(event, data) {
         if (!this._eventHandlers[event]) return;
         for (let handler of this._eventHandlers[event]) {
-            handler.call(this, data);
+            try {
+                handler.call(this, data);
+            } catch (error) {
+                console.error(error);
+            }
         }
     }
 
