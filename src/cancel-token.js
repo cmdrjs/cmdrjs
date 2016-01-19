@@ -12,7 +12,7 @@ class CancelToken {
         if (!this._isCancelRequested) {
             for (let handler of this._cancelHandlers) {
                 try {
-                    handler();
+                    handler(this);
                 } catch (error) {
                     console.error(error);
                 }
@@ -20,11 +20,17 @@ class CancelToken {
         }
         this._isCancelRequested = true;
     }
+    
+    uncancel() {
+        if (this._isCancelRequested) {
+            this._isCancelRequested = false;
+        }
+    }
 
     onCancel(handler) {
         if (this._isCancelRequested) {
             try {
-                handler();
+                handler(this);
             } catch (error) {
                 console.error(error);
             }
