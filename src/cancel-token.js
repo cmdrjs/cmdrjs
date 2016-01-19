@@ -22,9 +22,7 @@ class CancelToken {
     }
     
     uncancel() {
-        if (this._isCancelRequested) {
-            this._isCancelRequested = false;
-        }
+        this._isCancelRequested = false;
     }
 
     onCancel(handler) {
