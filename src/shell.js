@@ -3,6 +3,7 @@ import HistoryProvider from './history-provider.js';
 import AutocompleteProvider from './autocomplete-provider.js';
 import DefinitionProvider from './definition-provider.js';
 import CommandHandler from './command-handler.js';
+import CommandParser from './command-parser.js';
 import CancelToken from './cancel-token.js';
 
 const _defaultOptions = {
@@ -13,7 +14,8 @@ const _defaultOptions = {
     definitionProvider: null,
     historyProvider: null,
     autocompleteProvider: null,
-    commandHandler: null
+    commandHandler: null,
+    commandParser: null
 };
 
 class Shell {
@@ -35,13 +37,14 @@ class Shell {
         this._queue = [];
         this._promptPrefix = null;
         this._isInputInline = false;
-        this._autocompleteValue = null;
+        this._autocompleteContext = null;
         this._eventHandlers = {};
         this._isInitialized = false;
         this._historyProvider = null;
         this._autocompleteProvider = null;
         this._definitionProvider = null;
         this._commandHandler = null;
+        this._commandParser = null;
 
         this.init();
     }
@@ -108,6 +111,13 @@ class Shell {
     set commandHandler(value) {
         this._commandHandler = value;
     }
+    
+    get commandParser() {
+        return this._commandParser;
+    }
+    set commandParser(value) {
+        this._commandParser = value;
+    }
 
     init() {
         if (this._isInitialized) return;
@@ -125,7 +135,7 @@ class Shell {
 
         this._promptNode.addEventListener('keydown', (event) => {
             if (!this._current) {
-                if (event.keyCode !== 9) {
+                if (event.keyCode !== 9 && !event.shiftKey) {
                     this._autocompleteReset();
                 }
                 switch (event.keyCode) {
@@ -197,6 +207,7 @@ class Shell {
         this._autocompleteProvider.bind(this);
 
         this._commandHandler = this.options.commandHandler || new CommandHandler();
+        this._commandParser = this.options.commandParser || new CommandParser();
 
         this._activateInput();
 
@@ -217,6 +228,7 @@ class Shell {
         this._queue = [];
         this._promptPrefix = null;
         this._isInputInline = false;
+        this._autocompleteContext = null;
         this._eventHandlers = {};
 
         if (this._historyProvider) {
@@ -233,6 +245,7 @@ class Shell {
         }
 
         this._commandHandler = null;
+        this._commandParser = null;
 
         this._isInitialized = false;
     }
@@ -530,21 +543,30 @@ class Shell {
         });
     }
 
-    _autocompleteCycle(forward) {
-        let inputValue = this._promptNode.textContent;
-        inputValue = inputValue.replace(/\s$/, ' '); //fixing end whitespace
-        let cursorPosition = utils.getCursorPosition(this._promptNode);
-        let startIndex = inputValue.lastIndexOf(' ', cursorPosition) + 1;
-        startIndex = startIndex !== -1 ? startIndex : 0;
-        if (this._autocompleteValue === null) {
+    _autocompleteCycle(forward) {        
+        if (!this._autocompleteContext) {
+            let inputValue = this._promptNode.textContent;
+            inputValue = inputValue.replace(/\s$/, ' ');
+            let cursorPosition = utils.getCursorPosition(this._promptNode);
+            let startIndex = inputValue.lastIndexOf(' ', cursorPosition) + 1;
+            startIndex = startIndex !== -1 ? startIndex : 0;
             let endIndex = inputValue.indexOf(' ', startIndex);
             endIndex = endIndex !== -1 ? endIndex : inputValue.length;
-            this._autocompleteValue = inputValue.substring(startIndex, endIndex);
-        }
-        Promise.all([this._autocompleteProvider.getNextValue(forward, this._autocompleteValue, inputValue)]).then((values) => {
+            let incompleteValue = inputValue.substring(startIndex, endIndex);
+            let precursorValue = inputValue.substring(0, startIndex);
+            let parsed = this.commandParser.parseCommand(precursorValue);
+            this._autocompleteContext = {
+                shell: this,
+                incompleteValue: incompleteValue,
+                precursorValue: precursorValue,                
+                parsed: parsed
+            };
+        }        
+        
+        Promise.all([this._autocompleteProvider.getNextValue(forward, this._autocompleteContext)]).then((values) => {
             let value = values[0];
             if (value) {
-                this._promptNode.textContent = inputValue.substring(0, startIndex) + value;
+                this._promptNode.textContent = this._autocompleteContext.precursorValue + value;
                 utils.cursorToEnd(this._promptNode);
                 utils.dispatchEvent(this._promptNode, 'change', true, false);
             }
@@ -552,7 +574,7 @@ class Shell {
     }
 
     _autocompleteReset() {
-        this._autocompleteValue = null;
+        this._autocompleteContext = null;
     }
 
     _fixPromptIndent() {

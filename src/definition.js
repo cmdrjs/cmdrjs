@@ -18,14 +18,14 @@ class Definition {
         this.usage = null;
         this.available = true;
         this.help = function () {
-            if (this.description) {
-                this.shell.writeLine(this.description);
+            if (this.definition.description) {
+                this.shell.writeLine(this.definition.description);
             }
-            if (this.description && this.usage) {
+            if (this.definition.description && this.definition.usage) {
                 this.shell.writeLine();
             }
-            if (this.usage) {
-                this.shell.writeLine(this.usage);
+            if (this.definition.usage) {
+                this.shell.writeLine(this.definition.usage);
             }
         };
 
