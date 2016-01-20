@@ -1,4 +1,4 @@
-/* cmdrjs | version 1.1.8 | license MIT | (c) 2016 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
+/* cmdrjs | version 1.1.9 | license MIT | (c) 2016 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.cmdr = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function (process,global){
 /*!
@@ -1064,7 +1064,7 @@ process.chdir = function (dir) {
 process.umask = function() { return 0; };
 
 },{}],3:[function(require,module,exports){
-"use strict";
+'use strict';
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
@@ -1078,48 +1078,118 @@ var AutocompleteProvider = (function () {
     function AutocompleteProvider() {
         _classCallCheck(this, AutocompleteProvider);
 
-        this.values = [];
-        this.index = -1;
-        this.incompleteValue = null;
+        this.lookups = [];
+
+        this._incompleteValue = null;
+        this._index = -1;
+        this._values = [];
     }
 
     _createClass(AutocompleteProvider, [{
-        key: "bind",
+        key: 'bind',
         value: function bind(shell) {}
     }, {
-        key: "unbind",
+        key: 'unbind',
         value: function unbind(shell) {}
     }, {
-        key: "getNextValue",
-        value: function getNextValue(forward, incompleteValue) {
-            if (incompleteValue !== this.incompleteValue) {
-                this.index = -1;
+        key: 'getNextValue',
+        value: function getNextValue(forward, incompleteValue, inputValue) {
+            var _this = this;
+
+            if (incompleteValue !== this._incompleteValue) {
+                this._incompleteValue = incompleteValue;
+                this._index = -1;
+                this._values = this._lookupValues(inputValue);
             }
-            this.incompleteValue = incompleteValue;
 
-            var completeValues = this.values.filter(function (value) {
-                return value.toLowerCase().slice(0, incompleteValue.toLowerCase()) === incompleteValue.toLowerCase();
+            return Promise.all([this._values]).then(function (values) {
+                values = values[0];
+
+                var completeValues = values.filter(function (value) {
+                    return value.toLowerCase().slice(0, incompleteValue.toLowerCase().length) === incompleteValue.toLowerCase();
+                });
+
+                if (completeValues.length === 0) {
+                    return null;
+                }
+
+                if (_this._index >= completeValues.length) {
+                    _this._index = -1;
+                }
+
+                if (forward && _this._index < completeValues.length - 1) {
+                    _this._index++;
+                } else if (forward && _this._index >= completeValues.length - 1) {
+                    _this._index = 0;
+                } else if (!forward && _this._index > 0) {
+                    _this._index--;
+                } else if (!forward && _this._index <= 0) {
+                    _this._index = completeValues.length - 1;
+                }
+
+                return completeValues[_this._index];
             });
+        }
+    }, {
+        key: '_lookupValues',
+        value: function _lookupValues(inputValue) {
 
-            if (completeValues.length === 0) {
+            function resolveValues(values) {
+                if (Array.isArray(values)) {
+                    return values;
+                }
+                if (typeof values === 'function') {
+                    return values(inputValue);
+                }
                 return null;
             }
 
-            if (this.index >= completeValues.length) {
-                this.index = -1;
+            function isMatch(lookup) {
+                if (lookup.match instanceof RegExp) {
+                    return lookup.match.test(inputValue);
+                } else if (typeof lookup.match === 'function') {
+                    return lookup.match(inputValue);
+                }
             }
 
-            if (forward && this.index < completeValues.length - 1) {
-                this.index++;
-            } else if (forward && this.index >= completeValues.length - 1) {
-                this.index = 0;
-            } else if (!forward && this.index > 0) {
-                this.index--;
-            } else if (!forward && this.index <= 0) {
-                this.index = completeValues.length - 1;
+            var _iteratorNormalCompletion = true;
+            var _didIteratorError = false;
+            var _iteratorError = undefined;
+
+            try {
+                for (var _iterator = this.lookups[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                    var lookup = _step.value;
+
+                    var results = undefined;
+
+                    results = resolveValues(lookup);
+                    if (results) {
+                        return results;
+                    }
+
+                    if (isMatch(lookup)) {
+                        results = resolveValues(lookup.values);
+                        if (results) {
+                            return results;
+                        }
+                    }
+                }
+            } catch (err) {
+                _didIteratorError = true;
+                _iteratorError = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion && _iterator.return) {
+                        _iterator.return();
+                    }
+                } finally {
+                    if (_didIteratorError) {
+                        throw _iteratorError;
+                    }
+                }
             }
 
-            return completeValues[this.index];
+            return [];
         }
     }]);
 
@@ -1129,6 +1199,97 @@ var AutocompleteProvider = (function () {
 exports.default = AutocompleteProvider;
 
 },{}],4:[function(require,module,exports){
+"use strict";
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var CancelToken = (function () {
+    function CancelToken() {
+        _classCallCheck(this, CancelToken);
+
+        this._isCancelRequested = false;
+        this._cancelHandlers = [];
+    }
+
+    _createClass(CancelToken, [{
+        key: "cancel",
+        value: function cancel() {
+            if (!this._isCancelRequested) {
+                var _iteratorNormalCompletion = true;
+                var _didIteratorError = false;
+                var _iteratorError = undefined;
+
+                try {
+                    for (var _iterator = this._cancelHandlers[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                        var handler = _step.value;
+
+                        try {
+                            handler(this);
+                        } catch (error) {
+                            console.error(error);
+                        }
+                    }
+                } catch (err) {
+                    _didIteratorError = true;
+                    _iteratorError = err;
+                } finally {
+                    try {
+                        if (!_iteratorNormalCompletion && _iterator.return) {
+                            _iterator.return();
+                        }
+                    } finally {
+                        if (_didIteratorError) {
+                            throw _iteratorError;
+                        }
+                    }
+                }
+            }
+            this._isCancelRequested = true;
+        }
+    }, {
+        key: "uncancel",
+        value: function uncancel() {
+            this._isCancelRequested = false;
+        }
+    }, {
+        key: "onCancel",
+        value: function onCancel(handler) {
+            if (this._isCancelRequested) {
+                try {
+                    handler(this);
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+            this._cancelHandlers.push(handler);
+        }
+    }, {
+        key: "offCancel",
+        value: function offCancel(handler) {
+            var index = this._cancelHandlers.indexOf(handler);
+            if (index > -1) {
+                this._cancelHandlers.splice(index, 1);
+            }
+        }
+    }, {
+        key: "isCancelRequested",
+        get: function get() {
+            return this._isCancelRequested;
+        }
+    }]);
+
+    return CancelToken;
+})();
+
+exports.default = CancelToken;
+
+},{}],5:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1207,9 +1368,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 _es6Promise2.default.polyfill();
 
-var version = exports.version = '1.1.8';
+var version = exports.version = '1.1.9';
 
-},{"./autocomplete-provider.js":3,"./command-handler.js":5,"./definition-provider.js":6,"./definition.js":7,"./history-provider.js":8,"./overlay-shell.js":9,"./shell.js":10,"es6-promise":1}],5:[function(require,module,exports){
+},{"./autocomplete-provider.js":3,"./command-handler.js":6,"./definition-provider.js":7,"./definition.js":8,"./history-provider.js":9,"./overlay-shell.js":10,"./shell.js":11,"es6-promise":1}],6:[function(require,module,exports){
 'use strict';
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
@@ -1233,7 +1394,7 @@ var CommandHandler = (function () {
 
     _createClass(CommandHandler, [{
         key: 'executeCommand',
-        value: function executeCommand(shell, command) {
+        value: function executeCommand(shell, command, cancelToken) {
             var parsed = this._parseCommand(command);
 
             var definitions = shell.definitionProvider.getDefinitions(parsed.name);
@@ -1258,7 +1419,8 @@ var CommandHandler = (function () {
                 command: command,
                 args: parsed.args,
                 argString: parsed.argString,
-                defer: utils.defer
+                defer: utils.defer,
+                cancelToken: cancelToken
             });
 
             var args = parsed.args;
@@ -1309,7 +1471,7 @@ var CommandHandler = (function () {
 
 exports.default = CommandHandler;
 
-},{"./utils.js":11}],6:[function(require,module,exports){
+},{"./utils.js":12}],7:[function(require,module,exports){
 'use strict';
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
@@ -1422,6 +1584,11 @@ var DefinitionProvider = (function () {
                             return b.name.length - a.name.length;
                         })[0].name.length;
                         this.shell.writeTable(availableDefinitions, ['name:' + (length + 2).toString(), 'description:40']);
+                        this.shell.writeLine();
+                        this.shell.writeLine('* Pass "/?" into any command to display help for that command.');
+                        if (provider.options.allowAbbreviations) {
+                            this.shell.writeLine('* Command abbreviations are allowed (e.g. "H" for "HELP").');
+                        }
                     },
                     description: 'Lists the available commands.'
                 });
@@ -1464,7 +1631,7 @@ var DefinitionProvider = (function () {
 
 exports.default = DefinitionProvider;
 
-},{"./definition.js":7,"./utils.js":11}],7:[function(require,module,exports){
+},{"./definition.js":8,"./utils.js":12}],8:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1523,7 +1690,7 @@ var Definition = function Definition(name, main, options) {
 
 exports.default = Definition;
 
-},{"./utils.js":11}],8:[function(require,module,exports){
+},{"./utils.js":12}],9:[function(require,module,exports){
 'use strict';
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
@@ -1579,7 +1746,7 @@ var HistoryProvider = (function () {
 
 exports.default = HistoryProvider;
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict';
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
@@ -1696,7 +1863,7 @@ var OverlayShell = (function (_Shell) {
 
 exports.default = OverlayShell;
 
-},{"./shell.js":10,"./utils.js":11}],10:[function(require,module,exports){
+},{"./shell.js":11,"./utils.js":12}],11:[function(require,module,exports){
 'use strict';
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
@@ -1724,6 +1891,10 @@ var _definitionProvider2 = _interopRequireDefault(_definitionProvider);
 var _commandHandler = require('./command-handler.js');
 
 var _commandHandler2 = _interopRequireDefault(_commandHandler);
+
+var _cancelToken = require('./cancel-token.js');
+
+var _cancelToken2 = _interopRequireDefault(_cancelToken);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -1820,31 +1991,31 @@ var Shell = (function () {
                             event.preventDefault();
                             return false;
                     }
-                } else if (_this._current.readLine && event.keyCode === 13) {
-                    _this._current.readLine.resolve(_this._promptNode.textContent);
-                    return false;
+                } else {
+                    if (event.ctrlKey && event.keyCode === 67) {
+                        _this.cancel();
+                    } else if (_this._current.readLine && event.keyCode === 13) {
+                        _this._current.readLine.resolve(_this._promptNode.textContent);
+                    }
+
+                    if (!_this._current.read && !_this._current.readLine) {
+                        event.preventDefault();
+                        return false;
+                    }
                 }
+
                 return true;
             });
 
             this._promptNode.addEventListener('keypress', function (event) {
                 if (_this._current && _this._current.read) {
                     if (event.charCode !== 0) {
-                        _this._current.read.char = String.fromCharCode(event.charCode);
-                        if (_this._current.read.capture) {
-                            return false;
-                        }
-                    } else {
-                        return false;
+                        _this._current.read.resolve(String.fromCharCode(event.charCode));
                     }
+                    event.preventDefault();
+                    return false;
                 }
                 return true;
-            });
-
-            this._promptNode.addEventListener('keyup', function () {
-                if (_this._current && _this._current.read && _this._current.read.char) {
-                    _this._current.read.resolve(_this._current.read.char);
-                }
             });
 
             this._shellNode.addEventListener('click', function (event) {
@@ -1915,7 +2086,7 @@ var Shell = (function () {
         }
     }, {
         key: 'read',
-        value: function read(callback, capture) {
+        value: function read(callback, intercept) {
             var _this2 = this;
 
             if (!this._current) return;
@@ -1925,17 +2096,18 @@ var Shell = (function () {
             this._current.read = utils.defer();
             this._current.read.then(function (value) {
                 _this2._current.read = null;
-                if (!capture) {
-                    _this2._promptNode.textContent = value;
-                }
                 _this2._deactivateInput();
+                if (!intercept) {
+                    _this2._prefixNode.textContent += value;
+                    _this2._promptNode.textContent = '';
+                }
                 if (callback(value, _this2._current) === true) {
-                    _this2.read(callback, capture);
+                    _this2.read(callback, intercept);
                 } else {
                     _this2._flushInput();
                 }
             });
-            this._current.read.capture = capture;
+            this._current.read.intercept = intercept;
         }
     }, {
         key: 'readLine',
@@ -2187,8 +2359,11 @@ var Shell = (function () {
             this._flushInput(!this._echo);
             this._deactivateInput();
 
+            var cancelToken = new _cancelToken2.default();
+
             this._current = {
-                command: command
+                command: command,
+                cancelToken: cancelToken
             };
 
             var complete = function complete() {
@@ -2206,7 +2381,7 @@ var Shell = (function () {
 
             var result = undefined;
             try {
-                result = this._commandHandler.executeCommand(this, command);
+                result = this._commandHandler.executeCommand(this, command, cancelToken);
             } catch (error) {
                 this.writeLine('Unhandled exception', 'error');
                 this.writeLine(error, 'error');
@@ -2219,18 +2394,30 @@ var Shell = (function () {
                 _this5._trigger('execute', {
                     command: command
                 });
-                deferred.resolve(values[0]);
-                complete();
+                try {
+                    deferred.resolve(values[0]);
+                } finally {
+                    complete();
+                }
             }, function (reason) {
                 _this5._trigger('execute', {
                     command: command,
                     error: reason
                 });
-                deferred.reject(reason);
-                complete();
+                try {
+                    deferred.reject(reason);
+                } finally {
+                    complete();
+                }
             });
 
             return deferred;
+        }
+    }, {
+        key: 'cancel',
+        value: function cancel() {
+            if (!this._current) return;
+            this._current.cancelToken.cancel();
         }
     }, {
         key: '_buildCommand',
@@ -2289,8 +2476,8 @@ var Shell = (function () {
     }, {
         key: '_deactivateInput',
         value: function _deactivateInput() {
+            this._promptNode.style.textIndent = '';
             this._promptNode.setAttribute('disabled', 'disabled');
-            this._inputNode.style.display = 'none';
         }
     }, {
         key: '_flushInput',
@@ -2314,7 +2501,11 @@ var Shell = (function () {
                 for (var _iterator6 = this._eventHandlers[event][Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
                     var handler = _step6.value;
 
-                    handler.call(this, data);
+                    try {
+                        handler(data);
+                    } catch (error) {
+                        console.error(error);
+                    }
                 }
             } catch (err) {
                 _didIteratorError6 = true;
@@ -2350,20 +2541,20 @@ var Shell = (function () {
         value: function _autocompleteCycle(forward) {
             var _this7 = this;
 
-            var input = this._promptNode.textContent;
-            input = input.replace(/\s$/, ' '); //fixing end whitespace
+            var inputValue = this._promptNode.textContent;
+            inputValue = inputValue.replace(/\s$/, ' '); //fixing end whitespace
             var cursorPosition = utils.getCursorPosition(this._promptNode);
-            var startIndex = input.lastIndexOf(' ', cursorPosition) + 1;
+            var startIndex = inputValue.lastIndexOf(' ', cursorPosition) + 1;
             startIndex = startIndex !== -1 ? startIndex : 0;
             if (this._autocompleteValue === null) {
-                var endIndex = input.indexOf(' ', startIndex);
-                endIndex = endIndex !== -1 ? endIndex : input.length;
-                this._autocompleteValue = input.substring(startIndex, endIndex);
+                var endIndex = inputValue.indexOf(' ', startIndex);
+                endIndex = endIndex !== -1 ? endIndex : inputValue.length;
+                this._autocompleteValue = inputValue.substring(startIndex, endIndex);
             }
-            Promise.all([this._autocompleteProvider.getNextValue(forward, this._autocompleteValue)]).then(function (values) {
+            Promise.all([this._autocompleteProvider.getNextValue(forward, this._autocompleteValue, inputValue)]).then(function (values) {
                 var value = values[0];
                 if (value) {
-                    _this7._promptNode.textContent = input.substring(0, startIndex) + value;
+                    _this7._promptNode.textContent = inputValue.substring(0, startIndex) + value;
                     utils.cursorToEnd(_this7._promptNode);
                     utils.dispatchEvent(_this7._promptNode, 'change', true, false);
                 }
@@ -2473,7 +2664,7 @@ var Shell = (function () {
 
 exports.default = Shell;
 
-},{"./autocomplete-provider.js":3,"./command-handler.js":5,"./definition-provider.js":6,"./history-provider.js":8,"./utils.js":11}],11:[function(require,module,exports){
+},{"./autocomplete-provider.js":3,"./cancel-token.js":4,"./command-handler.js":6,"./definition-provider.js":7,"./history-provider.js":9,"./utils.js":12}],12:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2611,5 +2802,5 @@ function getCursorPosition(element) {
     return pos;
 }
 
-},{}]},{},[4])(4)
+},{}]},{},[5])(5)
 });
