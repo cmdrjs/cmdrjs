@@ -1,4 +1,4 @@
-/* cmdrjs | version 1.1.9 | license MIT | (c) 2016 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
+/* cmdrjs | version 1.1.10 | license MIT | (c) 2016 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.cmdr = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function (process,global){
 /*!
@@ -1080,9 +1080,11 @@ var AutocompleteProvider = (function () {
 
         this.lookups = [];
 
-        this._incompleteValue = null;
+        this._context = null;
         this._index = -1;
         this._values = [];
+
+        this._predefineLookups();
     }
 
     _createClass(AutocompleteProvider, [{
@@ -1093,20 +1095,20 @@ var AutocompleteProvider = (function () {
         value: function unbind(shell) {}
     }, {
         key: 'getNextValue',
-        value: function getNextValue(forward, incompleteValue, inputValue) {
+        value: function getNextValue(forward, context) {
             var _this = this;
 
-            if (incompleteValue !== this._incompleteValue) {
-                this._incompleteValue = incompleteValue;
+            if (context !== this._context) {
+                this._context = context;
                 this._index = -1;
-                this._values = this._lookupValues(inputValue);
+                this._values = this._lookupValues(context);
             }
 
             return Promise.all([this._values]).then(function (values) {
                 values = values[0];
 
                 var completeValues = values.filter(function (value) {
-                    return value.toLowerCase().slice(0, incompleteValue.toLowerCase().length) === incompleteValue.toLowerCase();
+                    return context.incompleteValue === '' || value.toLowerCase().slice(0, context.incompleteValue.toLowerCase().length) === context.incompleteValue.toLowerCase();
                 });
 
                 if (completeValues.length === 0) {
@@ -1132,24 +1134,16 @@ var AutocompleteProvider = (function () {
         }
     }, {
         key: '_lookupValues',
-        value: function _lookupValues(inputValue) {
+        value: function _lookupValues(context) {
 
             function resolveValues(values) {
                 if (Array.isArray(values)) {
                     return values;
                 }
                 if (typeof values === 'function') {
-                    return values(inputValue);
+                    return values(context);
                 }
                 return null;
-            }
-
-            function isMatch(lookup) {
-                if (lookup.match instanceof RegExp) {
-                    return lookup.match.test(inputValue);
-                } else if (typeof lookup.match === 'function') {
-                    return lookup.match(inputValue);
-                }
             }
 
             var _iteratorNormalCompletion = true;
@@ -1165,13 +1159,6 @@ var AutocompleteProvider = (function () {
                     results = resolveValues(lookup);
                     if (results) {
                         return results;
-                    }
-
-                    if (isMatch(lookup)) {
-                        results = resolveValues(lookup.values);
-                        if (results) {
-                            return results;
-                        }
                     }
                 }
             } catch (err) {
@@ -1190,6 +1177,20 @@ var AutocompleteProvider = (function () {
             }
 
             return [];
+        }
+    }, {
+        key: '_predefineLookups',
+        value: function _predefineLookups() {
+
+            function commandNameLookup(context) {
+                if (context.precursorValue.trim() !== '') {
+                    return null;
+                }
+
+                return Object.keys(context.shell.definitionProvider.definitions);
+            }
+
+            this.lookups.push(commandNameLookup);
         }
     }]);
 
@@ -1295,7 +1296,7 @@ exports.default = CancelToken;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.version = exports.Definition = exports.DefinitionProvider = exports.AutocompleteProvider = exports.HistoryProvider = exports.CommandHandler = exports.OverlayShell = exports.Shell = undefined;
+exports.version = exports.Definition = exports.DefinitionProvider = exports.AutocompleteProvider = exports.HistoryProvider = exports.CommandParser = exports.CommandHandler = exports.OverlayShell = exports.Shell = undefined;
 
 var _shell = require('./shell.js');
 
@@ -1321,6 +1322,15 @@ Object.defineProperty(exports, 'CommandHandler', {
   enumerable: true,
   get: function get() {
     return _commandHandler.default;
+  }
+});
+
+var _commandParser = require('./command-parser.js');
+
+Object.defineProperty(exports, 'CommandParser', {
+  enumerable: true,
+  get: function get() {
+    return _commandParser.default;
   }
 });
 
@@ -1368,9 +1378,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 _es6Promise2.default.polyfill();
 
-var version = exports.version = '1.1.9';
+var version = exports.version = '1.1.10';
 
-},{"./autocomplete-provider.js":3,"./command-handler.js":6,"./definition-provider.js":7,"./definition.js":8,"./history-provider.js":9,"./overlay-shell.js":10,"./shell.js":11,"es6-promise":1}],6:[function(require,module,exports){
+},{"./autocomplete-provider.js":3,"./command-handler.js":6,"./command-parser.js":7,"./definition-provider.js":8,"./definition.js":9,"./history-provider.js":10,"./overlay-shell.js":11,"./shell.js":12,"es6-promise":1}],6:[function(require,module,exports){
 'use strict';
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
@@ -1395,7 +1405,7 @@ var CommandHandler = (function () {
     _createClass(CommandHandler, [{
         key: 'executeCommand',
         value: function executeCommand(shell, command, cancelToken) {
-            var parsed = this._parseCommand(command);
+            var parsed = shell.commandParser.parseCommand(command);
 
             var definitions = shell.definitionProvider.getDefinitions(parsed.name);
             if (!definitions || definitions.length < 1) {
@@ -1414,14 +1424,14 @@ var CommandHandler = (function () {
 
             var definition = definitions[0];
 
-            var thisArg = utils.extend({}, definition, {
+            var thisArg = {
                 shell: shell,
                 command: command,
-                args: parsed.args,
-                argString: parsed.argString,
+                definition: definition,
+                parsed: parsed,
                 defer: utils.defer,
                 cancelToken: cancelToken
-            });
+            };
 
             var args = parsed.args;
 
@@ -1436,9 +1446,32 @@ var CommandHandler = (function () {
 
             return definition.main.apply(thisArg, args);
         }
-    }, {
-        key: '_parseCommand',
-        value: function _parseCommand(command) {
+    }]);
+
+    return CommandHandler;
+})();
+
+exports.default = CommandHandler;
+
+},{"./utils.js":13}],7:[function(require,module,exports){
+"use strict";
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var CommandParser = (function () {
+    function CommandParser() {
+        _classCallCheck(this, CommandParser);
+    }
+
+    _createClass(CommandParser, [{
+        key: "parseCommand",
+        value: function parseCommand(command) {
             var exp = /[^\s"]+|"([^"]*)"/gi,
                 name = null,
                 argString = null,
@@ -1466,12 +1499,12 @@ var CommandHandler = (function () {
         }
     }]);
 
-    return CommandHandler;
+    return CommandParser;
 })();
 
-exports.default = CommandHandler;
+exports.default = CommandParser;
 
-},{"./utils.js":12}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 'use strict';
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
@@ -1631,7 +1664,7 @@ var DefinitionProvider = (function () {
 
 exports.default = DefinitionProvider;
 
-},{"./definition.js":8,"./utils.js":12}],8:[function(require,module,exports){
+},{"./definition.js":9,"./utils.js":13}],9:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1665,14 +1698,14 @@ var Definition = function Definition(name, main, options) {
     this.usage = null;
     this.available = true;
     this.help = function () {
-        if (this.description) {
-            this.shell.writeLine(this.description);
+        if (this.definition.description) {
+            this.shell.writeLine(this.definition.description);
         }
-        if (this.description && this.usage) {
+        if (this.definition.description && this.definition.usage) {
             this.shell.writeLine();
         }
-        if (this.usage) {
-            this.shell.writeLine(this.usage);
+        if (this.definition.usage) {
+            this.shell.writeLine(this.definition.usage);
         }
     };
 
@@ -1690,7 +1723,7 @@ var Definition = function Definition(name, main, options) {
 
 exports.default = Definition;
 
-},{"./utils.js":12}],9:[function(require,module,exports){
+},{"./utils.js":13}],10:[function(require,module,exports){
 'use strict';
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
@@ -1746,7 +1779,7 @@ var HistoryProvider = (function () {
 
 exports.default = HistoryProvider;
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 'use strict';
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
@@ -1863,7 +1896,7 @@ var OverlayShell = (function (_Shell) {
 
 exports.default = OverlayShell;
 
-},{"./shell.js":11,"./utils.js":12}],11:[function(require,module,exports){
+},{"./shell.js":12,"./utils.js":13}],12:[function(require,module,exports){
 'use strict';
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
@@ -1892,6 +1925,10 @@ var _commandHandler = require('./command-handler.js');
 
 var _commandHandler2 = _interopRequireDefault(_commandHandler);
 
+var _commandParser = require('./command-parser.js');
+
+var _commandParser2 = _interopRequireDefault(_commandParser);
+
 var _cancelToken = require('./cancel-token.js');
 
 var _cancelToken2 = _interopRequireDefault(_cancelToken);
@@ -1912,7 +1949,8 @@ var _defaultOptions = {
     definitionProvider: null,
     historyProvider: null,
     autocompleteProvider: null,
-    commandHandler: null
+    commandHandler: null,
+    commandParser: null
 };
 
 var Shell = (function () {
@@ -1936,13 +1974,14 @@ var Shell = (function () {
         this._queue = [];
         this._promptPrefix = null;
         this._isInputInline = false;
-        this._autocompleteValue = null;
+        this._autocompleteContext = null;
         this._eventHandlers = {};
         this._isInitialized = false;
         this._historyProvider = null;
         this._autocompleteProvider = null;
         this._definitionProvider = null;
         this._commandHandler = null;
+        this._commandParser = null;
 
         this.init();
     }
@@ -1967,7 +2006,7 @@ var Shell = (function () {
 
             this._promptNode.addEventListener('keydown', function (event) {
                 if (!_this._current) {
-                    if (event.keyCode !== 9) {
+                    if (event.keyCode !== 9 && !event.shiftKey) {
                         _this._autocompleteReset();
                     }
                     switch (event.keyCode) {
@@ -2038,6 +2077,7 @@ var Shell = (function () {
             this._autocompleteProvider.bind(this);
 
             this._commandHandler = this.options.commandHandler || new _commandHandler2.default();
+            this._commandParser = this.options.commandParser || new _commandParser2.default();
 
             this._activateInput();
 
@@ -2059,6 +2099,7 @@ var Shell = (function () {
             this._queue = [];
             this._promptPrefix = null;
             this._isInputInline = false;
+            this._autocompleteContext = null;
             this._eventHandlers = {};
 
             if (this._historyProvider) {
@@ -2075,6 +2116,7 @@ var Shell = (function () {
             }
 
             this._commandHandler = null;
+            this._commandParser = null;
 
             this._isInitialized = false;
         }
@@ -2541,20 +2583,29 @@ var Shell = (function () {
         value: function _autocompleteCycle(forward) {
             var _this7 = this;
 
-            var inputValue = this._promptNode.textContent;
-            inputValue = inputValue.replace(/\s$/, ' '); //fixing end whitespace
-            var cursorPosition = utils.getCursorPosition(this._promptNode);
-            var startIndex = inputValue.lastIndexOf(' ', cursorPosition) + 1;
-            startIndex = startIndex !== -1 ? startIndex : 0;
-            if (this._autocompleteValue === null) {
+            if (!this._autocompleteContext) {
+                var inputValue = this._promptNode.textContent;
+                inputValue = inputValue.replace(/\s$/, ' ');
+                var cursorPosition = utils.getCursorPosition(this._promptNode);
+                var startIndex = inputValue.lastIndexOf(' ', cursorPosition) + 1;
+                startIndex = startIndex !== -1 ? startIndex : 0;
                 var endIndex = inputValue.indexOf(' ', startIndex);
                 endIndex = endIndex !== -1 ? endIndex : inputValue.length;
-                this._autocompleteValue = inputValue.substring(startIndex, endIndex);
+                var incompleteValue = inputValue.substring(startIndex, endIndex);
+                var precursorValue = inputValue.substring(0, startIndex);
+                var parsed = this.commandParser.parseCommand(precursorValue);
+                this._autocompleteContext = {
+                    shell: this,
+                    incompleteValue: incompleteValue,
+                    precursorValue: precursorValue,
+                    parsed: parsed
+                };
             }
-            Promise.all([this._autocompleteProvider.getNextValue(forward, this._autocompleteValue, inputValue)]).then(function (values) {
+
+            Promise.all([this._autocompleteProvider.getNextValue(forward, this._autocompleteContext)]).then(function (values) {
                 var value = values[0];
                 if (value) {
-                    _this7._promptNode.textContent = inputValue.substring(0, startIndex) + value;
+                    _this7._promptNode.textContent = _this7._autocompleteContext.precursorValue + value;
                     utils.cursorToEnd(_this7._promptNode);
                     utils.dispatchEvent(_this7._promptNode, 'change', true, false);
                 }
@@ -2563,7 +2614,7 @@ var Shell = (function () {
     }, {
         key: '_autocompleteReset',
         value: function _autocompleteReset() {
-            this._autocompleteValue = null;
+            this._autocompleteContext = null;
         }
     }, {
         key: '_fixPromptIndent',
@@ -2657,6 +2708,14 @@ var Shell = (function () {
         set: function set(value) {
             this._commandHandler = value;
         }
+    }, {
+        key: 'commandParser',
+        get: function get() {
+            return this._commandParser;
+        },
+        set: function set(value) {
+            this._commandParser = value;
+        }
     }]);
 
     return Shell;
@@ -2664,7 +2723,7 @@ var Shell = (function () {
 
 exports.default = Shell;
 
-},{"./autocomplete-provider.js":3,"./cancel-token.js":4,"./command-handler.js":6,"./definition-provider.js":7,"./history-provider.js":9,"./utils.js":12}],12:[function(require,module,exports){
+},{"./autocomplete-provider.js":3,"./cancel-token.js":4,"./command-handler.js":6,"./command-parser.js":7,"./definition-provider.js":8,"./history-provider.js":10,"./utils.js":13}],13:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
