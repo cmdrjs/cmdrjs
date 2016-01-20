@@ -67,10 +67,8 @@ class AutocompleteProvider {
             return null;
         }
                
-        for (let lookup of this.lookups) {
-            let results;            
-            
-            results = resolveValues(lookup);
+        for (let lookup of this.lookups) {            
+            let results = resolveValues(lookup);
             if (results) {
                 return results;
             }                       
