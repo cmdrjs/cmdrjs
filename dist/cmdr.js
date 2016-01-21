@@ -1,4 +1,4 @@
-/* cmdrjs | version 1.1.10 | license MIT | (c) 2016 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
+/* cmdrjs | version 1.1.11 | license MIT | (c) 2016 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.cmdr = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function (process,global){
 /*!
@@ -1154,9 +1154,7 @@ var AutocompleteProvider = (function () {
                 for (var _iterator = this.lookups[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
                     var lookup = _step.value;
 
-                    var results = undefined;
-
-                    results = resolveValues(lookup);
+                    var results = resolveValues(lookup);
                     if (results) {
                         return results;
                     }
@@ -1378,7 +1376,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 _es6Promise2.default.polyfill();
 
-var version = exports.version = '1.1.10';
+var version = exports.version = '1.1.11';
 
 },{"./autocomplete-provider.js":3,"./command-handler.js":6,"./command-parser.js":7,"./definition-provider.js":8,"./definition.js":9,"./history-provider.js":10,"./overlay-shell.js":11,"./shell.js":12,"es6-promise":1}],6:[function(require,module,exports){
 'use strict';
@@ -1397,9 +1395,15 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+var _defaultOptions = {
+    contextExtensions: {}
+};
+
 var CommandHandler = (function () {
-    function CommandHandler() {
+    function CommandHandler(options) {
         _classCallCheck(this, CommandHandler);
+
+        this.options = utils.extend({}, _defaultOptions, options);
     }
 
     _createClass(CommandHandler, [{
@@ -1424,7 +1428,7 @@ var CommandHandler = (function () {
 
             var definition = definitions[0];
 
-            var thisArg = {
+            var context = {
                 shell: shell,
                 command: command,
                 definition: definition,
@@ -1433,6 +1437,8 @@ var CommandHandler = (function () {
                 cancelToken: cancelToken
             };
 
+            utils.extend(context, this.options.contextExtensions);
+
             var args = parsed.args;
 
             if (definition.help && args.length > 0 && args[args.length - 1] === "/?") {
@@ -1440,11 +1446,11 @@ var CommandHandler = (function () {
                     shell.writeLine(definition.help);
                     return false;
                 } else if (typeof definition.help === 'function') {
-                    return definition.help.apply(thisArg, args);
+                    return definition.help.apply(context, args);
                 }
             }
 
-            return definition.main.apply(thisArg, args);
+            return definition.main.apply(context, args);
         }
     }]);
 

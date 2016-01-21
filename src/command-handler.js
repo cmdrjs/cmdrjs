@@ -1,6 +1,14 @@
 import * as utils from './utils.js';
 
+const _defaultOptions = {
+    contextExtensions: {}
+}
+
 class CommandHandler {
+    
+    constructor(options) {        
+        this.options = utils.extend({}, _defaultOptions, options);
+    }
     
      executeCommand(shell, command, cancelToken) { 
         let parsed = shell.commandParser.parseCommand(command);
@@ -22,7 +30,7 @@ class CommandHandler {
 
         let definition = definitions[0];
         
-        let thisArg = {
+        let context = {
             shell: shell,
             command: command,
             definition: definition,
@@ -31,6 +39,8 @@ class CommandHandler {
             cancelToken: cancelToken
         };
         
+        utils.extend(context, this.options.contextExtensions);
+        
         let args = parsed.args;
         
         if (definition.help && args.length > 0 && args[args.length-1] === "/?") {
@@ -38,11 +48,11 @@ class CommandHandler {
                 shell.writeLine(definition.help);
                 return false;
             } else if (typeof definition.help === 'function') {
-                return definition.help.apply(thisArg, args);
+                return definition.help.apply(context, args);
             }
         }
                         
-        return definition.main.apply(thisArg, args);
+        return definition.main.apply(context, args);
     }
 }
 
