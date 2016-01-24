@@ -2,7 +2,7 @@ import * as utils from './utils.js';
 
 const _defaultOptions = {
     contextExtensions: {}
-}
+};
 
 class CommandHandler {
     
