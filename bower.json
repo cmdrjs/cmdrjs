@@ -5,6 +5,6 @@
   "keywords": ["command", "cmd", "shell", "console"],
   "repository": {
     "type": "git",
-    "url": "git@github.com:cmdrjs/cmdrjs.git"
+    "url": "git@github.com/cmdrjs/cmdrjs.git"
   }
 }
