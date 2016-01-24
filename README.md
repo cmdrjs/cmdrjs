@@ -59,4 +59,4 @@ The `cmdr` module is bundled with its dependencies and therefore has no external
 __Bundled dependencies__
 * [es6-promise](https://github.com/jakearchibald/es6-promise)
 
-See [package.json](https://github.com/cmdrjs/cmdrjs/blob/master/package.json) from accurate versions.
+See [package.json](https://github.com/cmdrjs/cmdrjs/blob/master/package.json) for accurate versions.
