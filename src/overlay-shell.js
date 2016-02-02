@@ -59,7 +59,8 @@ class OverlayShell extends Shell {
     }
 
     open() {
-        this._overlayNode.style.display = '';
+        this._overlayNode.style.display = '';        
+        document.body.style.overflow = 'hidden';
 
         setTimeout(() => {
             this._fixPromptIndent();  //hack: using 'private' method from base class to fix indent
@@ -69,6 +70,7 @@ class OverlayShell extends Shell {
 
     close() {
         this._overlayNode.style.display = 'none';
+        document.body.style.overflow = '';
         this.blur();
     }
 }
