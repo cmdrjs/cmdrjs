@@ -259,6 +259,8 @@ class Shell {
         if (!this._current) return;
 
         this._activateInput(true);
+        
+        let deferred = utils.defer();
 
         this._current.read = utils.defer();
         this._current.read.then((value) => {
@@ -268,19 +270,34 @@ class Shell {
                 this._prefixNode.textContent += value;
                 this._promptNode.textContent = '';
             }
-            if (callback(value, this._current) === true) {
-                this.read(callback, intercept);
+                        
+            let result = false;
+            try {
+                result = callback(value, this._current);
+            } catch (error) {
+                this.writeLine('Unhandled exception', 'error');
+                this.writeLine(error, 'error');
+                deferred.reject(error);
+            }  
+            if (result === true) {
+                this.read(callback).then(deferred.resolve, deferred.reject);
             } else {
                 this._flushInput();
+                deferred.resolve();
             }
+            deferred.resolve();
         });
         this._current.read.intercept = intercept;
+        
+        return deferred;
     }
 
     readLine(callback) {
         if (!this._current) return;
 
         this._activateInput(true);
+        
+        let deferred = utils.defer();
 
         this._current.readLine = utils.defer();
         this._current.readLine.then((value) => {
@@ -288,10 +305,22 @@ class Shell {
             this._promptNode.textContent = value;
             this._deactivateInput();
             this._flushInput();
-            if (callback(value, this._current) === true) {
-                this.readLine(callback);
+            let result = false;
+            try {
+                result = callback(value, this._current);
+            } catch (error) {
+                this.writeLine('Unhandled exception', 'error');
+                this.writeLine(error, 'error');
+                deferred.reject(error);
+            }  
+            if (result === true) {
+                this.readLine(callback).then(deferred.resolve, deferred.reject);
+            } else {
+                deferred.resolve();
             }
         });
+        
+        return deferred;
     }
 
     write(value, cssClass) {
@@ -514,8 +543,11 @@ class Shell {
 
     _flushInput(preventWrite) {
         if (!preventWrite) {
-            let outputValue = utils.createElement(`<div>${this._prefixNode.innerHTML}${this._promptNode.innerHTML}</div>`);
-            this._outputNode.appendChild(outputValue);
+            let outputValue = `${this._prefixNode.innerHTML}${this._promptNode.innerHTML}`;
+            if (outputValue) {
+                let outputValueNode = utils.createElement(`<div>${outputValue}</div>`);
+                this._outputNode.appendChild(outputValueNode);
+            }
         }
         this._prefixNode.textContent = '';
         this._promptNode.textContent = '';
