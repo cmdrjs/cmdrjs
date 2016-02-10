@@ -1,4 +1,4 @@
-/* cmdrjs | version 1.1.11 | license MIT | (c) 2016 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
+/* cmdrjs | version 1.1.12 | license MIT | (c) 2016 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.cmdr = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function (process,global){
 /*!
@@ -1066,7 +1066,7 @@ process.umask = function() { return 0; };
 },{}],3:[function(require,module,exports){
 'use strict';
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -1074,7 +1074,7 @@ Object.defineProperty(exports, "__esModule", {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var AutocompleteProvider = (function () {
+var AutocompleteProvider = function () {
     function AutocompleteProvider() {
         _classCallCheck(this, AutocompleteProvider);
 
@@ -1193,14 +1193,14 @@ var AutocompleteProvider = (function () {
     }]);
 
     return AutocompleteProvider;
-})();
+}();
 
 exports.default = AutocompleteProvider;
 
 },{}],4:[function(require,module,exports){
 "use strict";
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -1208,7 +1208,7 @@ Object.defineProperty(exports, "__esModule", {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var CancelToken = (function () {
+var CancelToken = function () {
     function CancelToken() {
         _classCallCheck(this, CancelToken);
 
@@ -1284,7 +1284,7 @@ var CancelToken = (function () {
     }]);
 
     return CancelToken;
-})();
+}();
 
 exports.default = CancelToken;
 
@@ -1376,12 +1376,12 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 _es6Promise2.default.polyfill();
 
-var version = exports.version = '1.1.11';
+var version = exports.version = '1.1.12';
 
 },{"./autocomplete-provider.js":3,"./command-handler.js":6,"./command-parser.js":7,"./definition-provider.js":8,"./definition.js":9,"./history-provider.js":10,"./overlay-shell.js":11,"./shell.js":12,"es6-promise":1}],6:[function(require,module,exports){
 'use strict';
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -1399,7 +1399,7 @@ var _defaultOptions = {
     contextExtensions: {}
 };
 
-var CommandHandler = (function () {
+var CommandHandler = function () {
     function CommandHandler(options) {
         _classCallCheck(this, CommandHandler);
 
@@ -1455,14 +1455,14 @@ var CommandHandler = (function () {
     }]);
 
     return CommandHandler;
-})();
+}();
 
 exports.default = CommandHandler;
 
 },{"./utils.js":13}],7:[function(require,module,exports){
 "use strict";
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -1470,7 +1470,7 @@ Object.defineProperty(exports, "__esModule", {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var CommandParser = (function () {
+var CommandParser = function () {
     function CommandParser() {
         _classCallCheck(this, CommandParser);
     }
@@ -1506,14 +1506,14 @@ var CommandParser = (function () {
     }]);
 
     return CommandParser;
-})();
+}();
 
 exports.default = CommandParser;
 
 },{}],8:[function(require,module,exports){
 'use strict';
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -1538,7 +1538,7 @@ var _defaultOptions = {
     allowAbbreviations: true
 };
 
-var DefinitionProvider = (function () {
+var DefinitionProvider = function () {
     function DefinitionProvider(options) {
         var _this = this;
 
@@ -1666,7 +1666,7 @@ var DefinitionProvider = (function () {
     }]);
 
     return DefinitionProvider;
-})();
+}();
 
 exports.default = DefinitionProvider;
 
@@ -1732,7 +1732,7 @@ exports.default = Definition;
 },{"./utils.js":13}],10:[function(require,module,exports){
 'use strict';
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -1740,7 +1740,7 @@ Object.defineProperty(exports, "__esModule", {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var HistoryProvider = (function () {
+var HistoryProvider = function () {
     function HistoryProvider() {
         var _this = this;
 
@@ -1781,14 +1781,14 @@ var HistoryProvider = (function () {
     }]);
 
     return HistoryProvider;
-})();
+}();
 
 exports.default = HistoryProvider;
 
 },{}],11:[function(require,module,exports){
 'use strict';
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
@@ -1820,7 +1820,7 @@ var _defaultOptions = {
     closeKey: 27
 };
 
-var OverlayShell = (function (_Shell) {
+var OverlayShell = function (_Shell) {
     _inherits(OverlayShell, _Shell);
 
     function OverlayShell(options) {
@@ -1878,6 +1878,7 @@ var OverlayShell = (function (_Shell) {
             var _this3 = this;
 
             this._overlayNode.style.display = '';
+            document.body.style.overflow = 'hidden';
 
             setTimeout(function () {
                 _this3._fixPromptIndent(); //hack: using 'private' method from base class to fix indent
@@ -1888,6 +1889,7 @@ var OverlayShell = (function (_Shell) {
         key: 'close',
         value: function close() {
             this._overlayNode.style.display = 'none';
+            document.body.style.overflow = '';
             this.blur();
         }
     }, {
@@ -1898,14 +1900,16 @@ var OverlayShell = (function (_Shell) {
     }]);
 
     return OverlayShell;
-})(_shell2.default);
+}(_shell2.default);
 
 exports.default = OverlayShell;
 
 },{"./shell.js":12,"./utils.js":13}],12:[function(require,module,exports){
 'use strict';
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -1943,8 +1947,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj; }
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var _defaultOptions = {
@@ -1959,7 +1961,7 @@ var _defaultOptions = {
     commandParser: null
 };
 
-var Shell = (function () {
+var Shell = function () {
     function Shell(containerNode, options) {
         _classCallCheck(this, Shell);
 
@@ -2141,6 +2143,8 @@ var Shell = (function () {
 
             this._activateInput(true);
 
+            var deferred = utils.defer();
+
             this._current.read = utils.defer();
             this._current.read.then(function (value) {
                 _this2._current.read = null;
@@ -2149,13 +2153,26 @@ var Shell = (function () {
                     _this2._prefixNode.textContent += value;
                     _this2._promptNode.textContent = '';
                 }
-                if (callback(value, _this2._current) === true) {
-                    _this2.read(callback, intercept);
+
+                var result = false;
+                try {
+                    result = callback(value, _this2._current);
+                } catch (error) {
+                    _this2.writeLine('Unhandled exception', 'error');
+                    _this2.writeLine(error, 'error');
+                    deferred.reject(error);
+                }
+                if (result === true) {
+                    _this2.read(callback).then(deferred.resolve, deferred.reject);
                 } else {
                     _this2._flushInput();
+                    deferred.resolve();
                 }
+                deferred.resolve();
             });
             this._current.read.intercept = intercept;
+
+            return deferred;
         }
     }, {
         key: 'readLine',
@@ -2166,16 +2183,30 @@ var Shell = (function () {
 
             this._activateInput(true);
 
+            var deferred = utils.defer();
+
             this._current.readLine = utils.defer();
             this._current.readLine.then(function (value) {
                 _this3._current.readLine = null;
                 _this3._promptNode.textContent = value;
                 _this3._deactivateInput();
                 _this3._flushInput();
-                if (callback(value, _this3._current) === true) {
-                    _this3.readLine(callback);
+                var result = false;
+                try {
+                    result = callback(value, _this3._current);
+                } catch (error) {
+                    _this3.writeLine('Unhandled exception', 'error');
+                    _this3.writeLine(error, 'error');
+                    deferred.reject(error);
+                }
+                if (result === true) {
+                    _this3.readLine(callback).then(deferred.resolve, deferred.reject);
+                } else {
+                    deferred.resolve();
                 }
             });
+
+            return deferred;
         }
     }, {
         key: 'write',
@@ -2531,8 +2562,11 @@ var Shell = (function () {
         key: '_flushInput',
         value: function _flushInput(preventWrite) {
             if (!preventWrite) {
-                var outputValue = utils.createElement('<div>' + this._prefixNode.innerHTML + this._promptNode.innerHTML + '</div>');
-                this._outputNode.appendChild(outputValue);
+                var outputValue = '' + this._prefixNode.innerHTML + this._promptNode.innerHTML;
+                if (outputValue) {
+                    var outputValueNode = utils.createElement('<div>' + outputValue + '</div>');
+                    this._outputNode.appendChild(outputValueNode);
+                }
             }
             this._prefixNode.textContent = '';
             this._promptNode.textContent = '';
@@ -2725,12 +2759,14 @@ var Shell = (function () {
     }]);
 
     return Shell;
-})();
+}();
 
 exports.default = Shell;
 
 },{"./autocomplete-provider.js":3,"./cancel-token.js":4,"./command-handler.js":6,"./command-parser.js":7,"./definition-provider.js":8,"./history-provider.js":10,"./utils.js":13}],13:[function(require,module,exports){
 'use strict';
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -2746,9 +2782,6 @@ exports.dispatchEvent = dispatchEvent;
 exports.blur = blur;
 exports.cursorToEnd = cursorToEnd;
 exports.getCursorPosition = getCursorPosition;
-
-function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj; }
-
 //Object
 
 function extend(out) {
