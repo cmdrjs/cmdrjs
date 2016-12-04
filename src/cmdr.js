@@ -10,4 +10,4 @@ export { default as AutocompleteProvider } from './autocomplete-provider.js';
 export { default as DefinitionProvider } from './definition-provider.js';
 export { default as Definition } from './definition.js';
 export { default as Plugin } from './plugin.js'
-export const version = '1.1.12';
+export const version = '1.2.0';
