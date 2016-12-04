@@ -18,13 +18,13 @@ class DefinitionProvider {
         this._predefine();
     }
 
-    bind(shell) {
+    activate(shell) {
         if (typeof shell.define === 'undefined') {
             shell.define = this.define;
         }
     }
 
-    unbind(shell) {
+    deactivate(shell) {
         if (shell.define === this.define) {
             delete shell.define;
         }

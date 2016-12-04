@@ -9,10 +9,10 @@ class AutocompleteProvider {
         this._predefineLookups();
     }
         
-    bind(shell) { 
+    activate(shell) { 
     }
     
-    unbind(shell) {
+    deactivate(shell) {
     }
     
     getNextValue(forward, context) {

@@ -5,12 +5,12 @@ const _defaultOptions = {
 };
 
 class CommandHandler {
-    
-    constructor(options) {        
+
+    constructor(options) {
         this.options = utils.extend({}, _defaultOptions, options);
     }
-    
-     executeCommand(shell, command, cancelToken) { 
+
+    executeCommand(shell, command, cancelToken) {
         let parsed = shell.commandParser.parseCommand(command);
 
         let definitions = shell.definitionProvider.getDefinitions(parsed.name);
@@ -29,7 +29,7 @@ class CommandHandler {
         }
 
         let definition = definitions[0];
-        
+
         let context = {
             shell: shell,
             command: command,
@@ -38,12 +38,12 @@ class CommandHandler {
             defer: utils.defer,
             cancelToken: cancelToken
         };
-        
+
         utils.extend(context, this.options.contextExtensions);
-        
+
         let args = parsed.args;
-        
-        if (definition.help && args.length > 0 && args[args.length-1] === "/?") {
+
+        if (definition.help && args.length > 0 && args[args.length - 1] === "/?") {
             if (typeof definition.help === 'string') {
                 shell.writeLine(definition.help);
                 return false;
@@ -51,7 +51,7 @@ class CommandHandler {
                 return definition.help.apply(context, args);
             }
         }
-                        
+
         return definition.main.apply(context, args);
     }
 }

@@ -15,7 +15,8 @@ const _defaultOptions = {
     historyProvider: null,
     autocompleteProvider: null,
     commandHandler: null,
-    commandParser: null
+    commandParser: null,
+    plugins: []
 };
 
 class Shell {
@@ -45,6 +46,7 @@ class Shell {
         this._definitionProvider = null;
         this._commandHandler = null;
         this._commandParser = null;
+        this._plugins = [];
 
         this.init();
     }
@@ -75,48 +77,28 @@ class Shell {
         this._echo = value;
     }
 
-    get historyProvider() {
-        return this._historyProvider;
-    }
-    set historyProvider(value) {
-        if (this._historyProvider) {
-            this._historyProvider.unbind(this);
-        }
-        this._historyProvider = value;
-    }
-
-    get autocompleteProvider() {
-        return this._autocompleteProvider;
-    }
-    set autocompleteProvider(value) {
-        if (this._autocompleteProvider) {
-            this._autocompleteProvider.unbind(this);
-        }
-        this._autocompleteProvider = value;
-    }
-
-    get definitionProvider() {
-        return this._definitionProvider;
-    }
-    set definitionProvider(value) {
-        if (this._definitionProvider) {
-            this._definitionProvider.unbind(this);
-        }
-        this._definitionProvider = value;
-    }
-
     get commandHandler() {
         return this._commandHandler;
-    }
-    set commandHandler(value) {
-        this._commandHandler = value;
     }
     
     get commandParser() {
         return this._commandParser;
     }
-    set commandParser(value) {
-        this._commandParser = value;
+
+    get historyProvider() {
+        return this._historyProvider;
+    }
+
+    get autocompleteProvider() {
+        return this._autocompleteProvider;
+    }
+
+    get definitionProvider() {
+        return this._definitionProvider;
+    }
+
+    get plugins() {
+        return Object.freeze(this._plugins);
     }
 
     init() {
@@ -196,18 +178,23 @@ class Shell {
         this._promptPrefix = this._options.promptPrefix;
 
         this._echo = this._options.echo;
-
-        this._definitionProvider = this._options.definitionProvider || new DefinitionProvider();
-        this._definitionProvider.bind(this);
-
-        this._historyProvider = this._options.historyProvider || new HistoryProvider();
-        this._historyProvider.bind(this);
-
-        this._autocompleteProvider = this._options.autocompleteProvider || new AutocompleteProvider();
-        this._autocompleteProvider.bind(this);
-
+        
         this._commandHandler = this.options.commandHandler || new CommandHandler();
         this._commandParser = this.options.commandParser || new CommandParser();
+
+        this._definitionProvider = this._options.definitionProvider || new DefinitionProvider();
+        this._definitionProvider.activate(this);
+
+        this._historyProvider = this._options.historyProvider || new HistoryProvider();
+        this._historyProvider.activate(this);
+
+        this._autocompleteProvider = this._options.autocompleteProvider || new AutocompleteProvider();
+        this._autocompleteProvider.activate(this);
+
+        for (let plugin of this._options.plugins) {
+            this._plugins.push(plugin);
+            plugin.activate(this);
+        }
 
         this._activateInput();
 
@@ -231,21 +218,25 @@ class Shell {
         this._autocompleteContext = null;
         this._eventHandlers = {};
 
+        this._commandHandler = null;
+        this._commandParser = null;
+
         if (this._historyProvider) {
-            this._historyProvider.unbind(this);
+            this._historyProvider.deactivate(this);
             this._historyProvider = null;
         }
         if (this._autocompleteProvider) {
-            this._autocompleteProvider.unbind(this);
+            this._autocompleteProvider.deactivate(this);
             this._autocompleteProvider = null;
         }
         if (this._definitionProvider) {
-            this._definitionProvider.unbind(this);
+            this._definitionProvider.deactivate(this);
             this._definitionProvider = null;
         }
-
-        this._commandHandler = null;
-        this._commandParser = null;
+        for (let plugin of this._plugins) {
+            plugin.deactivate(this);
+        }
+        this._plugins = [];    
 
         this._isInitialized = false;
     }

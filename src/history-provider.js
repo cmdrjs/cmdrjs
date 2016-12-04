@@ -9,11 +9,11 @@ class HistoryProvider {
         };
     }
     
-    bind(shell) { 
+    activate(shell) { 
         shell.on('preexecute', this._preexecuteHandler);
     }
     
-    unbind(shell) {
+    deactivate(shell) {
         shell.off('preexecute', this._preexecuteHandler);
     }
     
