@@ -8,7 +8,7 @@ A JavaScript based command line interface for web pages.
 
 #### NPM
 ```
-npm install cmdrjs
+npm i cmdrjs
 ```
 
 ## Loading the module
@@ -49,8 +49,5 @@ See the [wiki](https://github.com/cmdrjs/cmdrjs/wiki/Documentation) for full doc
 ## Dependencies
 
 The `cmdr` module is bundled with its dependencies and therefore has no external dependencies.
-
-__Bundled dependencies__
-* [es6-promise](https://github.com/jakearchibald/es6-promise)
 
 See [package.json](https://github.com/cmdrjs/cmdrjs/blob/master/package.json) for accurate versions.
