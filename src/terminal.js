@@ -312,8 +312,53 @@ class Terminal {
         this._outputLineNode = null;
     }
 
+    writePad(value, length, char = ' ', cssClass = null) {
+        this.write(utils.pad(value, length, char), cssClass);
+    }
+
+    writeTable(data, columns, showHeaders, cssClass) {
+        columns = columns.map((value) => {
+            let values = value.split(':');
+            return {
+                name: values[0],
+                padding: values.length > 1 ? values[1] : 10,
+                header: values.length > 2 ? values[2] : values[0]
+            };
+        });
+        let writeCell = (value, padding) => {
+            value = value || '';
+            if (padding === '*') {
+                this.write(value, cssClass);
+            } else {
+                this.writePad(value, parseInt(padding, 10), ' ', cssClass);
+            }
+        };
+        if (showHeaders) {
+            for (let col of columns) {
+                writeCell(col.header, col.padding);
+            }
+            this.writeLine();
+            for (let col of columns) {
+                writeCell(Array(col.header.length + 1).join('-'), col.padding);
+            }
+            this.writeLine();
+        }
+        for (let row of data) {
+            for (let col of columns) {
+                writeCell(row[col.name] ? row[col.name].toString() : '', col.padding);
+            }
+            this.writeLine();
+        }
+    }
+
     clear() {
         this._outputNode.innerHTML = '';
+    }
+
+    clearLine() {
+        if (this._outputNode.lastChild) {
+            this._outputNode.removeChild(this._outputNode.lastChild);
+        }
     }
 
     focus() {
