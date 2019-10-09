@@ -7,6 +7,12 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports["default"] = void 0;
 
+var utils = _interopRequireWildcard(require("./utils.js"));
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; if (obj != null) { var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -29,10 +35,10 @@ function () {
 
   _createClass(AutocompleteProvider, [{
     key: "activate",
-    value: function activate(shell) {}
+    value: function activate(terminal) {}
   }, {
     key: "deactivate",
-    value: function deactivate(shell) {}
+    value: function deactivate(terminal) {}
   }, {
     key: "getNextValue",
     value: function getNextValue(forward, context) {
@@ -124,7 +130,11 @@ function () {
           return null;
         }
 
-        return Object.keys(context.shell.definitionProvider.definitions);
+        var commands = context.terminal.shell.getCommands();
+        var names = utils.arrayFrom(commands, function (c) {
+          return c.name;
+        });
+        return names;
       }
 
       this.lookups.push(commandNameLookup);
@@ -137,7 +147,7 @@ function () {
 var _default = AutocompleteProvider;
 exports["default"] = _default;
 
-},{}],2:[function(require,module,exports){
+},{"./utils.js":11}],2:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -243,28 +253,28 @@ exports["default"] = _default;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+Object.defineProperty(exports, "Terminal", {
+  enumerable: true,
+  get: function get() {
+    return _terminal["default"];
+  }
+});
+Object.defineProperty(exports, "OverlayTerminal", {
+  enumerable: true,
+  get: function get() {
+    return _overlayTerminal["default"];
+  }
+});
+Object.defineProperty(exports, "ShellBase", {
+  enumerable: true,
+  get: function get() {
+    return _shellBase["default"];
+  }
+});
 Object.defineProperty(exports, "Shell", {
   enumerable: true,
   get: function get() {
     return _shell["default"];
-  }
-});
-Object.defineProperty(exports, "OverlayShell", {
-  enumerable: true,
-  get: function get() {
-    return _overlayShell["default"];
-  }
-});
-Object.defineProperty(exports, "CommandHandler", {
-  enumerable: true,
-  get: function get() {
-    return _commandHandler["default"];
-  }
-});
-Object.defineProperty(exports, "CommandParser", {
-  enumerable: true,
-  get: function get() {
-    return _commandParser["default"];
   }
 });
 Object.defineProperty(exports, "HistoryProvider", {
@@ -279,16 +289,10 @@ Object.defineProperty(exports, "AutocompleteProvider", {
     return _autocompleteProvider["default"];
   }
 });
-Object.defineProperty(exports, "DefinitionProvider", {
+Object.defineProperty(exports, "Command", {
   enumerable: true,
   get: function get() {
-    return _definitionProvider["default"];
-  }
-});
-Object.defineProperty(exports, "Definition", {
-  enumerable: true,
-  get: function get() {
-    return _definition["default"];
+    return _command["default"];
   }
 });
 Object.defineProperty(exports, "Plugin", {
@@ -299,21 +303,19 @@ Object.defineProperty(exports, "Plugin", {
 });
 exports.version = void 0;
 
+var _terminal = _interopRequireDefault(require("./terminal.js"));
+
+var _overlayTerminal = _interopRequireDefault(require("./overlay-terminal.js"));
+
+var _shellBase = _interopRequireDefault(require("./shell-base.js"));
+
 var _shell = _interopRequireDefault(require("./shell.js"));
-
-var _overlayShell = _interopRequireDefault(require("./overlay-shell.js"));
-
-var _commandHandler = _interopRequireDefault(require("./command-handler.js"));
-
-var _commandParser = _interopRequireDefault(require("./command-parser.js"));
 
 var _historyProvider = _interopRequireDefault(require("./history-provider.js"));
 
 var _autocompleteProvider = _interopRequireDefault(require("./autocomplete-provider.js"));
 
-var _definitionProvider = _interopRequireDefault(require("./definition-provider.js"));
-
-var _definition = _interopRequireDefault(require("./definition.js"));
+var _command = _interopRequireDefault(require("./command.js"));
 
 var _plugin = _interopRequireDefault(require("./plugin.js"));
 
@@ -322,7 +324,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "d
 var version = '2.0.0';
 exports.version = version;
 
-},{"./autocomplete-provider.js":1,"./command-handler.js":4,"./command-parser.js":5,"./definition-provider.js":6,"./definition.js":7,"./history-provider.js":8,"./overlay-shell.js":9,"./plugin.js":10,"./shell.js":11}],4:[function(require,module,exports){
+},{"./autocomplete-provider.js":1,"./command.js":4,"./history-provider.js":5,"./overlay-terminal.js":6,"./plugin.js":7,"./shell-base.js":8,"./shell.js":9,"./terminal.js":10}],4:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -338,325 +340,8 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
-var _defaultOptions = {
-  contextExtensions: {}
-};
-
-var CommandHandler =
-/*#__PURE__*/
-function () {
-  function CommandHandler(options) {
-    _classCallCheck(this, CommandHandler);
-
-    this.options = utils.extend({}, _defaultOptions, options);
-  }
-
-  _createClass(CommandHandler, [{
-    key: "executeCommand",
-    value: function executeCommand(shell, command, cancelToken) {
-      var parsed = shell.commandParser.parseCommand(command);
-      var definitions = shell.definitionProvider.getDefinitions(parsed.name);
-
-      if (!definitions || definitions.length < 1) {
-        shell.writeLine('Invalid command', 'error');
-        return false;
-      } else if (definitions.length > 1) {
-        shell.writeLine('Ambiguous command', 'error');
-        shell.writeLine();
-
-        for (var i = 0; i < definitions.length; i++) {
-          shell.writePad(definitions[i].name, 10);
-          shell.writeLine(definitions[i].description);
-        }
-
-        shell.writeLine();
-        return false;
-      }
-
-      var definition = definitions[0];
-      var context = {
-        shell: shell,
-        command: command,
-        definition: definition,
-        parsed: parsed,
-        defer: utils.defer,
-        cancelToken: cancelToken
-      };
-      utils.extend(context, this.options.contextExtensions);
-      var args = parsed.args;
-
-      if (definition.help && args.length > 0 && args[args.length - 1] === "/?") {
-        if (typeof definition.help === 'string') {
-          shell.writeLine(definition.help);
-          return false;
-        } else if (typeof definition.help === 'function') {
-          return definition.help.apply(context, args);
-        }
-      }
-
-      return definition.main.apply(context, args);
-    }
-  }]);
-
-  return CommandHandler;
-}();
-
-var _default = CommandHandler;
-exports["default"] = _default;
-
-},{"./utils.js":12}],5:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports["default"] = void 0;
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
-var CommandParser =
-/*#__PURE__*/
-function () {
-  function CommandParser() {
-    _classCallCheck(this, CommandParser);
-  }
-
-  _createClass(CommandParser, [{
-    key: "parseCommand",
-    value: function parseCommand(command) {
-      var exp = /[^\s"]+|"([^"]*)"/gi,
-          name = null,
-          argString = null,
-          args = [],
-          match = null;
-
-      do {
-        match = exp.exec(command);
-
-        if (match !== null) {
-          var value = match[1] ? match[1] : match[0];
-
-          if (match.index === 0) {
-            name = value;
-            argString = command.substr(value.length + (match[1] ? 3 : 1));
-          } else {
-            args.push(value);
-          }
-        }
-      } while (match !== null);
-
-      return {
-        name: name,
-        argString: argString,
-        args: args
-      };
-    }
-  }]);
-
-  return CommandParser;
-}();
-
-var _default = CommandParser;
-exports["default"] = _default;
-
-},{}],6:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports["default"] = void 0;
-
-var utils = _interopRequireWildcard(require("./utils.js"));
-
-var _definition = _interopRequireDefault(require("./definition.js"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
-
-function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; if (obj != null) { var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
-
-function isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
-
-function _construct(Parent, args, Class) { if (isNativeReflectConstruct()) { _construct = Reflect.construct; } else { _construct = function _construct(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; }; } return _construct.apply(null, arguments); }
-
-function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
-var _defaultOptions = {
-  predefined: ['HELP', 'ECHO', 'CLS'],
-  allowAbbreviations: true
-};
-
-var DefinitionProvider =
-/*#__PURE__*/
-function () {
-  function DefinitionProvider(options) {
-    var _this = this;
-
-    _classCallCheck(this, DefinitionProvider);
-
-    this.options = utils.extend({}, _defaultOptions, options);
-    this.definitions = {};
-
-    this.define = function () {
-      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-        args[_key] = arguments[_key];
-      }
-
-      _this.addDefinition(_construct(_definition["default"], args));
-    };
-
-    this._predefine();
-  }
-
-  _createClass(DefinitionProvider, [{
-    key: "activate",
-    value: function activate(shell) {
-      if (typeof shell.define === 'undefined') {
-        shell.define = this.define;
-      }
-    }
-  }, {
-    key: "deactivate",
-    value: function deactivate(shell) {
-      if (shell.define === this.define) {
-        delete shell.define;
-      }
-    }
-  }, {
-    key: "getDefinitions",
-    value: function getDefinitions(name) {
-      name = name.toUpperCase();
-      var definition = this.definitions[name];
-
-      if (definition) {
-        if (definition.available) {
-          return [definition];
-        }
-
-        return null;
-      }
-
-      var definitions = [];
-
-      if (this.options.allowAbbreviations) {
-        for (var key in this.definitions) {
-          if (key.indexOf(name, 0) === 0 && utils.unwrap(this.definitions[key].available)) {
-            definitions.push(this.definitions[key]);
-          }
-        }
-      }
-
-      return definitions;
-    }
-  }, {
-    key: "addDefinition",
-    value: function addDefinition(definition) {
-      this.definitions[definition.name] = definition;
-    }
-  }, {
-    key: "_predefine",
-    value: function _predefine() {
-      var provider = this;
-
-      if (this.options.predefined.indexOf('HELP') > -1) {
-        this.define({
-          name: 'HELP',
-          main: function main() {
-            this.shell.writeLine('The following commands are available:');
-            this.shell.writeLine();
-            var availableDefinitions = Object.keys(provider.definitions).map(function (key) {
-              return provider.definitions[key];
-            }).filter(function (def) {
-              return def.available;
-            });
-            var length = availableDefinitions.slice().sort(function (a, b) {
-              return b.name.length - a.name.length;
-            })[0].name.length;
-            this.shell.writeTable(availableDefinitions, ['name:' + (length + 2).toString(), 'description:40']);
-            this.shell.writeLine();
-            this.shell.writeLine('* Pass "/?" into any command to display help for that command.');
-
-            if (provider.options.allowAbbreviations) {
-              this.shell.writeLine('* Command abbreviations are allowed (e.g. "H" for "HELP").');
-            }
-          },
-          description: 'Lists the available commands.'
-        });
-      }
-
-      if (this.options.predefined.indexOf('ECHO') > -1) {
-        this.define({
-          name: 'ECHO',
-          main: function main() {
-            var toggle = this.argString.toUpperCase();
-
-            if (toggle === 'ON') {
-              this.shell.echo = true;
-            } else if (toggle === 'OFF') {
-              this.shell.echo = false;
-            } else if (this.argString) {
-              this.shell.writeLine(this.argString);
-            } else {
-              this.shell.writeLine('ECHO is ' + (this.shell.echo ? 'on.' : 'off.'));
-            }
-          },
-          description: 'Displays messages, or toggles command echoing.',
-          usage: 'ECHO [ON | OFF]\nECHO [message]\n\nType ECHO without parameters to display the current echo setting.'
-        });
-      }
-
-      if (this.options.predefined.indexOf('CLS') > -1) {
-        this.define({
-          name: 'CLS',
-          main: function main() {
-            this.shell.clear();
-          },
-          description: 'Clears the command prompt.'
-        });
-      }
-    }
-  }]);
-
-  return DefinitionProvider;
-}();
-
-var _default = DefinitionProvider;
-exports["default"] = _default;
-
-},{"./definition.js":7,"./utils.js":12}],7:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports["default"] = void 0;
-
-var utils = _interopRequireWildcard(require("./utils.js"));
-
-function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; if (obj != null) { var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var Definition = function Definition(name, main, options) {
-  _classCallCheck(this, Definition);
+var Command = function Command(name, main, options) {
+  _classCallCheck(this, Command);
 
   if (typeof name !== 'string') {
     options = main;
@@ -677,19 +362,22 @@ var Definition = function Definition(name, main, options) {
 
   this.help = function () {
     if (this.definition.description) {
-      this.shell.writeLine(this.definition.description);
+      this.terminal.writeLine(this.definition.description);
     }
 
     if (this.definition.description && this.definition.usage) {
-      this.shell.writeLine();
+      this.terminal.writeLine();
     }
 
     if (this.definition.usage) {
-      this.shell.writeLine(this.definition.usage);
+      this.terminal.writeLine(this.definition.usage);
     }
   };
 
   utils.extend(this, options);
+
+  this.main = this.main || function () {};
+
   if (typeof this.name !== 'string') throw '"name" must be a string.';
   if (typeof this.main !== 'function') throw '"main" must be a function.';
   this.name = this.name.toUpperCase();
@@ -699,10 +387,10 @@ var Definition = function Definition(name, main, options) {
   }
 };
 
-var _default = Definition;
+var _default = Command;
 exports["default"] = _default;
 
-},{"./utils.js":12}],8:[function(require,module,exports){
+},{"./utils.js":11}],5:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -736,13 +424,13 @@ function () {
 
   _createClass(HistoryProvider, [{
     key: "activate",
-    value: function activate(shell) {
-      shell.on('preexecute', this._preexecuteHandler);
+    value: function activate(terminal) {
+      terminal.on('preexecute', this._preexecuteHandler);
     }
   }, {
     key: "deactivate",
-    value: function deactivate(shell) {
-      shell.off('preexecute', this._preexecuteHandler);
+    value: function deactivate(terminal) {
+      terminal.off('preexecute', this._preexecuteHandler);
     }
   }, {
     key: "getNextValue",
@@ -767,7 +455,7 @@ function () {
 var _default = HistoryProvider;
 exports["default"] = _default;
 
-},{}],9:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -777,7 +465,7 @@ exports["default"] = void 0;
 
 var utils = _interopRequireWildcard(require("./utils.js"));
 
-var _shell = _interopRequireDefault(require("./shell.js"));
+var _terminal = _interopRequireDefault(require("./terminal.js"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
@@ -813,26 +501,26 @@ var _defaultOptions = {
   closeKey: 27
 };
 
-var OverlayShell =
+var OverlayTerminal =
 /*#__PURE__*/
-function (_Shell) {
-  _inherits(OverlayShell, _Shell);
+function (_Terminal) {
+  _inherits(OverlayTerminal, _Terminal);
 
-  function OverlayShell(options) {
+  function OverlayTerminal(options) {
     var _this;
 
-    _classCallCheck(this, OverlayShell);
+    _classCallCheck(this, OverlayTerminal);
 
     var overlayNode = utils.createElement('<div style="display: none" class="cmdr-overlay"></div>');
     document.body.appendChild(overlayNode);
     options = utils.extend({}, _defaultOptions, options);
-    _this = _possibleConstructorReturn(this, _getPrototypeOf(OverlayShell).call(this, overlayNode, options));
+    _this = _possibleConstructorReturn(this, _getPrototypeOf(OverlayTerminal).call(this, overlayNode, options));
     _this._overlayNode = overlayNode;
     _this._documentEventHandler = null;
     return _this;
   }
 
-  _createClass(OverlayShell, [{
+  _createClass(OverlayTerminal, [{
     key: "init",
     value: function init() {
       var _this2 = this;
@@ -851,7 +539,7 @@ function (_Shell) {
 
       document.addEventListener('keydown', this._documentEventHandler);
 
-      _get(_getPrototypeOf(OverlayShell.prototype), "init", this).call(this);
+      _get(_getPrototypeOf(OverlayTerminal.prototype), "init", this).call(this);
 
       if (this.options.autoOpen) {
         this.open();
@@ -862,7 +550,7 @@ function (_Shell) {
     value: function dispose() {
       if (!this.initialized) return;
 
-      _get(_getPrototypeOf(OverlayShell.prototype), "dispose", this).call(this);
+      _get(_getPrototypeOf(OverlayTerminal.prototype), "dispose", this).call(this);
 
       document.removeEventListener('keydown', this._documentEventHandler);
       document.body.removeChild(this._overlayNode);
@@ -895,13 +583,13 @@ function (_Shell) {
     }
   }]);
 
-  return OverlayShell;
-}(_shell["default"]);
+  return OverlayTerminal;
+}(_terminal["default"]);
 
-var _default = OverlayShell;
+var _default = OverlayTerminal;
 exports["default"] = _default;
 
-},{"./shell.js":11,"./utils.js":12}],10:[function(require,module,exports){
+},{"./terminal.js":10,"./utils.js":11}],7:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -924,10 +612,10 @@ function () {
 
   _createClass(Plugin, [{
     key: "activate",
-    value: function activate(shell) {}
+    value: function activate(terminal) {}
   }, {
     key: "deactivate",
-    value: function deactivate(shell) {}
+    value: function deactivate(terminal) {}
   }]);
 
   return Plugin;
@@ -936,7 +624,295 @@ function () {
 var _default = Plugin;
 exports["default"] = _default;
 
-},{}],11:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports["default"] = void 0;
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var ShellBase =
+/*#__PURE__*/
+function () {
+  function ShellBase() {
+    _classCallCheck(this, ShellBase);
+  }
+
+  _createClass(ShellBase, [{
+    key: "executeCommand",
+    value: function executeCommand(terminal, commandLine, cancelToken) {}
+  }, {
+    key: "getCommands",
+    value: function getCommands(name) {}
+  }, {
+    key: "parseCommandLine",
+    value: function parseCommandLine(commandLine) {
+      var exp = /[^\s"]+|"([^"]*)"/gi,
+          name = null,
+          argString = null,
+          args = [],
+          match = null;
+
+      do {
+        match = exp.exec(commandLine);
+
+        if (match !== null) {
+          var value = match[1] ? match[1] : match[0];
+
+          if (match.index === 0) {
+            name = value;
+            argString = commandLine.substr(value.length + (match[1] ? 3 : 1));
+          } else {
+            args.push(value);
+          }
+        }
+      } while (match !== null);
+
+      return {
+        name: name,
+        argString: argString,
+        args: args
+      };
+    }
+  }]);
+
+  return ShellBase;
+}();
+
+var _default = ShellBase;
+exports["default"] = _default;
+
+},{}],9:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports["default"] = void 0;
+
+var utils = _interopRequireWildcard(require("./utils.js"));
+
+var _shellBase = _interopRequireDefault(require("./shell-base.js"));
+
+var _command = _interopRequireDefault(require("./command.js"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; if (obj != null) { var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+function isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
+function _construct(Parent, args, Class) { if (isNativeReflectConstruct()) { _construct = Reflect.construct; } else { _construct = function _construct(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; }; } return _construct.apply(null, arguments); }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+var _defaultOptions = {
+  contextExtensions: {},
+  builtInCommands: ['HELP', 'ECHO', 'CLS'],
+  allowAbbreviations: true
+};
+
+var Shell =
+/*#__PURE__*/
+function (_ShellBase) {
+  _inherits(Shell, _ShellBase);
+
+  function Shell(options) {
+    var _this;
+
+    _classCallCheck(this, Shell);
+
+    _this = _possibleConstructorReturn(this, _getPrototypeOf(Shell).call(this));
+    _this.options = utils.extend({}, _defaultOptions, options);
+    _this.commands = {};
+
+    _this._addBuiltInCommands();
+
+    return _this;
+  }
+
+  _createClass(Shell, [{
+    key: "executeCommand",
+    value: function executeCommand(terminal, commandLine, cancelToken) {
+      var parsed = this.parseCommandLine(commandLine);
+      var commands = this.getCommands(parsed.name);
+
+      if (!commands || commands.length < 1) {
+        terminal.writeLine('Invalid command', 'error');
+        return false;
+      } else if (commands.length > 1) {
+        terminal.writeLine('Ambiguous command', 'error');
+        terminal.writeLine();
+
+        for (var i = 0; i < commands.length; i++) {
+          terminal.writePad(commands[i].name, 10);
+          terminal.writeLine(commands[i].description);
+        }
+
+        terminal.writeLine();
+        return false;
+      }
+
+      var command = commands[0];
+      var context = {
+        terminal: terminal,
+        commandLine: commandLine,
+        command: command,
+        parsed: parsed,
+        defer: utils.defer,
+        cancelToken: cancelToken
+      };
+      utils.extend(context, this.options.contextExtensions);
+      var args = parsed.args;
+
+      if (command.help && args.length > 0 && args[args.length - 1] === "/?") {
+        if (typeof command.help === 'string') {
+          terminal.writeLine(command.help);
+          return false;
+        } else if (typeof command.help === 'function') {
+          return command.help.apply(context, args);
+        }
+      }
+
+      return command.main.apply(context, args);
+    }
+  }, {
+    key: "getCommands",
+    value: function getCommands(name) {
+      var commands = [];
+
+      if (name) {
+        name = name.toUpperCase();
+        var command = this.commands[name];
+
+        if (command) {
+          if (command.available) {
+            return [command];
+          }
+
+          return null;
+        }
+
+        if (this.options.allowAbbreviations) {
+          for (var key in this.commands) {
+            if (key.indexOf(name, 0) === 0 && utils.unwrap(this.commands[key].available)) {
+              commands.push(this.commands[key]);
+            }
+          }
+        }
+      } else {
+        for (var _key in this.commands) {
+          commands.push(this.commands[_key]);
+        }
+      }
+
+      return commands;
+    }
+  }, {
+    key: "addCommand",
+    value: function addCommand(command) {
+      if (!(command instanceof _command["default"])) {
+        command = _construct(_command["default"], Array.prototype.slice.call(arguments));
+      }
+
+      this.commands[command.name] = command;
+    }
+  }, {
+    key: "_addBuiltInCommands",
+    value: function _addBuiltInCommands() {
+      var provider = this;
+
+      if (this.options.builtInCommands.indexOf('HELP') > -1) {
+        this.addCommand({
+          name: 'HELP',
+          main: function main() {
+            this.terminal.writeLine('The following commands are available:');
+            this.terminal.writeLine();
+            var availableCommands = Object.keys(provider.commands).map(function (key) {
+              return provider.commands[key];
+            }).filter(function (def) {
+              return def.available;
+            });
+            var length = availableCommands.slice().sort(function (a, b) {
+              return b.name.length - a.name.length;
+            })[0].name.length;
+            this.terminal.writeTable(availableCommands, ['name:' + (length + 2).toString(), 'description:40']);
+            this.terminal.writeLine();
+            this.terminal.writeLine('* Pass "/?" into any command to display help for that command.');
+
+            if (provider.options.allowAbbreviations) {
+              this.terminal.writeLine('* Command abbreviations are allowed (e.g. "H" for "HELP").');
+            }
+          },
+          description: 'Lists the available commands.'
+        });
+      }
+
+      if (this.options.builtInCommands.indexOf('ECHO') > -1) {
+        this.addCommand({
+          name: 'ECHO',
+          main: function main() {
+            var toggle = this.argString.toUpperCase();
+
+            if (toggle === 'ON') {
+              this.terminal.echo = true;
+            } else if (toggle === 'OFF') {
+              this.terminal.echo = false;
+            } else if (this.argString) {
+              this.terminal.writeLine(this.argString);
+            } else {
+              this.terminal.writeLine('ECHO is ' + (this.terminal.echo ? 'on.' : 'off.'));
+            }
+          },
+          description: 'Displays messages, or toggles command echoing.',
+          usage: 'ECHO [ON | OFF]\nECHO [message]\n\nType ECHO without parameters to display the current echo setting.'
+        });
+      }
+
+      if (this.options.builtInCommands.indexOf('CLS') > -1) {
+        this.addCommand({
+          name: 'CLS',
+          main: function main() {
+            this.terminal.clear();
+          },
+          description: 'Clears the command prompt.'
+        });
+      }
+    }
+  }]);
+
+  return Shell;
+}(_shellBase["default"]);
+
+var _default = Shell;
+exports["default"] = _default;
+
+},{"./command.js":4,"./shell-base.js":8,"./utils.js":11}],10:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -950,11 +926,7 @@ var _historyProvider = _interopRequireDefault(require("./history-provider.js"));
 
 var _autocompleteProvider = _interopRequireDefault(require("./autocomplete-provider.js"));
 
-var _definitionProvider = _interopRequireDefault(require("./definition-provider.js"));
-
-var _commandHandler = _interopRequireDefault(require("./command-handler.js"));
-
-var _commandParser = _interopRequireDefault(require("./command-parser.js"));
+var _shell = _interopRequireDefault(require("./shell.js"));
 
 var _cancelToken = _interopRequireDefault(require("./cancel-token.js"));
 
@@ -975,21 +947,19 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 var _defaultOptions = {
   echo: true,
   promptPrefix: '>',
-  template: '<div class="cmdr-shell"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>',
+  template: '<div class="cmdr-terminal"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>',
   theme: 'cmd',
-  definitionProvider: null,
   historyProvider: null,
   autocompleteProvider: null,
-  commandHandler: null,
-  commandParser: null,
+  shell: null,
   plugins: []
 };
 
-var Shell =
+var Terminal =
 /*#__PURE__*/
 function () {
-  function Shell(containerNode, options) {
-    _classCallCheck(this, Shell);
+  function Terminal(containerNode, options) {
+    _classCallCheck(this, Terminal);
 
     if (!containerNode || !utils.isElement(containerNode)) {
       throw '"containerNode" must be an HTMLElement.';
@@ -997,7 +967,7 @@ function () {
 
     this._options = utils.extend({}, _defaultOptions, options);
     this._containerNode = containerNode;
-    this._shellNode = null;
+    this._terminalNode = null;
     this._inputNode = null;
     this._prefixNode = null;
     this._promptNode = null;
@@ -1013,28 +983,26 @@ function () {
     this._isInitialized = false;
     this._historyProvider = null;
     this._autocompleteProvider = null;
-    this._definitionProvider = null;
-    this._commandHandler = null;
-    this._commandParser = null;
+    this._shell = null;
     this._plugins = [];
     this.init();
   }
 
-  _createClass(Shell, [{
+  _createClass(Terminal, [{
     key: "init",
     value: function init() {
       var _this = this;
 
       if (this._isInitialized) return;
-      this._shellNode = utils.createElement(this._options.template);
-      this._shellNode.className += ' cmdr-shell--' + this._options.theme;
+      this._terminalNode = utils.createElement(this._options.template);
+      this._terminalNode.className += ' cmdr-terminal--' + this._options.theme;
 
-      this._containerNode.appendChild(this._shellNode);
+      this._containerNode.appendChild(this._terminalNode);
 
-      this._outputNode = this._shellNode.querySelector('.output');
-      this._inputNode = this._shellNode.querySelector('.input');
-      this._prefixNode = this._shellNode.querySelector('.prefix');
-      this._promptNode = this._shellNode.querySelector('.prompt');
+      this._outputNode = this._terminalNode.querySelector('.output');
+      this._inputNode = this._terminalNode.querySelector('.input');
+      this._prefixNode = this._terminalNode.querySelector('.prefix');
+      this._promptNode = this._terminalNode.querySelector('.prompt');
 
       this._promptNode.addEventListener('keydown', function (event) {
         if (!_this._current) {
@@ -1100,7 +1068,7 @@ function () {
         return true;
       });
 
-      this._shellNode.addEventListener('click', function (event) {
+      this._terminalNode.addEventListener('click', function (event) {
         if (event.target !== _this._inputNode && !_this._inputNode.contains(event.target) && event.target !== _this._outputNode && !_this._outputNode.contains(event.target)) {
           _this._promptNode.focus();
         }
@@ -1108,12 +1076,7 @@ function () {
 
       this._promptPrefix = this._options.promptPrefix;
       this._echo = this._options.echo;
-      this._commandHandler = this.options.commandHandler || new _commandHandler["default"]();
-      this._commandParser = this.options.commandParser || new _commandParser["default"]();
-      this._definitionProvider = this._options.definitionProvider || new _definitionProvider["default"]();
-
-      this._definitionProvider.activate(this);
-
+      this._shell = this.options.shell || new _shell["default"]();
       this._historyProvider = this._options.historyProvider || new _historyProvider["default"]();
 
       this._historyProvider.activate(this);
@@ -1158,9 +1121,9 @@ function () {
     value: function dispose() {
       if (!this._isInitialized) return;
 
-      this._containerNode.removeChild(this._shellNode);
+      this._containerNode.removeChild(this._terminalNode);
 
-      this._shellNode = null;
+      this._terminalNode = null;
       this._outputNode = null;
       this._inputNode = null;
       this._prefixNode = null;
@@ -1172,8 +1135,7 @@ function () {
       this._isInputInline = false;
       this._autocompleteContext = null;
       this._eventHandlers = {};
-      this._commandHandler = null;
-      this._commandParser = null;
+      this._shell = null;
 
       if (this._historyProvider) {
         this._historyProvider.deactivate(this);
@@ -1185,12 +1147,6 @@ function () {
         this._autocompleteProvider.deactivate(this);
 
         this._autocompleteProvider = null;
-      }
-
-      if (this._definitionProvider) {
-        this._definitionProvider.deactivate(this);
-
-        this._definitionProvider = null;
       }
 
       var _iteratorNormalCompletion2 = true;
@@ -1512,15 +1468,15 @@ function () {
     }
   }, {
     key: "execute",
-    value: function execute(command) {
+    value: function execute(commandLine) {
       var _this5 = this;
 
       var deferred;
 
-      if (_typeof(command) === 'object') {
-        deferred = command.deferred;
-        command = command.text;
-      } else if (typeof command === 'string' && command.length > 0) {
+      if (_typeof(commandLine) === 'object') {
+        deferred = commandLine.deferred;
+        commandLine = commandLine.text;
+      } else if (typeof commandLine === 'string' && commandLine.length > 0) {
         deferred = utils.defer();
 
         for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
@@ -1528,7 +1484,7 @@ function () {
         }
 
         if (args) {
-          command = this._buildCommand(command, args);
+          commandLine = this._buildCommand(commandLine, args);
         }
       } else {
         deferred = utils.defer();
@@ -1539,17 +1495,17 @@ function () {
       if (this._current) {
         this._queue.push({
           deferred: deferred,
-          text: command,
+          text: commandLine,
           executeOnly: true
         });
 
         return deferred;
       }
 
-      var commandText = command;
-      command = command.trim();
+      var commandText = commandLine;
+      commandLine = commandLine.trim();
 
-      this._trigger('preexecute', command);
+      this._trigger('preexecute', commandLine);
 
       this._promptNode.textContent = commandText;
 
@@ -1559,7 +1515,7 @@ function () {
 
       var cancelToken = new _cancelToken["default"]();
       this._current = {
-        command: command,
+        commandLine: commandLine,
         cancelToken: cancelToken
       };
 
@@ -1582,7 +1538,7 @@ function () {
       var result;
 
       try {
-        result = this._commandHandler.executeCommand(this, command, cancelToken);
+        result = this._shell.executeCommand(this, commandLine, cancelToken);
       } catch (error) {
         this.writeLine('Unhandled exception', 'error');
         this.writeLine(error, 'error');
@@ -1593,7 +1549,7 @@ function () {
 
       Promise.all([result]).then(function (values) {
         _this5._trigger('execute', {
-          command: command
+          commandLine: commandLine
         });
 
         try {
@@ -1603,7 +1559,7 @@ function () {
         }
       }, function (reason) {
         _this5._trigger('execute', {
-          command: command,
+          commandLine: commandLine,
           error: reason
         });
 
@@ -1624,7 +1580,7 @@ function () {
     }
   }, {
     key: "_buildCommand",
-    value: function _buildCommand(command, args) {
+    value: function _buildCommand(commandLine, args) {
       var _iteratorNormalCompletion7 = true;
       var _didIteratorError7 = false;
       var _iteratorError7 = undefined;
@@ -1634,9 +1590,9 @@ function () {
           var arg = _step7.value;
 
           if (typeof arg === 'string' && arg.indexOf(' ') > -1) {
-            command += " \"".concat(arg, "\"");
+            commandLine += " \"".concat(arg, "\"");
           } else {
-            command += ' ' + arg.toString();
+            commandLine += ' ' + arg.toString();
           }
         }
       } catch (err) {
@@ -1654,7 +1610,7 @@ function () {
         }
       }
 
-      return command;
+      return commandLine;
     }
   }, {
     key: "_activateInput",
@@ -1682,7 +1638,7 @@ function () {
 
       this._promptNode.focus();
 
-      this._shellNode.scrollTop = this._shellNode.scrollHeight;
+      this._terminalNode.scrollTop = this._terminalNode.scrollHeight;
     }
   }, {
     key: "_deactivateInput",
@@ -1746,10 +1702,10 @@ function () {
       var _this6 = this;
 
       Promise.all([this._historyProvider.getNextValue(forward)]).then(function (values) {
-        var command = values[0];
+        var commandLine = values[0];
 
-        if (command) {
-          _this6._promptNode.textContent = command;
+        if (commandLine) {
+          _this6._promptNode.textContent = commandLine;
           utils.cursorToEnd(_this6._promptNode);
           utils.dispatchEvent(_this6._promptNode, 'change', true, false);
         }
@@ -1770,9 +1726,9 @@ function () {
         endIndex = endIndex !== -1 ? endIndex : inputValue.length;
         var incompleteValue = inputValue.substring(startIndex, endIndex);
         var precursorValue = inputValue.substring(0, startIndex);
-        var parsed = this.commandParser.parseCommand(precursorValue);
+        var parsed = this.shell.parseCommandLine(precursorValue);
         this._autocompleteContext = {
-          shell: this,
+          terminal: this,
           incompleteValue: incompleteValue,
           precursorValue: precursorValue,
           parsed: parsed
@@ -1854,14 +1810,9 @@ function () {
       this._echo = value;
     }
   }, {
-    key: "commandHandler",
+    key: "shell",
     get: function get() {
-      return this._commandHandler;
-    }
-  }, {
-    key: "commandParser",
-    get: function get() {
-      return this._commandParser;
+      return this._shell;
     }
   }, {
     key: "historyProvider",
@@ -1874,30 +1825,26 @@ function () {
       return this._autocompleteProvider;
     }
   }, {
-    key: "definitionProvider",
-    get: function get() {
-      return this._definitionProvider;
-    }
-  }, {
     key: "plugins",
     get: function get() {
       return Object.freeze(this._plugins);
     }
   }]);
 
-  return Shell;
+  return Terminal;
 }();
 
-var _default = Shell;
+var _default = Terminal;
 exports["default"] = _default;
 
-},{"./autocomplete-provider.js":1,"./cancel-token.js":2,"./command-handler.js":4,"./command-parser.js":5,"./definition-provider.js":6,"./history-provider.js":8,"./utils.js":12}],12:[function(require,module,exports){
+},{"./autocomplete-provider.js":1,"./cancel-token.js":2,"./history-provider.js":5,"./shell.js":9,"./utils.js":11}],11:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.extend = extend;
+exports.arrayFrom = arrayFrom;
 exports.pad = pad;
 exports.encodeHtml = encodeHtml;
 exports.unwrap = unwrap;
@@ -1924,6 +1871,78 @@ function extend(out) {
   }
 
   return out;
+} //Array
+
+
+function arrayFrom(arrayLike
+/*, mapFn, thisArg */
+) {
+  var toStr = Object.prototype.toString;
+
+  var isCallable = function isCallable(fn) {
+    return typeof fn === 'function' || toStr.call(fn) === '[object Function]';
+  };
+
+  var toInteger = function toInteger(value) {
+    var number = Number(value);
+
+    if (isNaN(number)) {
+      return 0;
+    }
+
+    if (number === 0 || !isFinite(number)) {
+      return number;
+    }
+
+    return (number > 0 ? 1 : -1) * Math.floor(Math.abs(number));
+  };
+
+  var maxSafeInteger = Math.pow(2, 53) - 1;
+
+  var toLength = function toLength(value) {
+    var len = toInteger(value);
+    return Math.min(Math.max(len, 0), maxSafeInteger);
+  };
+
+  var C = this;
+  var items = Object(arrayLike);
+
+  if (arrayLike == null) {
+    throw new TypeError('arrayFrom requires an array-like object - not null or undefined');
+  }
+
+  var mapFn = arguments.length > 1 ? arguments[1] : void undefined;
+  var T;
+
+  if (typeof mapFn !== 'undefined') {
+    if (!isCallable(mapFn)) {
+      throw new TypeError('arrayFrom: when provided, the second argument must be a function');
+    }
+
+    if (arguments.length > 2) {
+      T = arguments[2];
+    }
+  }
+
+  var len = toLength(items.length);
+  var A = isCallable(C) ? Object(new C(len)) : new Array(len);
+  var k = 0;
+  var kValue;
+
+  while (k < len) {
+    kValue = items[k];
+
+    if (mapFn) {
+      A[k] = typeof T === 'undefined' ? mapFn(kValue, k) : mapFn.call(T, kValue, k);
+    } else {
+      A[k] = kValue;
+    }
+
+    k += 1;
+  }
+
+  A.length = len;
+  return A;
 } //String
 
 
