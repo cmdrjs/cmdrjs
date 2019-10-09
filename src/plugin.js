@@ -1,8 +1,8 @@
 class Plugin {
-    activate(shell) {
+    activate(terminal) {
     }
 
-    deactivate(shell) {
+    deactivate(terminal) {
     }
 }
 

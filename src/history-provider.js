@@ -9,12 +9,12 @@ class HistoryProvider {
         };
     }
     
-    activate(shell) { 
-        shell.on('preexecute', this._preexecuteHandler);
+    activate(terminal) { 
+        terminal.on('preexecute', this._preexecuteHandler);
     }
     
-    deactivate(shell) {
-        shell.off('preexecute', this._preexecuteHandler);
+    deactivate(terminal) {
+        terminal.off('preexecute', this._preexecuteHandler);
     }
     
     getNextValue(forward) {

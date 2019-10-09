@@ -3,18 +3,12 @@ cmdrjs
 A JavaScript based command line interface for web pages.
 
 [![Build status](https://travis-ci.org/cmdrjs/cmdrjs.png)](https://travis-ci.org/cmdrjs/cmdrjs)
-[![Bower version](https://badge.fury.io/bo/cmdrjs.svg)](http://badge.fury.io/bo/cmdrjs)
 
 ## Installing the module
 
-#### Bower
+#### NPM
 ```
-bower install cmdrjs
-```
-
-#### JSPM
-```
-jspm install cmdrjs
+npm install cmdrjs
 ```
 
 ## Loading the module
@@ -28,14 +22,14 @@ The `cmdr` module is bundled using the standalone option in [browserify](http://
 
 ```javascript
 var cmdr = require('cmdr.js');
-var shell = new cmdr.Shell(...);
+var terminal = new cmdr.Terminal(...);
 ```
 
 #### RequireJS
 
 ```javascript
 require('cmdr.js', function(cmdr) {
-    var shell = new cmdr.Shell(...);
+    var terminal = new cmdr.Terminal(...);
 });
 ```
 
@@ -44,7 +38,7 @@ require('cmdr.js', function(cmdr) {
 ```html
 <script src="cmdr.js"></script>
 <script>
-    var shell = new cmdr.Shell(...);
+    var terminal = new cmdr.Terminal(...);
 </script>
 ```
 

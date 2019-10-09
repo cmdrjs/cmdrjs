@@ -9,10 +9,10 @@ class AutocompleteProvider {
         this._predefineLookups();
     }
         
-    activate(shell) { 
+    activate(terminal) { 
     }
     
-    deactivate(shell) {
+    deactivate(terminal) {
     }
     
     getNextValue(forward, context) {
@@ -83,7 +83,7 @@ class AutocompleteProvider {
                 return null;
             }
             
-            return Object.keys(context.shell.definitionProvider.definitions);
+            return Object.keys(context.terminal.definitionProvider.definitions);
         }
         
         this.lookups.push(commandNameLookup);        

@@ -1,0 +1,85 @@
+.cmdr-terminal {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;  
+    overflow-y: auto;
+    padding: 5px;
+    width: 100%;
+    height: 100%;
+
+    .input {
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;  
+        position: relative;
+    
+        .prefix {
+            display: inline-block;
+        }
+
+        .prompt {
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;  
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            overflow: auto;
+            position: absolute;
+            left: 0;
+            top: 0;
+            word-break: break-all;
+            outline: 0;
+        }
+
+        .prompt:focus {
+            outline: none;
+        }
+    }
+
+    .output {
+        div {
+            word-break: break-all;
+        }
+
+        span {
+            white-space: -moz-pre-wrap;
+            white-space: -pre-wrap; 
+            white-space: -o-pre-wrap; 
+            white-space: pre-wrap; 
+        }      
+    }
+    
+    .success {
+        color: #4cff00;
+    }
+
+    .warning {
+        color: yellow;
+    }
+
+    .error {
+        color: red;
+    }  
+    
+    &--cmd {
+        color: #C0C0C0;
+        background: #000000;
+        font-family: Consolas, monaco, monospace;
+        font-size: 10pt;
+    }
+    
+    &--powershell {
+        color: #EEEDF0;
+        background: #012456;
+        font-family: 'Lucida Console', 'Lucida Sans Typewriter', monaco, 'Bitstream Vera Sans Mono', monospace;
+        font-size: 10pt;        
+    }
+
+    &--ubuntu {
+        color: #EEEEEE;
+        background: #2C001E;
+        font-family: Consolas, monaco, monospace;
+        font-size: 10pt;
+    }
+}

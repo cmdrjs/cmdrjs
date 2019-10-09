@@ -1,6 +1,6 @@
 import * as utils from './utils.js';
 
-class Definition {
+class Command {
     constructor(name, main, options) {
         if (typeof name !== 'string') {
             options = main;
@@ -19,17 +19,19 @@ class Definition {
         this.available = true;
         this.help = function () {
             if (this.definition.description) {
-                this.shell.writeLine(this.definition.description);
+                this.terminal.writeLine(this.definition.description);
             }
             if (this.definition.description && this.definition.usage) {
-                this.shell.writeLine();
+                this.terminal.writeLine();
             }
             if (this.definition.usage) {
-                this.shell.writeLine(this.definition.usage);
+                this.terminal.writeLine(this.definition.usage);
             }
         };
 
         utils.extend(this, options);
+
+        this.main = this.main || (()=>{});
         
         if (typeof this.name !== 'string')
             throw '"name" must be a string.';
@@ -44,4 +46,4 @@ class Definition {
     }
 }
 
-export default Definition;
+export default Command;
