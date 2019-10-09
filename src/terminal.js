@@ -1,7 +1,6 @@
 import * as utils from './utils.js';
 import HistoryProvider from './history-provider.js';
 import AutocompleteProvider from './autocomplete-provider.js';
-import CommandProvider from './command-provider.js';
 import Shell from './shell.js';
 import CancelToken from './cancel-token.js';
 
@@ -10,7 +9,6 @@ const _defaultOptions = {
     promptPrefix: '>',
     template: '<div class="cmdr-terminal"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>',
     theme: 'cmd',
-    commandProvider: null,
     historyProvider: null,
     autocompleteProvider: null,
     shell: null,
@@ -41,7 +39,6 @@ class Terminal {
         this._isInitialized = false;
         this._historyProvider = null;
         this._autocompleteProvider = null;
-        this._commandProvider = null;
         this._shell = null;
         this._plugins = [];
 
@@ -84,10 +81,6 @@ class Terminal {
 
     get autocompleteProvider() {
         return this._autocompleteProvider;
-    }
-
-    get commandProvider() {
-        return this._commandProvider;
     }
 
     get plugins() {
@@ -174,9 +167,6 @@ class Terminal {
         
         this._shell = this.options.shell || new Shell();
 
-        this._commandProvider = this._options.commandProvider || new CommandProvider();
-        this._commandProvider.activate(this);
-
         this._historyProvider = this._options.historyProvider || new HistoryProvider();
         this._historyProvider.activate(this);
 
@@ -219,10 +209,6 @@ class Terminal {
         if (this._autocompleteProvider) {
             this._autocompleteProvider.deactivate(this);
             this._autocompleteProvider = null;
-        }
-        if (this._commandProvider) {
-            this._commandProvider.deactivate(this);
-            this._commandProvider = null;
         }
         for (let plugin of this._plugins) {
             plugin.deactivate(this);

@@ -1,3 +1,5 @@
+import * as utils from './utils.js';
+
 class AutocompleteProvider {
     constructor() {
         this.lookups = [];
@@ -82,8 +84,9 @@ class AutocompleteProvider {
             if (context.precursorValue.trim() !== '') {
                 return null;
             }
-            
-            return Object.keys(context.terminal.definitionProvider.definitions);
+            var commands = context.terminal.shell.getCommands();            
+            var names = utils.arrayFrom(commands, c => c.name);
+            return names;
         }
         
         this.lookups.push(commandNameLookup);        
