@@ -20,8 +20,8 @@ class ShellBase {
 
         do {
             match = exp.exec(commandLine);
-            if (parseName) {
-                if (match !== null) {
+            if (match !== null) {
+                if (parseName) {
                     let value = match[1] ? match[1] : match[0];
                     if (match.index === 0) {
                         name = value;
@@ -29,9 +29,9 @@ class ShellBase {
                     } else {
                         args.push(value);
                     }
+                } else {
+                    args.push(match[0]);
                 }
-            } else {
-                args.push(match[0]);
             }
         } while (match !== null);
 
