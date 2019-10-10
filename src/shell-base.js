@@ -8,10 +8,10 @@ class ShellBase {
     }
 
     getCommands(name) {
-        
+        return [];
     }
 
-    parseCommandLine(commandLine) { 
+    parseCommandLine(commandLine, parseName) { 
         let exp = /[^\s"]+|"([^"]*)"/gi,
             name = null,
             argString = null,
@@ -20,22 +20,30 @@ class ShellBase {
 
         do {
             match = exp.exec(commandLine);
-            if (match !== null) {
-                let value = match[1] ? match[1] : match[0];
-                if (match.index === 0) {
-                    name = value;
-                    argString = commandLine.substr(value.length + (match[1] ? 3 : 1));
-                } else {
-                    args.push(value);
+            if (parseName) {
+                if (match !== null) {
+                    let value = match[1] ? match[1] : match[0];
+                    if (match.index === 0) {
+                        name = value;
+                        argString = commandLine.substr(value.length + (match[1] ? 3 : 1));
+                    } else {
+                        args.push(value);
+                    }
                 }
+            } else {
+                args.push(match[0]);
             }
         } while (match !== null);
 
-        return {
-            name: name,
-            argString: argString,
-            args: args
-        };
+        if (parseName) {
+            return {
+                name: name,
+                argString: argString,
+                args: args
+            };
+        } else {
+            return args;
+        }
     }
 }
 

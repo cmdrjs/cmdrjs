@@ -19,7 +19,7 @@ class Shell extends ShellBase {
     }
 
     executeCommand(terminal, commandLine, cancelToken) {
-        let parsed = this.parseCommandLine(commandLine);
+        let parsed = this.parseCommandLine(commandLine, true);
         let commands = this.getCommands(parsed.name);
         if (!commands || commands.length < 1) {
             terminal.writeLine('Invalid command', 'error');
