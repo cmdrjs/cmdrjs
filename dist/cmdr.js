@@ -1,4 +1,4 @@
-/* cmdrjs | version 2.0.0 | license MIT | (c) 2019 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
+/* cmdrjs | version 2.0.0-beta.1 | license MIT | (c) 2019 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.cmdr = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
 
@@ -650,10 +650,12 @@ function () {
     value: function executeCommand(terminal, commandLine, cancelToken) {}
   }, {
     key: "getCommands",
-    value: function getCommands(name) {}
+    value: function getCommands(name) {
+      return [];
+    }
   }, {
     key: "parseCommandLine",
-    value: function parseCommandLine(commandLine) {
+    value: function parseCommandLine(commandLine, parseName) {
       var exp = /[^\s"]+|"([^"]*)"/gi,
           name = null,
           argString = null,
@@ -663,23 +665,31 @@ function () {
       do {
         match = exp.exec(commandLine);
 
-        if (match !== null) {
-          var value = match[1] ? match[1] : match[0];
+        if (parseName) {
+          if (match !== null) {
+            var value = match[1] ? match[1] : match[0];
 
-          if (match.index === 0) {
-            name = value;
-            argString = commandLine.substr(value.length + (match[1] ? 3 : 1));
-          } else {
-            args.push(value);
+            if (match.index === 0) {
+              name = value;
+              argString = commandLine.substr(value.length + (match[1] ? 3 : 1));
+            } else {
+              args.push(value);
+            }
           }
+        } else {
+          args.push(match[0]);
         }
       } while (match !== null);
 
-      return {
-        name: name,
-        argString: argString,
-        args: args
-      };
+      if (parseName) {
+        return {
+          name: name,
+          argString: argString,
+          args: args
+        };
+      } else {
+        return args;
+      }
     }
   }]);
 
@@ -759,7 +769,7 @@ function (_ShellBase) {
   _createClass(Shell, [{
     key: "executeCommand",
     value: function executeCommand(terminal, commandLine, cancelToken) {
-      var parsed = this.parseCommandLine(commandLine);
+      var parsed = this.parseCommandLine(commandLine, true);
       var commands = this.getCommands(parsed.name);
 
       if (!commands || commands.length < 1) {
@@ -1273,12 +1283,14 @@ function () {
     }
   }, {
     key: "write",
-    value: function write(value, cssClass) {
+    value: function write(value, style) {
       value = utils.encodeHtml(value || '');
       var outputValue = utils.createElement("<span>".concat(value, "</span>"));
 
-      if (cssClass) {
-        outputValue.className = cssClass;
+      if (typeof style === 'string') {
+        outputValue.className = style;
+      } else {
+        outputValue.style = style;
       }
 
       if (!this._outputLineNode) {
@@ -1291,9 +1303,9 @@ function () {
     }
   }, {
     key: "writeLine",
-    value: function writeLine(value, cssClass) {
+    value: function writeLine(value, style) {
       value = (value || '') + '\n';
-      this.write(value, cssClass);
+      this.write(value, style);
       this._outputLineNode = null;
     }
   }, {
@@ -1433,6 +1445,13 @@ function () {
     key: "clear",
     value: function clear() {
       this._outputNode.innerHTML = '';
+    }
+  }, {
+    key: "clearLine",
+    value: function clearLine() {
+      if (this._outputNode.lastChild) {
+        this._outputNode.removeChild(this._outputNode.lastChild);
+      }
     }
   }, {
     key: "focus",
