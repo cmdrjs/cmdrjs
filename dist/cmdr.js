@@ -1,4 +1,4 @@
-/* cmdrjs | version 2.0.0-beta.2 | license MIT | (c) 2019 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
+/* cmdrjs | version 2.0.0-beta.3 | license MIT | (c) 2019 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.cmdr = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
 
@@ -957,8 +957,9 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 var _defaultOptions = {
   echo: true,
   promptPrefix: '>',
-  template: '<div class="cmdr-terminal"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>',
+  template: '<div class="cmdr-terminal"><div class="output"></div><div class="input"><span class="prefix"></span><textarea class="prompt" spellcheck="false"></textarea></div></div>',
   theme: 'cmd',
+  autoScroll: true,
   historyProvider: null,
   autocompleteProvider: null,
   shell: null,
@@ -1022,7 +1023,7 @@ function () {
 
           switch (event.keyCode) {
             case 13:
-              var value = _this._promptNode.textContent;
+              var value = _this._promptNode.value;
 
               if (value) {
                 _this.execute(value);
@@ -1053,7 +1054,7 @@ function () {
           if (event.ctrlKey && event.keyCode === 67) {
             _this.cancel();
           } else if (_this._current.readLine && event.keyCode === 13) {
-            _this._current.readLine.resolve(_this._promptNode.textContent);
+            _this._current.readLine.resolve(_this._promptNode.value);
           }
 
           if (!_this._current.read && !_this._current.readLine) {
@@ -1076,6 +1077,10 @@ function () {
         }
 
         return true;
+      });
+
+      this._promptNode.addEventListener('input', function (event) {
+        _this._fixPromptHeight();
       });
 
       this._terminalNode.addEventListener('click', function (event) {
@@ -1211,7 +1216,9 @@ function () {
 
         if (!intercept) {
           _this2._prefixNode.textContent += value;
-          _this2._promptNode.textContent = '';
+          _this2._promptNode.value = '';
+
+          _this2._fixPromptHeight();
         }
 
         var result = false;
@@ -1254,7 +1261,9 @@ function () {
 
       this._current.readLine.then(function (value) {
         _this3._current.readLine = null;
-        _this3._promptNode.textContent = value;
+        _this3._promptNode.value = value;
+
+        _this3._fixPromptHeight();
 
         _this3._deactivateInput();
 
@@ -1283,8 +1292,9 @@ function () {
     }
   }, {
     key: "write",
-    value: function write(value, style) {
-      value = utils.encodeHtml(value || '');
+    value: function write(value, style, raw) {
+      value = value || '';
+      value = raw ? value : utils.encodeHtml(value);
       var outputValue = utils.createElement("<span>".concat(value, "</span>"));
 
       if (typeof style === 'string') {
@@ -1300,12 +1310,16 @@ function () {
       }
 
       this._outputLineNode.appendChild(outputValue);
+
+      if (this._options.autoScroll) {
+        this._terminalNode.scrollTop = this._terminalNode.scrollHeight;
+      }
     }
   }, {
     key: "writeLine",
-    value: function writeLine(value, style) {
+    value: function writeLine(value, style, raw) {
       value = (value || '') + '\n';
-      this.write(value, style);
+      this.write(value, style, raw);
       this._outputLineNode = null;
     }
   }, {
@@ -1313,12 +1327,13 @@ function () {
     value: function writePad(value, length) {
       var _char = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : ' ';
 
-      var cssClass = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
-      this.write(utils.pad(value, length, _char), cssClass);
+      var style = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
+      var raw = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
+      this.write(utils.pad(value, length, _char), style, raw);
     }
   }, {
     key: "writeTable",
-    value: function writeTable(data, columns, showHeaders, cssClass) {
+    value: function writeTable(data, columns, showHeaders, style, raw) {
       var _this4 = this;
 
       columns = columns.map(function (value) {
@@ -1334,9 +1349,9 @@ function () {
         value = value || '';
 
         if (padding === '*') {
-          _this4.write(value, cssClass);
+          _this4.write(value, style, raw);
         } else {
-          _this4.writePad(value, parseInt(padding, 10), ' ', cssClass);
+          _this4.writePad(value, parseInt(padding, 10), ' ', style, raw);
         }
       };
 
@@ -1526,7 +1541,9 @@ function () {
 
       this._trigger('preexecute', commandLine);
 
-      this._promptNode.textContent = commandText;
+      this._promptNode.value = commandText;
+
+      this._fixPromptHeight();
 
       this._flushInput(!this._echo);
 
@@ -1670,7 +1687,7 @@ function () {
     key: "_flushInput",
     value: function _flushInput(preventWrite) {
       if (!preventWrite) {
-        var outputValue = "".concat(this._prefixNode.innerHTML).concat(this._promptNode.innerHTML);
+        var outputValue = "".concat(this._prefixNode.innerHTML).concat(this._promptNode.value);
 
         if (outputValue) {
           var outputValueNode = utils.createElement("<div>".concat(outputValue, "</div>"));
@@ -1680,7 +1697,9 @@ function () {
       }
 
       this._prefixNode.textContent = '';
-      this._promptNode.textContent = '';
+      this._promptNode.value = '';
+
+      this._fixPromptHeight();
     }
   }, {
     key: "_trigger",
@@ -1724,7 +1743,10 @@ function () {
         var commandLine = values[0];
 
         if (commandLine) {
-          _this6._promptNode.textContent = commandLine;
+          _this6._promptNode.value = commandLine;
+
+          _this6._fixPromptHeight();
+
           utils.cursorToEnd(_this6._promptNode);
           utils.dispatchEvent(_this6._promptNode, 'change', true, false);
         }
@@ -1736,7 +1758,7 @@ function () {
       var _this7 = this;
 
       if (!this._autocompleteContext) {
-        var inputValue = this._promptNode.textContent;
+        var inputValue = this._promptNode.value;
         inputValue = inputValue.replace(/\s$/, ' ');
         var cursorPosition = utils.getCursorPosition(this._promptNode);
         var startIndex = inputValue.lastIndexOf(' ', cursorPosition) + 1;
@@ -1758,7 +1780,10 @@ function () {
         var value = values[0];
 
         if (value) {
-          _this7._promptNode.textContent = _this7._autocompleteContext.precursorValue + value;
+          _this7._promptNode.value = _this7._autocompleteContext.precursorValue + value;
+
+          _this7._fixPromptHeight();
+
           utils.cursorToEnd(_this7._promptNode);
           utils.dispatchEvent(_this7._promptNode, 'change', true, false);
         }
@@ -1795,6 +1820,12 @@ function () {
 
       prefixWidth += spacePadding * this._prefixNode._spaceWidth;
       this._promptNode.style.textIndent = prefixWidth + 'px';
+    }
+  }, {
+    key: "_fixPromptHeight",
+    value: function _fixPromptHeight() {
+      this._promptNode.style.height = 'auto';
+      this._promptNode.style.height = this._promptNode.scrollHeight + 'px';
     }
   }, {
     key: "isInitialized",
