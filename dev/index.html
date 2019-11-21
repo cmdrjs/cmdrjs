@@ -15,16 +15,17 @@
     
     <div id="container"></div>
 
-    <button onclick="clearLine()">Clear Line</button>
     <script src="cmdr.js"></script>
     <script>
                
         var terminal = new cmdr.Terminal(document.getElementById("container"), { theme: 'ubuntu' });
         
-        function clearLine()
-        {
-            terminal.clearLine();
-        }
+        terminal.shell.addCommand({
+            name: 'TEST',
+            main: function () {
+                this.terminal.writeLine("<a href='http://bing.com'>Woot</a>", null, true);
+            }
+        });
         
     </script>
 </body>

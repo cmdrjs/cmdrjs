@@ -10,7 +10,8 @@
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
-    position: relative; }
+    position: relative;
+    margin-bottom: 5px; }
     .cmdr-terminal .input .prefix {
       display: inline-block; }
     .cmdr-terminal .input .prompt {
@@ -25,7 +26,13 @@
       left: 0;
       top: 0;
       word-break: break-all;
-      outline: 0; }
+      outline: 0;
+      color: inherit;
+      font: inherit;
+      resize: none;
+      border: none;
+      background: none;
+      overflow-y: hidden; }
     .cmdr-terminal .input .prompt:focus {
       outline: none; }
   .cmdr-terminal .output div {
