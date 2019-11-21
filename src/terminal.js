@@ -7,7 +7,7 @@ import CancelToken from './cancel-token.js';
 const _defaultOptions = {
     echo: true,
     promptPrefix: '>',
-    template: '<div class="cmdr-terminal"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>',
+    template: '<div class="cmdr-terminal"><div class="output"></div><div class="input"><span class="prefix"></span><textarea class="prompt" spellcheck="false"></textarea></div></div>',
     theme: 'cmd',
     autoScroll: true,
     historyProvider: null,
@@ -109,7 +109,7 @@ class Terminal {
                 }
                 switch (event.keyCode) {
                     case 13:
-                        let value = this._promptNode.textContent;
+                        let value = this._promptNode.value;
                         if (value) {
                             this.execute(value);
                         }
@@ -132,7 +132,7 @@ class Terminal {
                 if (event.ctrlKey && event.keyCode === 67) {
                     this.cancel(); 
                 } else if (this._current.readLine && event.keyCode === 13) {
-                    this._current.readLine.resolve(this._promptNode.textContent); 
+                    this._current.readLine.resolve(this._promptNode.value); 
                 } 
                 
                 if (!this._current.read && !this._current.readLine) {
@@ -153,6 +153,10 @@ class Terminal {
                 return false;
             }
             return true;
+        });
+
+        this._promptNode.addEventListener('input', (event) => {
+            this._fixPromptHeight();
         });
 
         this._terminalNode.addEventListener('click', (event) => {
@@ -237,7 +241,8 @@ class Terminal {
             this._deactivateInput();
             if (!intercept) {
                 this._prefixNode.textContent += value;
-                this._promptNode.textContent = '';
+                this._promptNode.value = '';
+                this._fixPromptHeight();
             }
                         
             let result = false;
@@ -271,7 +276,8 @@ class Terminal {
         this._current.readLine = utils.defer();
         this._current.readLine.then((value) => {
             this._current.readLine = null;
-            this._promptNode.textContent = value;
+            this._promptNode.value = value;
+            this._fixPromptHeight();
             this._deactivateInput();
             this._flushInput();
             let result = false;
@@ -423,7 +429,8 @@ class Terminal {
 
         this._trigger('preexecute', commandLine);
 
-        this._promptNode.textContent = commandText;
+        this._promptNode.value = commandText;
+        this._fixPromptHeight();
         this._flushInput(!this._echo);
         this._deactivateInput();
 
@@ -524,14 +531,15 @@ class Terminal {
 
     _flushInput(preventWrite) {
         if (!preventWrite) {
-            let outputValue = `${this._prefixNode.innerHTML}${this._promptNode.innerHTML}`;
+            let outputValue = `${this._prefixNode.innerHTML}${this._promptNode.value}`;
             if (outputValue) {
                 let outputValueNode = utils.createElement(`<div>${outputValue}</div>`);
                 this._outputNode.appendChild(outputValueNode);
             }
         }
         this._prefixNode.textContent = '';
-        this._promptNode.textContent = '';
+        this._promptNode.value = '';
+        this._fixPromptHeight();
     }
 
     _trigger(event, data) {
@@ -549,7 +557,8 @@ class Terminal {
         Promise.all([this._historyProvider.getNextValue(forward)]).then((values) => {
             let commandLine = values[0];
             if (commandLine) {
-                this._promptNode.textContent = commandLine;
+                this._promptNode.value = commandLine;
+                this._fixPromptHeight();
                 utils.cursorToEnd(this._promptNode);
                 utils.dispatchEvent(this._promptNode, 'change', true, false);
             }
@@ -558,7 +567,7 @@ class Terminal {
 
     _autocompleteCycle(forward) {        
         if (!this._autocompleteContext) {
-            let inputValue = this._promptNode.textContent;
+            let inputValue = this._promptNode.value;
             inputValue = inputValue.replace(/\s$/, ' ');
             let cursorPosition = utils.getCursorPosition(this._promptNode);
             let startIndex = inputValue.lastIndexOf(' ', cursorPosition) + 1;
@@ -579,7 +588,8 @@ class Terminal {
         Promise.all([this._autocompleteProvider.getNextValue(forward, this._autocompleteContext)]).then((values) => {
             let value = values[0];
             if (value) {
-                this._promptNode.textContent = this._autocompleteContext.precursorValue + value;
+                this._promptNode.value = this._autocompleteContext.precursorValue + value;
+                this._fixPromptHeight();
                 utils.cursorToEnd(this._promptNode);
                 utils.dispatchEvent(this._promptNode, 'change', true, false);
             }
@@ -608,6 +618,11 @@ class Terminal {
         prefixWidth += spacePadding * this._prefixNode._spaceWidth;
 
         this._promptNode.style.textIndent = prefixWidth + 'px';
+    }
+
+    _fixPromptHeight() {
+        this._promptNode.style.height = 'auto';
+        this._promptNode.style.height = (this._promptNode.scrollHeight) + 'px';
     }
 }
 

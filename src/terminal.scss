@@ -31,6 +31,13 @@
             top: 0;
             word-break: break-all;
             outline: 0;
+
+            color: inherit;
+            font: inherit;
+            resize: none;
+            border: none;
+            background: none;
+            overflow-y: hidden;
         }
 
         .prompt:focus {
