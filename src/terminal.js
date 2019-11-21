@@ -9,6 +9,7 @@ const _defaultOptions = {
     promptPrefix: '>',
     template: '<div class="cmdr-terminal"><div class="output"></div><div class="input"><span class="prefix"></span><div class="prompt" spellcheck="false" contenteditable="true" /></div></div>',
     theme: 'cmd',
+    autoScroll: true,
     historyProvider: null,
     autocompleteProvider: null,
     shell: null,
@@ -304,7 +305,10 @@ class Terminal {
             this._outputLineNode = utils.createElement('<div></div>');
             this._outputNode.appendChild(this._outputLineNode);
         }
-        this._outputLineNode.appendChild(outputValue);
+        this._outputLineNode.appendChild(outputValue);        
+        if (this._options.autoScroll) {
+            this._terminalNode.scrollTop = this._terminalNode.scrollHeight;
+        }
     }
 
     writeLine(value, style, raw) {
