@@ -128,13 +128,10 @@ class Terminal {
                         event.preventDefault();
                         return false;
                 }
-            } else {
-                if (event.ctrlKey && event.keyCode === 67) {
-                    this.cancel(); 
-                } else if (this._current.readLine && event.keyCode === 13) {
+            } else { 
+                if (this._current.readLine && event.keyCode === 13) {
                     this._current.readLine.resolve(this._promptNode.value); 
-                } 
-                
+                }                 
                 if (!this._current.read && !this._current.readLine) {
                     event.preventDefault();
                     return false;
@@ -157,6 +154,12 @@ class Terminal {
 
         this._promptNode.addEventListener('input', (event) => {
             this._fixPromptHeight();
+        });
+
+        this._terminalNode.addEventListener('keydown', (event) => {
+            if (this._current && event.ctrlKey && event.keyCode === 67) {
+                this.cancel(); 
+            }
         });
 
         this._terminalNode.addEventListener('click', (event) => {
@@ -518,7 +521,7 @@ class Terminal {
             this._isInputInline = false;
         }
         this._inputNode.style.display = '';
-        this._promptNode.removeAttribute('disabled');
+        this._promptNode.removeAttribute('readonly');
         this._fixPromptIndent();
         this._promptNode.focus();
         this._terminalNode.scrollTop = this._terminalNode.scrollHeight;
@@ -526,7 +529,7 @@ class Terminal {
 
     _deactivateInput() {
         this._promptNode.style.textIndent = '';
-        this._promptNode.setAttribute('disabled', 'disabled');        
+        this._promptNode.setAttribute('readonly', 'readonly');        
     }
 
     _flushInput(preventWrite) {

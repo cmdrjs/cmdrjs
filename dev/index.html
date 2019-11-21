@@ -23,7 +23,17 @@
         terminal.shell.addCommand({
             name: 'TEST',
             main: function () {
-                this.terminal.writeLine("<a href='http://bing.com'>Woot</a>", null, true);
+                var terminal = this.terminal;
+                var cancelToken = this.cancelToken;
+                return new Promise(function(resolve) {                    
+                    var interval = setInterval(function () {
+                        terminal.writeLine(new Date().toString());
+                    }, 500);
+                    cancelToken.onCancel(function(){
+                        clearInterval(interval);
+                        resolve();
+                    });
+                });
             }
         });
         
