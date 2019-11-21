@@ -291,8 +291,9 @@ class Terminal {
         return deferred;
     }
 
-    write(value, style) {
-        value = utils.encodeHtml(value || '');
+    write(value, style, raw) {
+        value = value || '';
+        value = raw ? value : utils.encodeHtml(value);
         let outputValue = utils.createElement(`<span>${value}</span>`);
         if (typeof style === 'string') {
             outputValue.className = style;
@@ -306,17 +307,17 @@ class Terminal {
         this._outputLineNode.appendChild(outputValue);
     }
 
-    writeLine(value, style) {
+    writeLine(value, style, raw) {
         value = (value || '') + '\n';
-        this.write(value, style);
+        this.write(value, style, raw);
         this._outputLineNode = null;
     }
 
-    writePad(value, length, char = ' ', cssClass = null) {
-        this.write(utils.pad(value, length, char), cssClass);
+    writePad(value, length, char = ' ', style = null, raw = false) {
+        this.write(utils.pad(value, length, char), style, raw);
     }
 
-    writeTable(data, columns, showHeaders, cssClass) {
+    writeTable(data, columns, showHeaders, style, raw) {
         columns = columns.map((value) => {
             let values = value.split(':');
             return {
@@ -328,9 +329,9 @@ class Terminal {
         let writeCell = (value, padding) => {
             value = value || '';
             if (padding === '*') {
-                this.write(value, cssClass);
+                this.write(value, style, raw);
             } else {
-                this.writePad(value, parseInt(padding, 10), ' ', cssClass);
+                this.writePad(value, parseInt(padding, 10), ' ', style, raw);
             }
         };
         if (showHeaders) {
