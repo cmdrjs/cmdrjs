@@ -1,4 +1,4 @@
-/* cmdrjs | version 2.0.0-beta.3 | license MIT | (c) 2019 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
+/* cmdrjs | version 2.0.0-beta.5 | license MIT | (c) 2019 John Cruikshank | https://github.com/cmdrjs/cmdrjs */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.cmdr = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
 
@@ -1051,9 +1051,7 @@ function () {
               return false;
           }
         } else {
-          if (event.ctrlKey && event.keyCode === 67) {
-            _this.cancel();
-          } else if (_this._current.readLine && event.keyCode === 13) {
+          if (_this._current.readLine && event.keyCode === 13) {
             _this._current.readLine.resolve(_this._promptNode.value);
           }
 
@@ -1081,6 +1079,12 @@ function () {
 
       this._promptNode.addEventListener('input', function (event) {
         _this._fixPromptHeight();
+      });
+
+      this._terminalNode.addEventListener('keydown', function (event) {
+        if (_this._current && event.ctrlKey && event.keyCode === 67) {
+          _this.cancel();
+        }
       });
 
       this._terminalNode.addEventListener('click', function (event) {
@@ -1668,7 +1672,7 @@ function () {
 
       this._inputNode.style.display = '';
 
-      this._promptNode.removeAttribute('disabled');
+      this._promptNode.removeAttribute('readonly');
 
       this._fixPromptIndent();
 
@@ -1681,7 +1685,7 @@ function () {
     value: function _deactivateInput() {
       this._promptNode.style.textIndent = '';
 
-      this._promptNode.setAttribute('disabled', 'disabled');
+      this._promptNode.setAttribute('readonly', 'readonly');
     }
   }, {
     key: "_flushInput",
